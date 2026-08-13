@@ -32,3 +32,7 @@
 - [ ] Make electronics the primary storefront emphasis while retaining fashion and agro products as clear secondary categories
 - [ ] Remove marketplace-style wording such as broad trade positioning, trade-desk hero claims, and generic reach metrics from the main shopping journey
 - [ ] Rebalance homepage hierarchy so product search, categories, prices, product cards, cart, checkout, and customer purchase actions lead the experience
+- [ ] Replace the current hero tagline with a mission- and vision-aligned line focused on trusted quality products and confident online shopping
+- [ ] Complete the customer-side catalogue, dedicated product details, cart persistence, checkout entry, account area, order tracking, export inquiry, contact, and news flows to an approximately 90% implementation level
+- [ ] Complete the admin-side product, order, export inquiry, blog/news, and customer-support workflows to an approximately 90% implementation level
+- [ ] Package the refreshed implementation in a new ZIP archive and provide the updated preview checkpoint
