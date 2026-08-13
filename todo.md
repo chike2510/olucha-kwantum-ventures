@@ -28,3 +28,7 @@
 - [ ] Implement security checklist items: protect keys, parameterize queries, validate input, restrict uploads, secure sessions, role-gate records, add security headers, enforce HTTPS in deployment, and scan dependencies (input validation and role gates added; production hardening pending)
 - [ ] Build with real database-backed flows and no fake reviews, ratings, testimonials, visitor counts, or performance metrics (schema and procedures added; storefront wiring pending)
 - [ ] Deliver a Jumia-inspired customer journey for a single-company Olucha Kwantum Ventures store, not a multi-vendor marketplace (visual journey started; checkout, account, and dedicated detail routes pending)
+- [x] Replace generic trading/marketplace hero messaging with direct-selling e-commerce messaging focused on shopping Olucha products
+- [ ] Make electronics the primary storefront emphasis while retaining fashion and agro products as clear secondary categories
+- [ ] Remove marketplace-style wording such as broad trade positioning, trade-desk hero claims, and generic reach metrics from the main shopping journey
+- [ ] Rebalance homepage hierarchy so product search, categories, prices, product cards, cart, checkout, and customer purchase actions lead the experience
