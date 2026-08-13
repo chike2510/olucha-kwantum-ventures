@@ -1,0 +1,30 @@
+# Project TODO
+
+- [ ] Confirm the two authoritative branding reference images are available in the project context
+- [ ] Confirm the final product categories, catalogue data, pricing currency, and export destinations
+- [ ] Confirm Paystack account and required live/test credentials
+- [ ] Confirm the store owner's notification email and sender-email requirements
+- [ ] Confirm the WhatsApp business number for the wa.me click-to-chat link
+- [ ] Confirm customer account, order status, and fulfilment workflow requirements
+- [x] Receive explicit user authorization to begin implementation
+- [x] Build the public company profile and landing page
+- [x] Build catalogue search, category filtering, product detail pages, and product media workflow
+- [ ] Build export inquiry form and admin inquiry management (form UI present; database procedure added; admin UI pending)
+- [ ] Build cart, checkout, Paystack payment initialization, callback verification, and order records
+- [ ] Build customer account dashboard with order history and status tracking
+- [ ] Build blog/news listing, article pages, and admin content management
+- [ ] Build contact form and WhatsApp integration
+- [ ] Build role-gated admin panel for products, orders, posts, and inquiries (workspace and partial server gates implemented; full CRUD pending)
+- [ ] Add automated owner email notifications for new orders and export inquiries
+- [ ] Write and run Vitest coverage for core server workflows (3 baseline tests passing; commerce workflow coverage pending)
+- [ ] Verify responsive UI and end-to-end flows in the browser (desktop storefront and admin entry verified; payment and account workflows pending)
+- [ ] Save the first production-ready checkpoint after all required items are complete
+- [x] Use the uploaded screenshots as security and launch-quality checklists, not as visual branding references
+- [x] Support product groups for basic electronics gadgets, fashion, and agro products
+- [x] Add the confirmed mission and vision copy to the company profile
+- [ ] Start Paystack in test mode with credentials supplied securely before live launch
+- [ ] Use clearly labeled temporary placeholder values for WhatsApp and owner notification email
+- [ ] Apply Nigeria-first, internationally oriented business defaults for shipping, export inquiries, currency display, and fulfilment
+- [ ] Implement security checklist items: protect keys, parameterize queries, validate input, restrict uploads, secure sessions, role-gate records, add security headers, enforce HTTPS in deployment, and scan dependencies (input validation and role gates added; production hardening pending)
+- [ ] Build with real database-backed flows and no fake reviews, ratings, testimonials, visitor counts, or performance metrics (schema and procedures added; storefront wiring pending)
+- [ ] Deliver a Jumia-inspired customer journey for a single-company Olucha Kwantum Ventures store, not a multi-vendor marketplace (visual journey started; checkout, account, and dedicated detail routes pending)
