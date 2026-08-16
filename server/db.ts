@@ -21,4 +21,5 @@ export async function createOrder(input: { userId?: number; customerName: string
 export async function listOrdersForUser(userId: number) { const db = await getDb(); if (!db) return []; return db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt)); }
 export async function listAllOrders() { const db = await getDb(); if (!db) return []; return db.select().from(orders).orderBy(desc(orders.createdAt)); }
 export async function listAllBlogPosts() { const db = await getDb(); if (!db) return []; return db.select().from(blogPosts).orderBy(desc(blogPosts.createdAt)); }
+export async function createBlogPost(input: typeof blogPosts.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const result = await db.insert(blogPosts).values(input); return { id: Number(result[0].insertId) }; }
 export async function updateOrderStatus(id: number, status: "pending" | "paid" | "processing" | "shipped" | "delivered" | "cancelled") { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.update(orders).set({ status }).where(eq(orders.id, id)); return { success: true }; }
