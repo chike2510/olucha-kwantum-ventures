@@ -29,4 +29,14 @@ describe("commerce input validation", () => {
       message: "",
     })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
+
+  it("rejects an order with no line items", async () => {
+    const caller = appRouter.createCaller(createContext());
+    await expect(caller.account.createOrder({
+      customerName: "Test Buyer",
+      customerEmail: "buyer@example.com",
+      totalKobo: 5000,
+      lines: [],
+    })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
 });
