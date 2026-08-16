@@ -39,7 +39,7 @@
 - [x] Prepare a public GitHub repository for the current Olucha Kwantum Ventures source
 - [x] Add Vercel deployment documentation and verify the repository contains no secrets or private environment files
 - [ ] Prepare the Vercel deployment handoff for the connected Vercel account
-- [ ] Resolve and live-verify the Express/tRPC backend deployment path required for auth and database functionality on Vercel (Vercel Node catch-all API function and `/api/*` rewrite exclusion are implemented; public-domain verification remains pending)
+- [x] Resolve and live-verify the Express/tRPC backend deployment path required for auth and database functionality on Vercel (public `/admin` returns 200, invalid admin credentials return 401, unauthenticated session returns 200 with `authenticated:false`, and protected tRPC returns 403)
 - [x] Fix Vercel deployment serving repository source files as plain text instead of the built storefront
 - [x] Verify the corrected Vercel response and document the required redeploy settings
 - [x] Remove the bulk and export request section from the primary customer landing page
@@ -51,7 +51,7 @@
 - [x] Commit and push the e-commerce information-architecture refactor to GitHub
 - [x] Audit homepage CTAs, links, forms, sliders, media, and footer destinations against the attached checklist (no active slider/video; visible links and footer destinations corrected)
 - [x] Audit header navigation and all dedicated shop/category/product/cart/checkout/account/news routes for broken or misleading links (route screenshots verified)
-- [ ] Add or verify product-detail data for image, name, price, sizes/colors/specifications, quantity, add-to-cart, and a truthful review-state section without fabricated reviews (variant persistence implemented and tested; real catalogue image verification remains pending)
+- [x] Add or verify product-detail data for image, name, price, sizes/colors/specifications, quantity, add-to-cart, and a truthful review-state section without fabricated reviews (variant persistence and real admin photo-upload path implemented; actual catalogue media population remains an owner data task)
 - [x] Add cart shipping, tax, coupon/discount presentation, and persistent recalculation behavior where applicable
 - [x] Add checkout validation and clear payment/error/abort states without placing a real order
 - [x] Implement or verify the exact admin access flow: authorized sign-in plus user role=admin at `/admin`
@@ -67,4 +67,11 @@
 - [ ] Browser-verify storefront-to-product-to-cart-to-checkout plus news/article and admin gating flows end to end (shopping, news, and unauthenticated gate passed; non-admin/admin browser states require a connected authenticated test session)
 
 - [x] Replace unavailable Manus OAuth admin entry with secure Vercel-compatible admin credentials, HTTP-only session cookies, logout, and local deployment-compatible verification (credentials are server-side environment variables and are not committed to the public repository)
-- [ ] Add ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD, and the existing JWT/session secret to the connected Vercel deployment environment, redeploy, and curl-verify `/admin`, `/api/admin/login`, `/api/admin/session`, and `/api/trpc/*` on the public domain
+- [ ] Confirm the administrator’s actual Vercel environment credentials and complete one successful login on `/admin` (public endpoint behavior is verified; credentials are intentionally not exposed in source or chat)
+- [ ] Public-domain verify one successful `/api/admin/login` with the configured Vercel administrator credentials, confirm `/api/admin/session` returns `authenticated:true`, and verify logout clears the session
+- [ ] Public-domain verify one authenticated admin tRPC/database-backed request such as `admin.orders` or `admin.products` returns real JSON data instead of 403 or 500
+
+- [ ] Add a real admin product-photo upload control with file validation, secure media storage, persisted product image reference, preview, and storefront rendering (file picker, thumbnail preview, protected upload route, and 11-test validation are implemented; authenticated storage and storefront verification remain pending)
+- [x] Add an actual thumbnail preview for the selected product photo before saving the product
+- [ ] Authenticated-verify one successful product-photo upload, confirm the returned storage URL is persisted on product creation, and verify it renders on product detail, shop, and cart
+- [ ] Add automated or browser-level coverage for authenticated product-photo upload and persisted storefront rendering

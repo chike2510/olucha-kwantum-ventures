@@ -2,7 +2,9 @@ import { COOKIE_NAME, ONE_YEAR_MS, OAUTH_STATE_COOKIE, decodeOAuthState } from "
 import { parse as parseCookieHeader } from "cookie";
 import type { Express, Request, Response } from "express";
 import * as db from "../db.js";
+import { storagePut } from "../storage.js";
 import { getSessionCookieOptions } from "./cookies.js";
+import { parseProductImageDataUrl } from "./productMedia.js";
 import { sdk } from "./sdk.js";
 import { ADMIN_SESSION_COOKIE, adminSessionMaxAgeMs, createAdminSession, isAdminCredentialValid, getAdminSessionFromRequest } from "./adminAuth.js";
 
@@ -31,6 +33,25 @@ export function registerOAuthRoutes(app: Express) {
   app.post("/api/admin/logout", (req: Request, res: Response) => {
     res.clearCookie(ADMIN_SESSION_COOKIE, getSessionCookieOptions(req));
     res.json({ authenticated: false });
+  });
+
+  app.post("/api/admin/product-image", async (req: Request, res: Response) => {
+    if (!getAdminSessionFromRequest(req)) {
+      res.status(403).json({ error: "Administrator session required" });
+      return;
+    }
+    const image = parseProductImageDataUrl(req.body?.dataUrl);
+    if (!image) {
+      res.status(415).json({ error: "Only PNG, JPEG, WEBP, or GIF images smaller than 8 MB are accepted" });
+      return;
+    }
+    try {
+      const uploaded = await storagePut(`product-images/${crypto.randomUUID()}.${image.extension}`, image.bytes, image.contentType);
+      res.json(uploaded);
+    } catch (error) {
+      console.error("[Storage] Product image upload failed", error);
+      res.status(502).json({ error: "Product image upload failed" });
+    }
   });
 
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
