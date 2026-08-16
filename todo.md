@@ -38,3 +38,7 @@
 - [ ] Package the refreshed implementation in a new ZIP archive and provide the updated preview checkpoint
 - [x] Prepare a public GitHub repository for the current Olucha Kwantum Ventures source
 - [x] Add Vercel deployment documentation and verify the repository contains no secrets or private environment files
+- [ ] Prepare the Vercel deployment handoff for the connected Vercel account
+- [ ] Resolve or explicitly document the Express/tRPC backend deployment path required for live auth, database, and Paystack functionality on Vercel
+- [ ] Fix Vercel deployment serving repository source files as plain text instead of the built storefront
+- [ ] Verify the corrected Vercel response and document the required redeploy settings

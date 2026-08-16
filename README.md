@@ -26,7 +26,7 @@ Do not commit `.env` files or secrets. Configure environment variables through V
 
 ## Vercel deployment note
 
-The client is built with Vite and the project is structured around a full-stack Express/tRPC runtime. The frontend can be deployed to Vercel as a Vite application, but the current server runtime is not automatically converted into Vercel Functions. For a complete production deployment, either keep the managed full-stack runtime or add a deliberate Vercel Functions adapter for the Express/tRPC server and database connections. Do not treat a frontend-only Vercel deployment as a live commerce deployment until server procedures, authentication, database access, and Paystack callbacks have been verified.
+The repository includes `vercel.json`, which runs `pnpm build` and serves the generated `dist/public` Vite output with SPA routing. This fixes the common misconfiguration where Vercel serves repository source files as plain text. The current project is still structured around a full-stack Express/tRPC runtime; the frontend can deploy correctly to Vercel, but the server runtime is not automatically converted into Vercel Functions. For a complete production deployment, either keep the managed full-stack runtime or add a deliberate Vercel Functions adapter for the Express/tRPC server and database connections. Do not treat a frontend-only Vercel deployment as a live commerce deployment until server procedures, authentication, database access, and Paystack callbacks have been verified.
 
 ## Security
 
