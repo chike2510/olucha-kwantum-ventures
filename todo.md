@@ -49,3 +49,12 @@
 - [x] Refactor the public experience into a shopping home page rather than a landing-only page
 - [x] Add distinct catalogue, category, product detail, cart, checkout, account, and supporting content routes
 - [x] Commit and push the e-commerce information-architecture refactor to GitHub
+- [x] Audit homepage CTAs, links, forms, sliders, media, and footer destinations against the attached checklist (no active slider/video; visible links and footer destinations corrected)
+- [x] Audit header navigation and all dedicated shop/category/product/cart/checkout/account/news routes for broken or misleading links (route screenshots verified)
+- [ ] Add or verify product-detail data for image, name, price, sizes/colors/specifications, quantity, add-to-cart, and a truthful review-state section without fabricated reviews (all interaction fields added; real product photography still requires final media)
+- [x] Add cart shipping, tax, coupon/discount presentation, and persistent recalculation behavior where applicable
+- [x] Add checkout validation and clear payment/error/abort states without placing a real order
+- [x] Implement or verify the exact admin access flow: authorized sign-in plus user role=admin at `/admin`
+- [ ] Complete the checklist-based natural navigation verification and record any remaining limitations
+- [ ] Prevent pre-payment checkout from inserting real orders; wait for Paystack initialization/verification before creating an order
+- [ ] Add explicit checkout abort/edit-cart handling and a clear payment-unavailable error state
