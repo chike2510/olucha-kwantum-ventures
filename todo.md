@@ -45,7 +45,7 @@
 - [x] Remove the bulk and export request section from the primary customer landing page
 - [x] Add senior-level motion, hover transitions, reveal effects, and responsive interaction polish without harming accessibility
 - [x] Verify and document `/admin` role-gated access for authorized administrators
-- [ ] Remove the remaining join buying list or newsletter-style element from the storefront
-- [ ] Refactor the public experience into a shopping home page rather than a landing-only page
-- [ ] Add distinct catalogue, category, product detail, cart, checkout, account, and supporting content routes
-- [ ] Commit and push the e-commerce information-architecture refactor to GitHub
+- [x] Remove the remaining join buying list or newsletter-style element from the storefront (no active buying-list element remained in the current source)
+- [x] Refactor the public experience into a shopping home page rather than a landing-only page
+- [x] Add distinct catalogue, category, product detail, cart, checkout, account, and supporting content routes
+- [x] Commit and push the e-commerce information-architecture refactor to GitHub
