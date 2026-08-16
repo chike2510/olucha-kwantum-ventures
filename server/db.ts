@@ -1,8 +1,8 @@
 import { desc, eq, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, products, exportInquiries, contactMessages, blogPosts, orders, orderItems, Product, InsertProduct } from "../drizzle/schema";
-import { ENV } from "./_core/env";
-import { notifyOwner } from "./_core/notification";
+import { InsertUser, users, products, exportInquiries, contactMessages, blogPosts, orders, orderItems, Product, InsertProduct } from "../drizzle/schema.js";
+import { ENV } from "./_core/env.js";
+import { notifyOwner } from "./_core/notification.js";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() { if (!_db && process.env.DATABASE_URL) { try { _db = drizzle(process.env.DATABASE_URL); } catch (error) { console.warn("[Database] Failed to connect:", error); _db = null; } } return _db; }

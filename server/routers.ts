@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { COOKIE_NAME } from "@shared/const";
-import { getSessionCookieOptions } from "./_core/cookies";
-import { systemRouter } from "./_core/systemRouter";
-import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { createContactMessage, createExportInquiry, createProduct, updateProduct, createOrder, createBlogPost, updateBlogPost, getProductBySlug, listPublishedBlogPosts, getPublishedBlogPost, listAllBlogPosts, listAllOrders, listAllProducts, listExportInquiries, listOrdersForUser, listProducts, updateOrderStatus } from "./db";
+import { COOKIE_NAME } from "../shared/const.js";
+import { getSessionCookieOptions } from "./_core/cookies.js";
+import { systemRouter } from "./_core/systemRouter.js";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc.js";
+import { createContactMessage, createExportInquiry, createProduct, updateProduct, createOrder, createBlogPost, updateBlogPost, getProductBySlug, listPublishedBlogPosts, getPublishedBlogPost, listAllBlogPosts, listAllOrders, listAllProducts, listExportInquiries, listOrdersForUser, listProducts, updateOrderStatus } from "./db.js";
 
 const inquiryInput = z.object({ fullName: z.string().min(2).max(160), email: z.string().email(), phone: z.string().max(50).optional(), productInterest: z.string().min(2).max(180), quantity: z.string().max(120).optional(), destinationCountry: z.string().min(2).max(100), message: z.string().max(5000).optional() });
 const productInput = z.object({ name: z.string().min(2).max(180), slug: z.string().regex(/^[a-z0-9-]+$/).max(200), category: z.string().min(2).max(80), description: z.string().min(10), specifications: z.record(z.string(), z.string()), priceKobo: z.number().int().nonnegative(), currency: z.string().max(8).default("NGN"), unit: z.string().max(40).default("per item"), imageUrl: z.string().url().optional() });
