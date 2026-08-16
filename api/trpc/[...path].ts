@@ -1,3 +1,3 @@
-import { vercelApp } from "../../server/_core/vercelApp";
+import { vercelApp } from "../../server/_core/vercelApp.js";
 
 export default vercelApp;
