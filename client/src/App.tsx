@@ -12,6 +12,7 @@ import Shop from "@/pages/Shop";
 import Cart from "@/pages/Cart";
 import Checkout from "@/pages/Checkout";
 import News from "@/pages/News";
+import NewsArticle from "@/pages/NewsArticle";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -23,6 +24,7 @@ function Router() {
       <Route path={"/shop"} component={Shop} />
       <Route path={"/cart"} component={Cart} />
       <Route path={"/checkout"} component={Checkout} />
+      <Route path={"/news/:slug"} component={NewsArticle} />
       <Route path={"/news"} component={News} />
       <Route path={"/products/:slug"} component={ProductDetail} />
       <Route path={"/account"} component={Account} />
