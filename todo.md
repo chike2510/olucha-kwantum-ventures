@@ -16,7 +16,7 @@
 - [ ] Build contact form and WhatsApp integration
 - [ ] Build role-gated admin panel for products, orders, posts, and inquiries (workspace and partial server gates implemented; full CRUD pending)
 - [ ] Add automated owner email notifications for new orders and export inquiries
-- [ ] Write and run Vitest coverage for core server workflows (3 baseline tests passing; commerce workflow coverage pending)
+- [ ] Write and run Vitest coverage for core server workflows (4 validation tests passing; successful database order workflow coverage and payment coverage pending)
 - [ ] Verify responsive UI and end-to-end flows in the browser (desktop storefront and admin entry verified; payment and account workflows pending)
 - [ ] Save the first production-ready checkpoint after all required items are complete
 - [x] Use the uploaded screenshots as security and launch-quality checklists, not as visual branding references
