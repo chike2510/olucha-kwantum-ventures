@@ -65,3 +65,6 @@
 - [x] Verify repeated add-to-cart actions, quantity totals, and checkout navigation after the cart fix (browser test passed with quantity three, subtotal ₦145,500, and checkout navigation)
 - [x] Browser-verify homepage header/footer CTAs, Shop/category links, News listing-to-article, Account entry, Contact, and WhatsApp destinations
 - [ ] Browser-verify storefront-to-product-to-cart-to-checkout plus news/article and admin gating flows end to end (shopping, news, and unauthenticated gate passed; non-admin/admin browser states require a connected authenticated test session)
+
+- [x] Replace unavailable Manus OAuth admin entry with secure Vercel-compatible admin credentials, HTTP-only session cookies, logout, and local deployment-compatible verification (credentials are server-side environment variables and are not committed to the public repository)
+- [ ] Add ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD, and the existing JWT/session secret to the connected Vercel deployment environment, then redeploy and verify `/admin` on the public domain

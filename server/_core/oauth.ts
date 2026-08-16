@@ -4,6 +4,7 @@ import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
+import { ADMIN_SESSION_COOKIE, adminSessionMaxAgeMs, createAdminSession, isAdminCredentialValid, getAdminSessionFromRequest } from "./adminAuth";
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
@@ -11,6 +12,27 @@ function getQueryParam(req: Request, key: string): string | undefined {
 }
 
 export function registerOAuthRoutes(app: Express) {
+  app.post("/api/admin/login", (req: Request, res: Response) => {
+    const { email, password } = req.body ?? {};
+    if (typeof email !== "string" || typeof password !== "string" || !isAdminCredentialValid(email, password)) {
+      res.status(401).json({ error: "Invalid administrator credentials" });
+      return;
+    }
+    const cookieOptions = getSessionCookieOptions(req);
+    res.cookie(ADMIN_SESSION_COOKIE, createAdminSession(email), { ...cookieOptions, maxAge: adminSessionMaxAgeMs });
+    res.json({ authenticated: true });
+  });
+
+  app.get("/api/admin/session", (req: Request, res: Response) => {
+    const session = getAdminSessionFromRequest(req);
+    res.json(session ? { authenticated: true, email: session.email } : { authenticated: false });
+  });
+
+  app.post("/api/admin/logout", (req: Request, res: Response) => {
+    res.clearCookie(ADMIN_SESSION_COOKIE, getSessionCookieOptions(req));
+    res.json({ authenticated: false });
+  });
+
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
     const state = getQueryParam(req, "state");

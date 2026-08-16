@@ -55,13 +55,13 @@ await page.waitForFunction(() => location.hash === "#contact");
 if ((await page.locator("footer").getByRole("link", { name: "WhatsApp" }).getAttribute("href")) !== "https://wa.me/2348000000000") throw new Error("Footer WhatsApp destination is incorrect");
 
 await page.goto(`${root}/admin`, { waitUntil: "networkidle" });
-if (!(await page.getByText(/Admin workspace|Admin sign-in required|Access restricted/i).count())) throw new Error("Admin gating state did not render");
+if (!(await page.getByText(/Admin workspace|Admin sign-in required|Admin sign-in|Access restricted/i).count())) throw new Error("Admin gating state did not render");
 
 const unauthContext = await browser.newContext();
 const unauthPage = await unauthContext.newPage();
 await unauthPage.goto(`${root}/admin`, { waitUntil: "networkidle" });
-await unauthPage.waitForFunction(() => document.body.innerText.includes("Admin sign-in required"));
-if (!(await unauthPage.getByText("Admin sign-in required").count())) throw new Error("Unauthenticated admin gating failed");
+await unauthPage.waitForFunction(() => document.body.innerText.includes("Admin sign-in"));
+if (!(await unauthPage.getByText("Admin sign-in").count())) throw new Error("Unauthenticated admin gating failed");
 await unauthContext.close();
 
 console.log("navigation-flow: homepage CTAs, categories, footer routes, news article, account, contact, WhatsApp, and unauthenticated admin gating passed");
