@@ -9,6 +9,8 @@ export type StoreProduct = {
   color: string;
   tag: string;
   specs: Record<string, string>;
+  imageUrl?: string;
+  variant?: { size?: string; color?: string };
 };
 
 export const storeProducts: StoreProduct[] = [

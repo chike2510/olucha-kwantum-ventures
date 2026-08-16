@@ -5,7 +5,6 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { formatNaira } from "@/lib/storeCatalog";
 import { useStoreCart } from "@/hooks/useStoreCart";
-import { trpc } from "@/lib/trpc";
 
 export default function Checkout() {
   const { user } = useAuth();

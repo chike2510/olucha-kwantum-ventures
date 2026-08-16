@@ -12,11 +12,11 @@
 - [ ] Build export inquiry form and admin inquiry management (form UI present; database procedure added; admin UI pending)
 - [ ] Build cart, checkout, Paystack payment initialization, callback verification, and order records
 - [ ] Build customer account dashboard with order history and status tracking
-- [ ] Build blog/news listing, article pages, and admin content management
+- [ ] Build blog/news listing, article pages, and admin content management (public database wiring and admin create/edit UI implemented; mutation refresh and procedure-level verification now added, final browser check pending)
 - [ ] Build contact form and WhatsApp integration
 - [ ] Build role-gated admin panel for products, orders, posts, and inquiries (workspace and partial server gates implemented; full CRUD pending)
-- [ ] Add automated owner email notifications for new orders and export inquiries
-- [ ] Write and run Vitest coverage for core server workflows (4 validation tests passing; successful database order workflow coverage and payment coverage pending)
+- [x] Add automated owner alerts for new orders and export inquiries through the project notification service (email/sender configuration remains pending)
+- [ ] Write and run Vitest coverage for core server workflows (7 tests pass across auth, commerce validation, cart quantity, and variant merging; successful server order/admin/news/notification coverage remains pending)
 - [ ] Verify responsive UI and end-to-end flows in the browser (desktop storefront and admin entry verified; payment and account workflows pending)
 - [ ] Save the first production-ready checkpoint after all required items are complete
 - [x] Use the uploaded screenshots as security and launch-quality checklists, not as visual branding references
@@ -51,10 +51,17 @@
 - [x] Commit and push the e-commerce information-architecture refactor to GitHub
 - [x] Audit homepage CTAs, links, forms, sliders, media, and footer destinations against the attached checklist (no active slider/video; visible links and footer destinations corrected)
 - [x] Audit header navigation and all dedicated shop/category/product/cart/checkout/account/news routes for broken or misleading links (route screenshots verified)
-- [ ] Add or verify product-detail data for image, name, price, sizes/colors/specifications, quantity, add-to-cart, and a truthful review-state section without fabricated reviews (all interaction fields added; real product photography still requires final media)
+- [ ] Add or verify product-detail data for image, name, price, sizes/colors/specifications, quantity, add-to-cart, and a truthful review-state section without fabricated reviews (variant persistence implemented and tested; real catalogue image verification remains pending)
 - [x] Add cart shipping, tax, coupon/discount presentation, and persistent recalculation behavior where applicable
 - [x] Add checkout validation and clear payment/error/abort states without placing a real order
 - [x] Implement or verify the exact admin access flow: authorized sign-in plus user role=admin at `/admin`
-- [ ] Complete the checklist-based natural navigation verification and record any remaining limitations
-- [ ] Prevent pre-payment checkout from inserting real orders; wait for Paystack initialization/verification before creating an order
-- [ ] Add explicit checkout abort/edit-cart handling and a clear payment-unavailable error state
+- [ ] Complete the checklist-based natural navigation verification and record remaining admin-auth limitations (storefront navigation and unauthenticated admin gate passed; non-admin/admin browser states require a connected authenticated test session)
+- [x] Prevent pre-payment checkout from inserting real orders; wait for Paystack initialization/verification before creating an order
+- [x] Add explicit checkout abort/edit-cart handling and a clear payment-unavailable error state
+- [x] Verify product-detail add-to-cart increments shared cart state correctly (shared hook and product-detail handler verified; screenshot starts with empty localStorage)
+- [x] Verify cart quantity changes, removal, subtotal, shipping, tax, coupon, and checkout navigation
+- [x] Verify checkout validation, edit-cart abort behavior, and safe payment-unavailable messaging without creating an order
+- [x] Fix shared cart multi-quantity add behavior so product-detail quantity selections are applied accurately
+- [x] Verify repeated add-to-cart actions, quantity totals, and checkout navigation after the cart fix (browser test passed with quantity three, subtotal ₦145,500, and checkout navigation)
+- [x] Browser-verify homepage header/footer CTAs, Shop/category links, News listing-to-article, Account entry, Contact, and WhatsApp destinations
+- [ ] Browser-verify storefront-to-product-to-cart-to-checkout plus news/article and admin gating flows end to end (shopping, news, and unauthenticated gate passed; non-admin/admin browser states require a connected authenticated test session)

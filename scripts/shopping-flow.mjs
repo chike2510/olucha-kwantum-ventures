@@ -1,0 +1,20 @@
+import { chromium } from "playwright";
+
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+await page.goto("http://localhost:3000/products/smart-home-essentials", { waitUntil: "networkidle" });
+await page.evaluate(() => localStorage.clear());
+await page.reload({ waitUntil: "networkidle" });
+await page.getByLabel("Increase quantity").click();
+await page.getByLabel("Increase quantity").click();
+await page.getByRole("button", { name: "Add to cart" }).click();
+await page.getByLabel("Open cart").click();
+await page.waitForURL("**/cart");
+if (!(await page.getByText("Smart Home Essentials").count())) throw new Error("Product did not appear in cart");
+if (!(await page.locator("article").first().getByText("3", { exact: true }).count())) throw new Error("Selected quantity was not persisted");
+if (!(await page.getByText("₦145,500").count())) throw new Error("Cart subtotal did not recalculate");
+await page.getByRole("link", { name: "Continue to checkout" }).click();
+await page.waitForURL("**/checkout");
+if (!(await page.getByText("Buy with confidence.").count())) throw new Error("Checkout navigation failed");
+console.log("shopping-flow: product quantity, cart persistence, subtotal, and checkout navigation passed");
+await browser.close();
