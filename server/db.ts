@@ -1,6 +1,6 @@
 import { desc, eq, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, products, exportInquiries, contactMessages, Product, InsertProduct } from "../drizzle/schema";
+import { InsertUser, users, products, exportInquiries, contactMessages, orders, orderItems, Product, InsertProduct } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -16,3 +16,7 @@ export async function createExportInquiry(input: typeof exportInquiries.$inferIn
 export async function createContactMessage(input: typeof contactMessages.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const result = await db.insert(contactMessages).values(input); return { id: result[0].insertId }; }
 export async function listExportInquiries() { const db = await getDb(); if (!db) return []; return db.select().from(exportInquiries).orderBy(desc(exportInquiries.createdAt)); }
 export async function listAllProducts() { const db = await getDb(); if (!db) return []; return db.select().from(products).orderBy(desc(products.createdAt)); }
+export type OrderLineInput = { productId: number; productName: string; quantity: number; unitPriceKobo: number };
+export async function createOrder(input: { userId?: number; customerName: string; customerEmail: string; totalKobo: number; currency?: string; lines: OrderLineInput[] }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const result = await db.insert(orders).values({ userId: input.userId, customerName: input.customerName, customerEmail: input.customerEmail, totalKobo: input.totalKobo, currency: input.currency || "NGN" }); const orderId = Number(result[0].insertId); if (input.lines.length) await db.insert(orderItems).values(input.lines.map((line) => ({ orderId, ...line }))); return { id: orderId, status: "pending" as const }; }
+export async function listOrdersForUser(userId: number) { const db = await getDb(); if (!db) return []; return db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt)); }
+export async function listAllOrders() { const db = await getDb(); if (!db) return []; return db.select().from(orders).orderBy(desc(orders.createdAt)); }
