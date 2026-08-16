@@ -7,7 +7,7 @@ import { sdk } from "./sdk";
 import { ADMIN_SESSION_COOKIE, adminSessionMaxAgeMs, createAdminSession, isAdminCredentialValid, getAdminSessionFromRequest } from "./adminAuth";
 
 function getQueryParam(req: Request, key: string): string | undefined {
-  const value = req.query[key];
+  const value = (req as Request & { query: Record<string, unknown> }).query[key];
   return typeof value === "string" ? value : undefined;
 }
 
