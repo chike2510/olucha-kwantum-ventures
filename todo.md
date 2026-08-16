@@ -36,3 +36,5 @@
 - [ ] Complete the customer-side catalogue, dedicated product details, cart persistence, checkout entry, account area, order tracking, export inquiry, contact, and news flows to an approximately 90% implementation level
 - [ ] Complete the admin-side product, order, export inquiry, blog/news, and customer-support workflows to an approximately 90% implementation level
 - [ ] Package the refreshed implementation in a new ZIP archive and provide the updated preview checkpoint
+- [ ] Prepare a public GitHub repository for the current Olucha Kwantum Ventures source
+- [ ] Add Vercel deployment documentation and verify the repository contains no secrets or private environment files
