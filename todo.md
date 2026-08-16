@@ -42,3 +42,6 @@
 - [ ] Resolve or explicitly document the Express/tRPC backend deployment path required for live auth, database, and Paystack functionality on Vercel
 - [x] Fix Vercel deployment serving repository source files as plain text instead of the built storefront
 - [x] Verify the corrected Vercel response and document the required redeploy settings
+- [x] Remove the bulk and export request section from the primary customer landing page
+- [x] Add senior-level motion, hover transitions, reveal effects, and responsive interaction polish without harming accessibility
+- [x] Verify and document `/admin` role-gated access for authorized administrators

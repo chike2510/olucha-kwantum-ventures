@@ -18,3 +18,20 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .field.light input, .field.light textarea, .field.light select { border-color: rgba(255,255,255,.14); background: rgba(255,255,255,.08); color: white; }
 .field.light input::placeholder, .field.light textarea::placeholder { color: rgba(255,255,255,.4); }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+
+@keyframes olucha-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes olucha-float { 0%, 100% { transform: translate3d(0, 0, 0); } 50% { transform: translate3d(0, -8px, 0); } }
+@keyframes olucha-shimmer { from { transform: translateX(-110%); } to { transform: translateX(110%); } }
+.motion-rise { animation: olucha-rise .72s cubic-bezier(.23,1,.32,1) both; }
+.motion-rise-delay-1 { animation-delay: .08s; }
+.motion-rise-delay-2 { animation-delay: .16s; }
+.motion-rise-delay-3 { animation-delay: .24s; }
+.motion-float { animation: olucha-float 6s ease-in-out infinite; }
+.interactive-card { transition: transform .24s cubic-bezier(.23,1,.32,1), box-shadow .24s ease, border-color .24s ease; }
+.interactive-card:hover { transform: translateY(-6px); box-shadow: 0 24px 60px rgba(17,36,74,.13); }
+button, a { transition: transform .18s cubic-bezier(.23,1,.32,1), color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease; }
+button:active, a:active { transform: scale(.97); }
+.shimmer-button { position: relative; isolation: isolate; overflow: hidden; }
+.shimmer-button::after { content: ""; position: absolute; inset: 0 auto 0 -80%; width: 45%; transform: skewX(-18deg); background: linear-gradient(90deg, transparent, rgba(255,255,255,.42), transparent); pointer-events: none; }
+.shimmer-button:hover::after { animation: olucha-shimmer .75s ease; }
+@media (prefers-reduced-motion: reduce) { .motion-rise, .motion-float { animation: none !important; } .interactive-card:hover { transform: none; } }
