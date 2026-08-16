@@ -7,7 +7,10 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Admin from "./pages/Admin";
 import ProductDetail from "./pages/ProductDetail";
-import Account from "./pages/Account";
+import Account from "@/pages/Account";
+import Shop from "@/pages/Shop";
+import Cart from "@/pages/Cart";
+import Checkout from "@/pages/Checkout";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -15,6 +18,10 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/admin"} component={Admin} />
+      <Route path={"/shop/:category"} component={Shop} />
+      <Route path={"/shop"} component={Shop} />
+      <Route path={"/cart"} component={Cart} />
+      <Route path={"/checkout"} component={Checkout} />
       <Route path={"/products/:slug"} component={ProductDetail} />
       <Route path={"/account"} component={Account} />
       <Route path={"/404"} component={NotFound} />
