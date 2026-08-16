@@ -39,7 +39,7 @@
 - [x] Prepare a public GitHub repository for the current Olucha Kwantum Ventures source
 - [x] Add Vercel deployment documentation and verify the repository contains no secrets or private environment files
 - [ ] Prepare the Vercel deployment handoff for the connected Vercel account
-- [ ] Resolve or explicitly document the Express/tRPC backend deployment path required for live auth, database, and Paystack functionality on Vercel
+- [ ] Resolve and live-verify the Express/tRPC backend deployment path required for auth and database functionality on Vercel (Vercel Node catch-all API function and `/api/*` rewrite exclusion are implemented; public-domain verification remains pending)
 - [x] Fix Vercel deployment serving repository source files as plain text instead of the built storefront
 - [x] Verify the corrected Vercel response and document the required redeploy settings
 - [x] Remove the bulk and export request section from the primary customer landing page
@@ -67,4 +67,4 @@
 - [ ] Browser-verify storefront-to-product-to-cart-to-checkout plus news/article and admin gating flows end to end (shopping, news, and unauthenticated gate passed; non-admin/admin browser states require a connected authenticated test session)
 
 - [x] Replace unavailable Manus OAuth admin entry with secure Vercel-compatible admin credentials, HTTP-only session cookies, logout, and local deployment-compatible verification (credentials are server-side environment variables and are not committed to the public repository)
-- [ ] Add ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD, and the existing JWT/session secret to the connected Vercel deployment environment, then redeploy and verify `/admin` on the public domain
+- [ ] Add ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD, and the existing JWT/session secret to the connected Vercel deployment environment, redeploy, and curl-verify `/admin`, `/api/admin/login`, `/api/admin/session`, and `/api/trpc/*` on the public domain
