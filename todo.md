@@ -23,18 +23,18 @@
 - [x] Support product groups for basic electronics gadgets, fashion, and agro products
 - [x] Add the confirmed mission and vision copy to the company profile
 - [ ] Start Paystack in test mode with credentials supplied securely before live launch
-- [ ] Use clearly labeled temporary placeholder values for WhatsApp and owner notification email
-- [ ] Apply Nigeria-first, internationally oriented business defaults for shipping, export inquiries, currency display, and fulfilment
+- [x] Use clearly labeled temporary placeholder values for WhatsApp and owner notification email (WhatsApp is labeled in the contact section; `Temporary contact email: hello@oluchakwantum.example` is labeled in the homepage footer)
+- [x] Apply Nigeria-first, internationally oriented business defaults for shipping, export inquiries, currency display, and fulfilment (NGN display, Nigeria-first country default, international country options, and export inquiry fields are present)
 - [ ] Implement security checklist items: protect keys, parameterize queries, validate input, restrict uploads, secure sessions, role-gate records, add security headers, enforce HTTPS in deployment, and scan dependencies (input validation and role gates added; production hardening pending)
-- [ ] Build with real database-backed flows and no fake reviews, ratings, testimonials, visitor counts, or performance metrics (schema and procedures added; storefront wiring pending)
+- [x] Build with real database-backed flows and no fake reviews, ratings, testimonials, visitor counts, or performance metrics (database-backed catalogue/news/inquiry/order procedures are used when available; preview catalogue/news fallbacks contain no fabricated user-generated content)
 - [x] Deliver a Jumia-inspired customer journey for a single-company Olucha Kwantum Ventures store, not a multi-vendor marketplace (single-company catalogue, product detail, cart, checkout, account, news, and admin entry routes are implemented)
 - [x] Replace generic trading/marketplace hero messaging with direct-selling e-commerce messaging focused on shopping Olucha products
 - [x] Make electronics the primary storefront emphasis while retaining fashion and agro products as clear secondary categories (electronics leads hero copy, navigation, and catalogue ordering)
 - [x] Remove marketplace-style wording such as broad trade positioning, trade-desk hero claims, and generic reach metrics from the main shopping journey (shopping-first copy and single-company framing are in place)
-- [ ] Rebalance homepage hierarchy so product search, categories, prices, product cards, cart, checkout, and customer purchase actions lead the experience (shopping-first hero and navigation are complete; company profile still precedes the catalogue section)
+- [x] Rebalance homepage hierarchy so product search, categories, prices, product cards, cart, checkout, and customer purchase actions lead the experience (catalogue/search/product-card section now appears immediately after the hero, before the company profile)
 - [x] Replace the current hero tagline with a mission- and vision-aligned line focused on trusted quality products and confident online shopping ("Quality products. Trusted quality.")
-- [ ] Complete the customer-side catalogue, dedicated product details, cart persistence, checkout entry, account area, order tracking, export inquiry, contact, and news flows to an approximately 90% implementation level (catalogue, cart, checkout validation, account, contact, and news are implemented; Paystack order creation and authenticated order history remain dependent on payment/auth configuration)
-- [ ] Complete the admin-side product, order, export inquiry, blog/news, and customer-support workflows to an approximately 90% implementation level
+- [ ] Complete the customer-side catalogue, dedicated product details, cart persistence, checkout entry, account area, order tracking, export inquiry, contact, and news flows to an approximately 90% implementation level (implemented subset is catalogue, product detail, cart persistence, checkout validation, account surface, inquiry, contact, and news; Paystack order creation and authenticated order-history tracking remain launch dependencies)
+- [ ] Complete the admin-side product, order, export inquiry, blog/news, and customer-support workflows to an approximately 90% implementation level (implemented subset is product creation/photo upload, order status, inquiry status, and article create/edit; full product CRUD and broader support workflows remain pending)
 - [x] Package the refreshed implementation in a new ZIP archive and provide the updated preview checkpoint (latest source archive created)
 - [x] Prepare a public GitHub repository for the current Olucha Kwantum Ventures source
 - [x] Add Vercel deployment documentation and verify the repository contains no secrets or private environment files
@@ -88,3 +88,7 @@
 - [x] Apply the new blue/gold OKV accent treatment consistently across Shop, ProductDetail, Cart, Checkout, News, Account, Admin, shared product gradients, and the homepage—not just the shared header and hero
 - [x] Capture desktop and mobile screenshots for the newly restyled homepage and key storefront routes after the blue/gold refresh (six primary routes captured at 375px and 1280px widths)
 - [x] Commit and push the latest OKV logo/path and blue-gold styling changes to GitHub, then record the new commit hash in todo.md (`7a08342`)
+- [x] Add explicit, verifiable labeling for the temporary owner notification email placeholder or document exactly where it appears in code/UI (homepage footer labels `Temporary contact email: hello@oluchakwantum.example`)
+- [x] Move the catalogue/search/product-card section above the company profile section on the homepage so shopping leads the page hierarchy
+- [x] Keep the customer-side 90% rollup scoped to the implemented catalogue/cart/checkout-validation/account/news/inquiry surfaces until Paystack-backed order creation and authenticated order-history tracking are verified
+- [x] Keep the admin-side 90% rollup scoped to the implemented product-create/photo-upload/order-status/inquiry-status/article-edit subset until broader CRUD is complete
