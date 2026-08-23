@@ -92,3 +92,4 @@
 - [x] Move the catalogue/search/product-card section above the company profile section on the homepage so shopping leads the page hierarchy
 - [x] Keep the customer-side 90% rollup scoped to the implemented catalogue/cart/checkout-validation/account/news/inquiry surfaces until Paystack-backed order creation and authenticated order-history tracking are verified
 - [x] Keep the admin-side 90% rollup scoped to the implemented product-create/photo-upload/order-status/inquiry-status/article-edit subset until broader CRUD is complete
+- [x] Route hosted `/manus-storage/*` assets through the Vercel serverless function so the public OKV logo cannot fall through to the SPA 404 (Vercel rewrite plus `/api/manus-storage/*` proxy route added; local probe returns the signed 307 response; public redeploy verification remains pending)
