@@ -76,4 +76,9 @@
 - [ ] Authenticated-verify one successful product-photo upload, confirm the returned storage URL is persisted on product creation, and verify it renders on product detail, shop, and cart
 - [ ] Add automated or browser-level coverage for authenticated product-photo upload and persisted storefront rendering
 
-- [ ] Replace the logo placeholder with the supplied Olucha Kwantum Ventures logo, apply its navy/gold brand palette across storefront and admin UI, verify responsive rendering, and sync the branded build to GitHub
+- [x] Replace the logo placeholder with the supplied Olucha Kwantum Ventures logo, add the hosted favicon, update shared navy/gold brand tokens, and sync the branded build to GitHub (GitHub main updated to `ad016194`; primary commerce-route rollout completed in the follow-up checkpoint)
+- [x] Apply the supplied logo/brand treatment across the primary Shop, Product Detail, Cart, Checkout, Account, News, and article page headers (shared `BrandHeader` now covers all primary commerce pages)
+- [x] Verify branded responsive rendering for the primary storefront routes at desktop and mobile breakpoints (desktop and mobile screenshots now cover Shop, Product Detail fallback, Cart, Checkout, Account, News, and NewsArticle; admin sign-in is covered separately)
+- [x] Capture and verify desktop branded rendering for Shop, Product Detail, Cart, Checkout, Account, News, and NewsArticle pages
+- [x] Apply the supplied logo/brand treatment to remaining shared/supporting states: unauthenticated Account and Admin now show the supplied logo; Contact remains the branded homepage section; NotFound remains intentionally minimal as a recovery state
+- [x] Capture and verify the authenticated admin mobile workspace layout/state, not only the admin sign-in screen (HTTPS preview browser-flow passed and screenshot captured at `artifacts/admin-mobile-authenticated.png`)

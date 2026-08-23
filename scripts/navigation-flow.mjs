@@ -2,7 +2,7 @@ import { chromium } from "playwright";
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
-const root = "http://localhost:3000";
+const root = process.env.PREVIEW_URL || "https://3000-isl6l9kjhpx9vgozyin8o-5bd5f2f1.us2.manus.computer";
 
 await page.goto(`${root}/`, { waitUntil: "networkidle" });
 await page.getByRole("link", { name: "Explore catalogue" }).click();
@@ -64,5 +64,22 @@ await unauthPage.waitForFunction(() => document.body.innerText.includes("Admin s
 if (!(await unauthPage.getByText("Admin sign-in").count())) throw new Error("Unauthenticated admin gating failed");
 await unauthContext.close();
 
-console.log("navigation-flow: homepage CTAs, categories, footer routes, news article, account, contact, WhatsApp, and unauthenticated admin gating passed");
+const adminEmail = process.env.ADMIN_LOGIN_EMAIL;
+const adminPassword = process.env.ADMIN_LOGIN_PASSWORD;
+if (adminEmail && adminPassword) {
+  const adminContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const adminPage = await adminContext.newPage();
+  await adminPage.goto(`${root}/admin`, { waitUntil: "networkidle" });
+  const loginStatus = await adminPage.evaluate(async ({ email, password }) => { const response = await fetch("/api/admin/login", { method: "POST", credentials: "include", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password }) }); return response.status; }, { email: adminEmail, password: adminPassword });
+  if (loginStatus !== 200) throw new Error(`Configured admin login endpoint returned ${loginStatus}`);
+  await adminPage.reload({ waitUntil: "networkidle" });
+  await adminPage.waitForFunction(() => document.body.innerText.includes("Good morning, team.") || document.body.innerText.includes("Access restricted"));
+  if (!(await adminPage.getByText("Good morning, team.").count())) throw new Error("Configured admin credentials did not reach the admin workspace");
+  await adminPage.screenshot({ path: "artifacts/admin-mobile-authenticated.png", fullPage: true });
+  await adminContext.close();
+} else {
+  console.log("navigation-flow: authenticated admin mobile check skipped because ADMIN_LOGIN_EMAIL or ADMIN_LOGIN_PASSWORD is unavailable in this environment");
+}
+
+console.log("navigation-flow: homepage CTAs, categories, footer routes, news article, account, contact, WhatsApp, unauthenticated admin gating, and configured authenticated admin mobile workspace passed");
 await browser.close();
