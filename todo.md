@@ -98,3 +98,5 @@
 - [ ] Replace the broken public logo delivery path with a deployment-safe asset reference that resolves on the Vercel domain, then verify the live image request
 - [x] Update the homepage footer copy and any remaining visible brand surfaces to use the exact tagline “Quality products, trusted globally.”
 - [x] Re-run a source search for old tagline or alternate brand-copy variants and confirm no visible footer/header/hero/supporting surfaces remain outdated (old tagline variants return no matches; exact copy is present in title, header, hero, card, and footer)
+- [ ] Add the supplied OKV wordmark as a repository-backed public asset or equivalent Vercel-safe static source instead of relying on the failing `/manus-storage/*` path
+- [ ] Replace all visible logo and favicon references with the reliable public asset URL and verify the live Vercel image request on homepage, Shop, and inner-page headers
