@@ -1,6 +1,6 @@
 # Project TODO
 
-- [ ] Confirm the two authoritative branding reference images are available in the project context
+- [x] Confirm the two authoritative branding reference images are available in the project context (supplied OKV wordmark and mobile visual reference are available)
 - [ ] Confirm the final product categories, catalogue data, pricing currency, and export destinations
 - [ ] Confirm Paystack account and required live/test credentials
 - [ ] Confirm the store owner's notification email and sender-email requirements
@@ -95,8 +95,10 @@
 - [x] Route hosted `/manus-storage/*` assets through the Vercel serverless function so the public OKV logo cannot fall through to the SPA 404 (Vercel rewrite plus `/api/manus-storage/*` proxy route added; local probe returns the signed 307 response; public redeploy verification remains pending)
 - [x] Replace every visible tagline variant with the exact text “Quality products, trusted globally.” across the browser title, header, hero, footer, and supporting brand surfaces (source audit and desktop/mobile preview confirm the exact wording)
 - [x] Strengthen the OKV blue/gold treatment so the supplied blue company name and gold tagline are clearly legible and visually dominant on desktop and mobile (full supplied wordmark lockup plus blue/gold hero accents verified at 375px and 1280px)
-- [ ] Replace the broken public logo delivery path with a deployment-safe asset reference that resolves on the Vercel domain, then verify the live image request (repository-backed asset and commit-pinned references are complete; public deployment still needs publishing)
+- [x] Replace the broken public logo delivery path with a deployment-safe asset reference that resolves on the Vercel domain, then verify the live image request (public homepage and Shop route now render the commit-pinned GitHub wordmark without a broken image)
 - [x] Update the homepage footer copy and any remaining visible brand surfaces to use the exact tagline “Quality products, trusted globally.”
 - [x] Re-run a source search for old tagline or alternate brand-copy variants and confirm no visible footer/header/hero/supporting surfaces remain outdated (old tagline variants return no matches; exact copy is present in title, header, hero, card, and footer)
 - [x] Add the supplied OKV wordmark as a repository-backed public asset or equivalent Vercel-safe static source instead of relying on the failing `/manus-storage/*` path (assets committed under `assets/` in public GitHub commit `ab935a1`)
-- [ ] Replace all visible logo and favicon references with the reliable public asset URL and verify the live Vercel image request on homepage, Shop, and inner-page headers (all source references now use commit-pinned raw GitHub URLs; local homepage, Shop, Account, and Admin screenshots pass; public Vercel verification awaits publish)
+- [x] Replace all visible logo and favicon references with the reliable public asset URL and verify the live Vercel image request on homepage, Shop, and inner-page headers (public homepage and Shop checks pass; local Account/Admin checks also pass)
+- [x] Public-domain verify the repository-backed logo on Product Detail, Cart, Checkout, Account, and News routes that use the shared header, confirming no broken image placeholders remain (all five live routes pass)
+- [x] Public-domain verify the favicon request on the Vercel domain after a hard refresh and document the successful commit-pinned asset response (pinned favicon opens successfully as an image; findings saved in `public-brand-verification.md`)
