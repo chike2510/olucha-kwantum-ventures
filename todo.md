@@ -38,7 +38,7 @@
 - [x] Package the refreshed implementation in a new ZIP archive and provide the updated preview checkpoint (latest source archive created)
 - [x] Prepare a public GitHub repository for the current Olucha Kwantum Ventures source
 - [x] Add Vercel deployment documentation and verify the repository contains no secrets or private environment files
-- [ ] Prepare the Vercel deployment handoff for the connected Vercel account
+- [x] Prepare the Vercel deployment handoff for the connected Vercel account (`DEPLOYMENT.md` documents build settings, API routes, required secrets, admin access, and final launch checklist)
 - [x] Resolve and live-verify the Express/tRPC backend deployment path required for auth and database functionality on Vercel (public `/admin` returns 200, invalid admin credentials return 401, unauthenticated session returns 200 with `authenticated:false`, and protected tRPC returns 403)
 - [x] Fix Vercel deployment serving repository source files as plain text instead of the built storefront
 - [x] Verify the corrected Vercel response and document the required redeploy settings
