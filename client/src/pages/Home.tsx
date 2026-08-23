@@ -47,7 +47,7 @@ export default function Home() {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0b1736]/95 text-white backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
           <a href="#top" className="flex items-center gap-3" aria-label="Olucha Kwantum Ventures home">
-            <span className="flex h-12 w-[12rem] items-center justify-start overflow-hidden rounded-xl bg-white px-2 py-1 shadow-sm ring-1 ring-[#d2a63b]/40 sm:w-[17rem]"><img src="https://raw.githubusercontent.com/chike2510/olucha-kwantum-ventures/main/assets/okv-wordmark.png" alt="Olucha Kwantum Ventures — Quality products, trusted globally." className="h-full w-full object-contain object-left" /></span>
+            <span className="flex h-12 w-[12rem] items-center justify-start overflow-hidden rounded-xl bg-white px-2 py-1 shadow-sm ring-1 ring-[#d2a63b]/40 sm:w-[17rem]"><img src="https://raw.githubusercontent.com/chike2510/olucha-kwantum-ventures/ab935a1/assets/okv-wordmark.png" alt="Olucha Kwantum Ventures — Quality products, trusted globally." className="h-full w-full object-contain object-left" /></span>
           </a>
           <nav className="hidden items-center gap-7 text-sm text-white/80 md:flex">
             <a href="/shop/Electronics" className="transition hover:text-[#d2a63b]">Shop electronics</a><a href="/shop/Fashion" className="transition hover:text-[#d2a63b]">Fashion</a><a href="/shop/Agro%20Products" className="transition hover:text-[#d2a63b]">Agro products</a><a href="#contact" className="transition hover:text-[#d2a63b]">Contact</a>
