@@ -106,3 +106,6 @@
 - [x] Add smooth, accessible hover/focus/press transitions to primary navigation, buttons, product cards, filters, and cart actions (shared lift, press, shimmer, focus, and reduced-motion utilities added)
 - [x] Implement and verify product filtering by category and search across the homepage catalogue and Shop route (shared normalized filter helper, category pills, search matching, empty state, and 3 dedicated Vitest tests)
 - [x] Add responsive product-list pagination that preserves current search/category filters, resets safely when filters change, and provides clear previous/next and page-state controls (shared `paginate`/`pageRange` helpers power homepage and Shop controls; 3 pagination tests pass; desktop/mobile screenshots show the controls)
+- [ ] Add a category selector to the admin product form so administrators can assign products to Electronics, Fashion, or Agro Products
+- [ ] Replace the temporary WhatsApp destination with 0813 723 2498 and add an optional Facebook page-link setting that remains hidden until configured
+- [ ] Use a prominent logo-only OKV mark on the landing page and the full wordmark/tagline logo on the main storefront and inner pages
