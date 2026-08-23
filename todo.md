@@ -84,7 +84,7 @@
 - [x] Capture and verify the authenticated admin mobile workspace layout/state, not only the admin sign-in screen (HTTPS preview browser-flow passed and screenshot captured at `artifacts/admin-mobile-authenticated.png`)
 - [x] Replace the broken deployed logo reference with the newly supplied OKV logo asset and verify it loads on the local storefront preview (public Vercel redeploy verification remains owner-dependent)
 - [x] Restyle the storefront brand treatment to use the supplied blue company-name color and gold tagline color, including the mobile header and hero direction
-- [ ] Verify the corrected logo and brand styling at desktop and mobile breakpoints, then sync the fix to GitHub (desktop/mobile screenshots now cover homepage, Shop, Product Detail, Cart, Checkout, and News; GitHub sync pending)
+- [x] Verify the corrected logo and brand styling at desktop and mobile breakpoints, then sync the fix to GitHub (desktop/mobile screenshots cover homepage, Shop, Product Detail, Cart, Checkout, and News; public GitHub sync completed in commit `7a08342`)
 - [x] Apply the new blue/gold OKV accent treatment consistently across Shop, ProductDetail, Cart, Checkout, News, Account, Admin, shared product gradients, and the homepage—not just the shared header and hero
 - [x] Capture desktop and mobile screenshots for the newly restyled homepage and key storefront routes after the blue/gold refresh (six primary routes captured at 375px and 1280px widths)
-- [ ] Commit and push the latest OKV logo/path and blue-gold styling changes to GitHub, then record the new commit hash in todo.md
+- [x] Commit and push the latest OKV logo/path and blue-gold styling changes to GitHub, then record the new commit hash in todo.md (`7a08342`)
