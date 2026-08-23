@@ -102,3 +102,6 @@
 - [x] Replace all visible logo and favicon references with the reliable public asset URL and verify the live Vercel image request on homepage, Shop, and inner-page headers (public homepage and Shop checks pass; local Account/Admin checks also pass)
 - [x] Public-domain verify the repository-backed logo on Product Detail, Cart, Checkout, Account, and News routes that use the shared header, confirming no broken image placeholders remain (all five live routes pass)
 - [x] Public-domain verify the favicon request on the Vercel domain after a hard refresh and document the successful commit-pinned asset response (pinned favicon opens successfully as an image; findings saved in `public-brand-verification.md`)
+- [x] Strengthen the primary OKV blue/gold color system across storefront controls, active states, product cards, and supporting sections (shared tokens, filter pills, buttons, and cards now use the stronger blue/gold hierarchy)
+- [x] Add smooth, accessible hover/focus/press transitions to primary navigation, buttons, product cards, filters, and cart actions (shared lift, press, shimmer, focus, and reduced-motion utilities added)
+- [x] Implement and verify product filtering by category and search across the homepage catalogue and Shop route (shared normalized filter helper, category pills, search matching, empty state, and 3 dedicated Vitest tests)
