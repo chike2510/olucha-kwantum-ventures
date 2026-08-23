@@ -82,9 +82,9 @@
 - [x] Capture and verify desktop branded rendering for Shop, Product Detail, Cart, Checkout, Account, News, and NewsArticle pages
 - [x] Apply the supplied logo/brand treatment to remaining shared/supporting states: unauthenticated Account and Admin now show the supplied logo; Contact remains the branded homepage section; NotFound remains intentionally minimal as a recovery state
 - [x] Capture and verify the authenticated admin mobile workspace layout/state, not only the admin sign-in screen (HTTPS preview browser-flow passed and screenshot captured at `artifacts/admin-mobile-authenticated.png`)
-- [x] Replace the broken deployed logo reference with the newly supplied OKV logo asset and verify it loads on the local storefront preview (public Vercel redeploy verification remains owner-dependent)
+- [ ] Replace the broken deployed logo reference with the newly supplied full OKV wordmark and verify it loads on the public storefront (local preview now loads `/manus-storage/okv-wordmark-tagline_547f64ef.png`; public Vercel publish and live request remain pending)
 - [x] Restyle the storefront brand treatment to use the supplied blue company-name color and gold tagline color, including the mobile header and hero direction
-- [x] Verify the corrected logo and brand styling at desktop and mobile breakpoints, then sync the fix to GitHub (desktop/mobile screenshots cover homepage, Shop, Product Detail, Cart, Checkout, and News; public GitHub sync completed in commit `28ec6b4`)
+- [x] Verify the corrected logo and brand styling at desktop and mobile breakpoints, then sync the fix to GitHub (desktop/mobile screenshots cover homepage, Shop, Product Detail, Cart, Checkout, and News; latest exact-tagline source follows in the next GitHub sync)
 - [x] Apply the new blue/gold OKV accent treatment consistently across Shop, ProductDetail, Cart, Checkout, News, Account, Admin, shared product gradients, and the homepage—not just the shared header and hero
 - [x] Capture desktop and mobile screenshots for the newly restyled homepage and key storefront routes after the blue/gold refresh (six primary routes captured at 375px and 1280px widths)
 - [x] Commit and push the latest OKV logo/path and blue-gold styling changes to GitHub, then record the new commit hash in todo.md (`28ec6b4`)
@@ -93,3 +93,8 @@
 - [x] Keep the customer-side 90% rollup scoped to the implemented catalogue/cart/checkout-validation/account/news/inquiry surfaces until Paystack-backed order creation and authenticated order-history tracking are verified
 - [x] Keep the admin-side 90% rollup scoped to the implemented product-create/photo-upload/order-status/inquiry-status/article-edit subset until broader CRUD is complete
 - [x] Route hosted `/manus-storage/*` assets through the Vercel serverless function so the public OKV logo cannot fall through to the SPA 404 (Vercel rewrite plus `/api/manus-storage/*` proxy route added; local probe returns the signed 307 response; public redeploy verification remains pending)
+- [x] Replace every visible tagline variant with the exact text “Quality products, trusted globally.” across the browser title, header, hero, footer, and supporting brand surfaces (source audit and desktop/mobile preview confirm the exact wording)
+- [x] Strengthen the OKV blue/gold treatment so the supplied blue company name and gold tagline are clearly legible and visually dominant on desktop and mobile (full supplied wordmark lockup plus blue/gold hero accents verified at 375px and 1280px)
+- [ ] Replace the broken public logo delivery path with a deployment-safe asset reference that resolves on the Vercel domain, then verify the live image request
+- [x] Update the homepage footer copy and any remaining visible brand surfaces to use the exact tagline “Quality products, trusted globally.”
+- [x] Re-run a source search for old tagline or alternate brand-copy variants and confirm no visible footer/header/hero/supporting surfaces remain outdated (old tagline variants return no matches; exact copy is present in title, header, hero, card, and footer)
