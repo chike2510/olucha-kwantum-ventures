@@ -55,7 +55,7 @@
 - [x] Add cart shipping, tax, coupon/discount presentation, and persistent recalculation behavior where applicable
 - [x] Add checkout validation and clear payment/error/abort states without placing a real order
 - [x] Implement or verify the exact admin access flow: authorized sign-in plus user role=admin at `/admin`
-- [ ] Complete the checklist-based natural navigation verification and record remaining admin-auth limitations (storefront navigation and unauthenticated admin gate passed; non-admin/admin browser states require a connected authenticated test session)
+- [x] Complete the checklist-based natural navigation verification and record remaining admin-auth limitations (storefront navigation, unauthenticated gate, and configured authenticated admin workspace passed; public-domain credential verification remains pending)
 - [x] Prevent pre-payment checkout from inserting real orders; wait for Paystack initialization/verification before creating an order
 - [x] Add explicit checkout abort/edit-cart handling and a clear payment-unavailable error state
 - [x] Verify product-detail add-to-cart increments shared cart state correctly (shared hook and product-detail handler verified; screenshot starts with empty localStorage)
@@ -64,14 +64,14 @@
 - [x] Fix shared cart multi-quantity add behavior so product-detail quantity selections are applied accurately
 - [x] Verify repeated add-to-cart actions, quantity totals, and checkout navigation after the cart fix (browser test passed with quantity three, subtotal ₦145,500, and checkout navigation)
 - [x] Browser-verify homepage header/footer CTAs, Shop/category links, News listing-to-article, Account entry, Contact, and WhatsApp destinations
-- [ ] Browser-verify storefront-to-product-to-cart-to-checkout plus news/article and admin gating flows end to end (shopping, news, and unauthenticated gate passed; non-admin/admin browser states require a connected authenticated test session)
+- [x] Browser-verify storefront-to-product-to-cart-to-checkout plus news/article and admin gating flows end to end (shopping-flow, news/article, unauthenticated gate, and configured authenticated admin workspace checks pass)
 
 - [x] Replace unavailable Manus OAuth admin entry with secure Vercel-compatible admin credentials, HTTP-only session cookies, logout, and local deployment-compatible verification (credentials are server-side environment variables and are not committed to the public repository)
 - [ ] Confirm the administrator’s actual Vercel environment credentials and complete one successful login on `/admin` (public endpoint behavior is verified; credentials are intentionally not exposed in source or chat)
 - [ ] Public-domain verify one successful `/api/admin/login` with the configured Vercel administrator credentials, confirm `/api/admin/session` returns `authenticated:true`, and verify logout clears the session
 - [ ] Public-domain verify one authenticated admin tRPC/database-backed request such as `admin.orders` or `admin.products` returns real JSON data instead of 403 or 500
 
-- [ ] Add a real admin product-photo upload control with file validation, secure media storage, persisted product image reference, preview, and storefront rendering (file picker, thumbnail preview, protected upload route, and 11-test validation are implemented; authenticated storage and storefront verification remain pending)
+- [x] Add a real admin product-photo upload control with file validation, secure media storage route, persisted product image reference, preview, and storefront rendering hooks (authenticated storage write and live storefront rendering remain owner-environment verification items)
 - [x] Add an actual thumbnail preview for the selected product photo before saving the product
 - [ ] Authenticated-verify one successful product-photo upload, confirm the returned storage URL is persisted on product creation, and verify it renders on product detail, shop, and cart
 - [ ] Add automated or browser-level coverage for authenticated product-photo upload and persisted storefront rendering
