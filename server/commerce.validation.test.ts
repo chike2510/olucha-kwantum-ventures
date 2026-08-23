@@ -39,4 +39,10 @@ describe("commerce input validation", () => {
       lines: [],
     })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
+
+  it("rejects an invalid export inquiry status for administrators", async () => {
+    const adminContext = { ...createContext(), user: { id: 1, openId: "admin", name: "Admin", email: "admin@example.com", role: "admin" } as TrpcContext["user"] };
+    const caller = appRouter.createCaller(adminContext);
+    await expect(caller.admin.updateInquiryStatus({ id: 1, status: "invalid" as never })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
 });

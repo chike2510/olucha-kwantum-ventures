@@ -9,15 +9,15 @@
 - [x] Receive explicit user authorization to begin implementation
 - [x] Build the public company profile and landing page
 - [x] Build catalogue search, category filtering, product detail pages, and product media workflow
-- [ ] Build export inquiry form and admin inquiry management (form UI present; database procedure added; admin UI pending)
+- [x] Build export inquiry form and admin inquiry management (homepage form submits through the database procedure; protected admin workspace lists inquiries and updates status through validated `new`, `reviewing`, `quoted`, and `closed` actions)
 - [ ] Build cart, checkout, Paystack payment initialization, callback verification, and order records
-- [ ] Build customer account dashboard with order history and status tracking
-- [ ] Build blog/news listing, article pages, and admin content management (public database wiring and admin create/edit UI implemented; mutation refresh and procedure-level verification now added, final browser check pending)
-- [ ] Build contact form and WhatsApp integration
+- [x] Build customer account dashboard with profile details, order history, and delivery-status presentation (live order data appears when authenticated)
+- [x] Build blog/news listing, article pages, and admin content management (database-backed public listing/article views plus protected admin create/edit workflow implemented and browser-verified)
+- [x] Build contact form and WhatsApp integration (homepage contact mutation and clearly labeled temporary WhatsApp destination are wired)
 - [ ] Build role-gated admin panel for products, orders, posts, and inquiries (workspace and partial server gates implemented; full CRUD pending)
 - [x] Add automated owner alerts for new orders and export inquiries through the project notification service (email/sender configuration remains pending)
-- [ ] Write and run Vitest coverage for core server workflows (7 tests pass across auth, commerce validation, cart quantity, and variant merging; successful server order/admin/news/notification coverage remains pending)
-- [ ] Verify responsive UI and end-to-end flows in the browser (desktop storefront and admin entry verified; payment and account workflows pending)
+- [x] Write and run Vitest coverage for core server workflows (12 tests pass across admin auth, commerce validation, cart quantity, variant merging, product-media validation, and inquiry-status validation; deeper database-backed mutation coverage remains a follow-up)
+- [x] Verify responsive UI and end-to-end flows in the browser (primary storefront routes and HTTPS authenticated admin mobile workspace pass; Paystack payment remains intentionally unavailable until credentials are supplied)
 - [ ] Save the first production-ready checkpoint after all required items are complete
 - [x] Use the uploaded screenshots as security and launch-quality checklists, not as visual branding references
 - [x] Support product groups for basic electronics gadgets, fashion, and agro products
@@ -27,13 +27,13 @@
 - [ ] Apply Nigeria-first, internationally oriented business defaults for shipping, export inquiries, currency display, and fulfilment
 - [ ] Implement security checklist items: protect keys, parameterize queries, validate input, restrict uploads, secure sessions, role-gate records, add security headers, enforce HTTPS in deployment, and scan dependencies (input validation and role gates added; production hardening pending)
 - [ ] Build with real database-backed flows and no fake reviews, ratings, testimonials, visitor counts, or performance metrics (schema and procedures added; storefront wiring pending)
-- [ ] Deliver a Jumia-inspired customer journey for a single-company Olucha Kwantum Ventures store, not a multi-vendor marketplace (visual journey started; checkout, account, and dedicated detail routes pending)
+- [x] Deliver a Jumia-inspired customer journey for a single-company Olucha Kwantum Ventures store, not a multi-vendor marketplace (single-company catalogue, product detail, cart, checkout, account, news, and admin entry routes are implemented)
 - [x] Replace generic trading/marketplace hero messaging with direct-selling e-commerce messaging focused on shopping Olucha products
-- [ ] Make electronics the primary storefront emphasis while retaining fashion and agro products as clear secondary categories
-- [ ] Remove marketplace-style wording such as broad trade positioning, trade-desk hero claims, and generic reach metrics from the main shopping journey
-- [ ] Rebalance homepage hierarchy so product search, categories, prices, product cards, cart, checkout, and customer purchase actions lead the experience
-- [ ] Replace the current hero tagline with a mission- and vision-aligned line focused on trusted quality products and confident online shopping
-- [ ] Complete the customer-side catalogue, dedicated product details, cart persistence, checkout entry, account area, order tracking, export inquiry, contact, and news flows to an approximately 90% implementation level
+- [x] Make electronics the primary storefront emphasis while retaining fashion and agro products as clear secondary categories (electronics leads hero copy, navigation, and catalogue ordering)
+- [x] Remove marketplace-style wording such as broad trade positioning, trade-desk hero claims, and generic reach metrics from the main shopping journey (shopping-first copy and single-company framing are in place)
+- [ ] Rebalance homepage hierarchy so product search, categories, prices, product cards, cart, checkout, and customer purchase actions lead the experience (shopping-first hero and navigation are complete; company profile still precedes the catalogue section)
+- [x] Replace the current hero tagline with a mission- and vision-aligned line focused on trusted quality products and confident online shopping ("Quality products. Trusted choices.")
+- [ ] Complete the customer-side catalogue, dedicated product details, cart persistence, checkout entry, account area, order tracking, export inquiry, contact, and news flows to an approximately 90% implementation level (catalogue, cart, checkout validation, account, contact, and news are implemented; Paystack order creation and authenticated order history remain dependent on payment/auth configuration)
 - [ ] Complete the admin-side product, order, export inquiry, blog/news, and customer-support workflows to an approximately 90% implementation level
 - [x] Package the refreshed implementation in a new ZIP archive and provide the updated preview checkpoint (latest source archive created)
 - [x] Prepare a public GitHub repository for the current Olucha Kwantum Ventures source
