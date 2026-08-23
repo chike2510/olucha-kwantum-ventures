@@ -75,3 +75,5 @@
 - [x] Add an actual thumbnail preview for the selected product photo before saving the product
 - [ ] Authenticated-verify one successful product-photo upload, confirm the returned storage URL is persisted on product creation, and verify it renders on product detail, shop, and cart
 - [ ] Add automated or browser-level coverage for authenticated product-photo upload and persisted storefront rendering
+
+- [ ] Replace the logo placeholder with the supplied Olucha Kwantum Ventures logo, apply its navy/gold brand palette across storefront and admin UI, verify responsive rendering, and sync the branded build to GitHub

@@ -8,12 +8,12 @@ html { scroll-behavior: smooth; }
 body { margin: 0; min-width: 320px; background: #f6f7fb; }
 button, a, input, textarea, select { font: inherit; }
 button { cursor: pointer; }
-button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid rgba(34, 211, 238, .5); outline-offset: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid rgba(210, 166, 59, .7); outline-offset: 3px; }
 .section-title { font-family: "Manrope", sans-serif; font-size: clamp(2.25rem, 4vw, 4rem); line-height: 1.05; letter-spacing: -.055em; font-weight: 700; color: #0b1736; }
-.eyebrow { margin-bottom: .8rem; color: #087e8b; font-size: .72rem; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; }
+.eyebrow { margin-bottom: .8rem; color: #1f5b9f; font-size: .72rem; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; }
 .field { display: flex; flex-direction: column; gap: .55rem; color: #526178; font-size: .78rem; font-weight: 700; letter-spacing: .02em; }
 .field input, .field textarea, .field select { width: 100%; border: 1px solid #dbe2ec; border-radius: 1rem; background: #f8fafc; padding: .9rem 1rem; color: #14213d; font-size: .9rem; font-weight: 400; outline: none; transition: border-color .18s ease, box-shadow .18s ease; }
-.field input:focus, .field textarea:focus, .field select:focus { border-color: #0891b2; box-shadow: 0 0 0 4px rgba(8, 145, 178, .12); }
+.field input:focus, .field textarea:focus, .field select:focus { border-color: #d2a63b; box-shadow: 0 0 0 4px rgba(210, 166, 59, .16); }
 .field.light { color: rgba(255,255,255,.72); }
 .field.light input, .field.light textarea, .field.light select { border-color: rgba(255,255,255,.14); background: rgba(255,255,255,.08); color: white; }
 .field.light input::placeholder, .field.light textarea::placeholder { color: rgba(255,255,255,.4); }
