@@ -32,7 +32,7 @@
 - [x] Make electronics the primary storefront emphasis while retaining fashion and agro products as clear secondary categories (electronics leads hero copy, navigation, and catalogue ordering)
 - [x] Remove marketplace-style wording such as broad trade positioning, trade-desk hero claims, and generic reach metrics from the main shopping journey (shopping-first copy and single-company framing are in place)
 - [ ] Rebalance homepage hierarchy so product search, categories, prices, product cards, cart, checkout, and customer purchase actions lead the experience (shopping-first hero and navigation are complete; company profile still precedes the catalogue section)
-- [x] Replace the current hero tagline with a mission- and vision-aligned line focused on trusted quality products and confident online shopping ("Quality products. Trusted choices.")
+- [x] Replace the current hero tagline with a mission- and vision-aligned line focused on trusted quality products and confident online shopping ("Quality products. Trusted quality.")
 - [ ] Complete the customer-side catalogue, dedicated product details, cart persistence, checkout entry, account area, order tracking, export inquiry, contact, and news flows to an approximately 90% implementation level (catalogue, cart, checkout validation, account, contact, and news are implemented; Paystack order creation and authenticated order history remain dependent on payment/auth configuration)
 - [ ] Complete the admin-side product, order, export inquiry, blog/news, and customer-support workflows to an approximately 90% implementation level
 - [x] Package the refreshed implementation in a new ZIP archive and provide the updated preview checkpoint (latest source archive created)
@@ -82,3 +82,9 @@
 - [x] Capture and verify desktop branded rendering for Shop, Product Detail, Cart, Checkout, Account, News, and NewsArticle pages
 - [x] Apply the supplied logo/brand treatment to remaining shared/supporting states: unauthenticated Account and Admin now show the supplied logo; Contact remains the branded homepage section; NotFound remains intentionally minimal as a recovery state
 - [x] Capture and verify the authenticated admin mobile workspace layout/state, not only the admin sign-in screen (HTTPS preview browser-flow passed and screenshot captured at `artifacts/admin-mobile-authenticated.png`)
+- [x] Replace the broken deployed logo reference with the newly supplied OKV logo asset and verify it loads on the local storefront preview (public Vercel redeploy verification remains owner-dependent)
+- [x] Restyle the storefront brand treatment to use the supplied blue company-name color and gold tagline color, including the mobile header and hero direction
+- [ ] Verify the corrected logo and brand styling at desktop and mobile breakpoints, then sync the fix to GitHub (desktop/mobile screenshots now cover homepage, Shop, Product Detail, Cart, Checkout, and News; GitHub sync pending)
+- [x] Apply the new blue/gold OKV accent treatment consistently across Shop, ProductDetail, Cart, Checkout, News, Account, Admin, shared product gradients, and the homepage—not just the shared header and hero
+- [x] Capture desktop and mobile screenshots for the newly restyled homepage and key storefront routes after the blue/gold refresh (six primary routes captured at 375px and 1280px widths)
+- [ ] Commit and push the latest OKV logo/path and blue-gold styling changes to GitHub, then record the new commit hash in todo.md

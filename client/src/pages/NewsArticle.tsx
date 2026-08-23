@@ -16,7 +16,7 @@ export default function NewsArticle() {
   const fallback = fallbackArticles[slug];
   const article = post.data ? { tag: "Olucha guide", title: post.data.title, body: post.data.excerpt, paragraphs: post.data.content.split(/\n+/).filter(Boolean) } : fallback;
   if (post.isLoading) return <div className="min-h-screen bg-[#f6f7fb] p-10 text-slate-500">Loading article…</div>;
-  if (!article) return <div className="min-h-screen bg-[#f6f7fb] p-10"><Link href="/news" className="font-bold text-cyan-700">← Back to news</Link><h1 className="mt-16 text-3xl font-semibold text-[#0b1736]">Article not found</h1></div>;
+  if (!article) return <div className="min-h-screen bg-[#f6f7fb] p-10"><Link href="/news" className="font-bold text-[#1f5b9f]">← Back to news</Link><h1 className="mt-16 text-3xl font-semibold text-[#0b1736]">Article not found</h1></div>;
   return <div className="min-h-screen bg-[#f6f7fb] text-[#14213d]"><BrandHeader backHref="/news" backLabel="All news" section="Olucha news" actionHref="/shop" actionLabel="Shop" /><main className="mx-auto max-w-3xl px-5 py-14 lg:py-20"><p className="eyebrow">{article.tag}</p><h1 className="mt-3 text-4xl font-semibold leading-tight tracking-[-.05em] text-[#0b1736] sm:text-6xl">{article.title}</h1><p className="mt-6 text-xl leading-8 text-slate-600">{article.body}</p><div className="mt-12 space-y-7 rounded-[2rem] bg-white p-7 shadow-sm sm:p-10">{article.paragraphs.map((paragraph) => <p key={paragraph} className="text-lg leading-8 text-slate-600">{paragraph}</p>)}<Link href="/shop" className="inline-flex items-center gap-2 rounded-full bg-[#f7b32b] px-5 py-3 text-sm font-bold text-[#0b1736]">Shop the store <ArrowRight size={15}/></Link></div></main></div>;
 }
 
