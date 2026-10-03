@@ -4,13 +4,20 @@ Olucha Kwantum Ventures is a product-led e-commerce and export platform for basi
 
 ## Current project status
 
-This repository contains the current implementation checkpoint. The public storefront and admin foundation are available, while Paystack test credentials, full payment verification, complete order persistence, full admin CRUD, blog administration, and owner email notifications still require final implementation and configuration.
+This repository contains the current implementation checkpoint. The storefront, Express/tRPC API, OAuth callbacks, storage proxy, admin foundation, and database-backed procedures are ported to a Cloudflare Workers deployment target. Paystack payment initialization and verification are not implemented; the app still requires its deployment credentials, the TiDB connection URL, and OAuth callback allowlisting before a live environment is functional.
 
 ## Local development
 
 ```bash
 pnpm install
 pnpm dev
+```
+
+For a local Cloudflare Workers preview, build the static app first and then start Wrangler:
+
+```bash
+pnpm build
+pnpm dev:worker
 ```
 
 Run the available checks with:
@@ -20,14 +27,14 @@ pnpm check
 pnpm test
 ```
 
-## Environment variables
+`pnpm build` creates the Vite static output and runs `wrangler deploy --dry-run` to compile/validate the Worker without publishing it. `pnpm deploy:worker` is the explicit deployment command and is not run automatically by the build.
 
-Do not commit `.env` files or secrets. Configure environment variables through Vercel Project Settings or your local environment. The application may require the built-in Manus variables already described in the project template, database connection variables, and later the Paystack test secret when payment initialization is enabled.
+## Environment and deployment
 
-## Vercel deployment note
+Do not commit `.env` files or secrets. Configure Worker secrets and variables in Cloudflare, and provide `VITE_OAUTH_PORTAL_URL` and `VITE_APP_ID` to the frontend build environment. The exact required bindings, TiDB connection requirements, and OAuth callback URLs are in [DEPLOYMENT.md](./DEPLOYMENT.md).
 
-The repository includes `vercel.json`, which runs `pnpm build` and serves the generated `dist/public` Vite output with SPA routing. This fixes the common misconfiguration where Vercel serves repository source files as plain text. The current project is still structured around a full-stack Express/tRPC runtime; the frontend can deploy correctly to Vercel, but the server runtime is not automatically converted into Vercel Functions. For a complete production deployment, either keep the managed full-stack runtime or add a deliberate Vercel Functions adapter for the Express/tRPC server and database connections. Do not treat a frontend-only Vercel deployment as a live commerce deployment until server procedures, authentication, database access, and Paystack callbacks have been verified.
+The project retains `vercel.json` and its existing Vercel adapter for the previous deployment target. Cloudflare Workers uses the separate `worker.ts` entrypoint and `wrangler.jsonc` configuration.
 
 ## Security
 
-Never place Paystack secret keys, database credentials, OAuth secrets, or notification credentials in source control. Use test mode first and configure production credentials only through encrypted deployment settings.
+Never place administrator passwords, session-signing keys, database credentials, OAuth secrets, or Forge credentials in source control or browser build variables. Use encrypted deployment secrets for server-only credentials.

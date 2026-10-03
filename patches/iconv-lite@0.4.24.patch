@@ -1,0 +1,15 @@
+diff --git a/package.json b/package.json
+index a7c74fcc299d744ce6cec7dc79023475d29f4673..858dc498e1c5018e63cc53e11a00bd1eb1ed904b 100644
+--- a/package.json
++++ b/package.json
+@@ -26,10 +26,6 @@
+         "coverage-open": "open coverage/lcov-report/index.html",
+         "test": "mocha --reporter spec --grep ."
+     },
+-    "browser": {
+-        "./lib/extend-node": false,
+-        "./lib/streams": false
+-    },
+     "devDependencies": {
+         "mocha": "^3.1.0",
+         "request": "~2.87.0",

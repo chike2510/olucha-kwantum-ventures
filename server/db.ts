@@ -1,11 +1,30 @@
 import { desc, eq, like, or } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/tidb-serverless";
 import { InsertUser, users, products, exportInquiries, contactMessages, blogPosts, orders, orderItems, Product, InsertProduct } from "../drizzle/schema.js";
 import { ENV } from "./_core/env.js";
 import { notifyOwner } from "./_core/notification.js";
 
 let _db: ReturnType<typeof drizzle> | null = null;
-export async function getDb() { if (!_db && process.env.DATABASE_URL) { try { _db = drizzle(process.env.DATABASE_URL); } catch (error) { console.warn("[Database] Failed to connect:", error); _db = null; } } return _db; }
+export async function getDb() {
+  const databaseUrl = ENV.databaseUrl;
+  if (!_db && databaseUrl) {
+    try {
+      _db = drizzle({ connection: { url: databaseUrl } });
+    } catch (error) {
+      console.warn("[Database] Failed to initialize:", error);
+      _db = null;
+    }
+  }
+  return _db;
+}
+
+function toInsertedId(result: { lastInsertId: string | null }): number {
+  const id = Number(result.lastInsertId);
+  if (!Number.isSafeInteger(id) || id < 1) {
+    throw new Error("Database did not return a valid inserted row ID");
+  }
+  return id;
+}
 
 export async function upsertUser(user: InsertUser): Promise<void> { if (!user.openId) throw new Error("User openId is required for upsert"); const db = await getDb(); if (!db) return; const values: InsertUser = { openId: user.openId }; const updateSet: Record<string, unknown> = {}; const textFields = ["name", "email", "loginMethod"] as const; textFields.forEach((field) => { if (user[field] !== undefined) { values[field] = user[field] ?? null; updateSet[field] = user[field] ?? null; } }); if (user.lastSignedIn !== undefined) { values.lastSignedIn = user.lastSignedIn; updateSet.lastSignedIn = user.lastSignedIn; } if (user.role !== undefined) { values.role = user.role; updateSet.role = user.role; } else if (user.openId === ENV.ownerOpenId) { values.role = "admin"; updateSet.role = "admin"; } if (!values.lastSignedIn) values.lastSignedIn = new Date(); if (!Object.keys(updateSet).length) updateSet.lastSignedIn = new Date(); await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet }); }
 export async function getUserByOpenId(openId: string) { const db = await getDb(); if (!db) return undefined; const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1); return result[0]; }
@@ -14,18 +33,18 @@ export async function listProducts(search?: string, category?: string) { const d
 export async function getProductBySlug(slug: string) { const db = await getDb(); if (!db) return null; const result = await db.select().from(products).where(eq(products.slug, slug)).limit(1); return result[0] ?? null; }
 export async function createProduct(input: InsertProduct) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.insert(products).values(input); return { success: true }; }
 export async function updateProduct(id: number, input: Partial<InsertProduct>) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.update(products).set(input).where(eq(products.id, id)); return { success: true }; }
-export async function createExportInquiry(input: typeof exportInquiries.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const result = await db.insert(exportInquiries).values(input); await notifyOwner({ title: "New export inquiry", content: `${input.fullName} requested ${input.productInterest} for ${input.destinationCountry}. Contact: ${input.email}. Quantity: ${input.quantity || "Not specified"}.` }).catch((error) => console.warn("[Notification] Export inquiry alert failed:", error)); return { id: result[0].insertId }; }
-export async function createContactMessage(input: typeof contactMessages.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const result = await db.insert(contactMessages).values(input); return { id: result[0].insertId }; }
+export async function createExportInquiry(input: typeof exportInquiries.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const result = await db.insert(exportInquiries).values(input); await notifyOwner({ title: "New export inquiry", content: `${input.fullName} requested ${input.productInterest} for ${input.destinationCountry}. Contact: ${input.email}. Quantity: ${input.quantity || "Not specified"}.` }).catch((error) => console.warn("[Notification] Export inquiry alert failed:", error)); return { id: toInsertedId(result) }; }
+export async function createContactMessage(input: typeof contactMessages.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const result = await db.insert(contactMessages).values(input); return { id: toInsertedId(result) }; }
 export async function listExportInquiries() { const db = await getDb(); if (!db) return []; return db.select().from(exportInquiries).orderBy(desc(exportInquiries.createdAt)); }
 export async function updateExportInquiryStatus(id: number, status: "new" | "reviewing" | "quoted" | "closed") { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.update(exportInquiries).set({ status }).where(eq(exportInquiries.id, id)); return { success: true }; }
 export async function listAllProducts() { const db = await getDb(); if (!db) return []; return db.select().from(products).orderBy(desc(products.createdAt)); }
 export type OrderLineInput = { productId: number; productName: string; quantity: number; unitPriceKobo: number };
-export async function createOrder(input: { userId?: number; customerName: string; customerEmail: string; totalKobo: number; currency?: string; lines: OrderLineInput[] }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const result = await db.insert(orders).values({ userId: input.userId, customerName: input.customerName, customerEmail: input.customerEmail, totalKobo: input.totalKobo, currency: input.currency || "NGN" }); const orderId = Number(result[0].insertId); if (input.lines.length) await db.insert(orderItems).values(input.lines.map((line) => ({ orderId, ...line }))); await notifyOwner({ title: `New order #${orderId}`, content: `${input.customerName} placed an order for ${(input.totalKobo / 100).toLocaleString()} ${input.currency || "NGN"}. Email: ${input.customerEmail}. Items: ${input.lines.map((line) => `${line.productName} × ${line.quantity}`).join(", ")}.` }).catch((error) => console.warn("[Notification] Order alert failed:", error)); return { id: orderId, status: "pending" as const }; }
+export async function createOrder(input: { userId?: number; customerName: string; customerEmail: string; totalKobo: number; currency?: string; lines: OrderLineInput[] }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const result = await db.insert(orders).values({ userId: input.userId, customerName: input.customerName, customerEmail: input.customerEmail, totalKobo: input.totalKobo, currency: input.currency || "NGN" }); const orderId = toInsertedId(result); if (input.lines.length) await db.insert(orderItems).values(input.lines.map((line) => ({ orderId, ...line }))); await notifyOwner({ title: `New order #${orderId}`, content: `${input.customerName} placed an order for ${(input.totalKobo / 100).toLocaleString()} ${input.currency || "NGN"}. Email: ${input.customerEmail}. Items: ${input.lines.map((line) => `${line.productName} × ${line.quantity}`).join(", ")}.` }).catch((error) => console.warn("[Notification] Order alert failed:", error)); return { id: orderId, status: "pending" as const }; }
 export async function listOrdersForUser(userId: number) { const db = await getDb(); if (!db) return []; return db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt)); }
 export async function listAllOrders() { const db = await getDb(); if (!db) return []; return db.select().from(orders).orderBy(desc(orders.createdAt)); }
 export async function listAllBlogPosts() { const db = await getDb(); if (!db) return []; return db.select().from(blogPosts).orderBy(desc(blogPosts.createdAt)); }
 export async function listPublishedBlogPosts() { const db = await getDb(); if (!db) return []; return db.select().from(blogPosts).where(eq(blogPosts.status, "published")).orderBy(desc(blogPosts.publishedAt)); }
 export async function getPublishedBlogPost(slug: string) { const db = await getDb(); if (!db) return null; const result = await db.select().from(blogPosts).where(eq(blogPosts.slug, slug)).limit(1); return result[0]?.status === "published" ? result[0] : null; }
-export async function createBlogPost(input: typeof blogPosts.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const result = await db.insert(blogPosts).values(input); return { id: Number(result[0].insertId) }; }
+export async function createBlogPost(input: typeof blogPosts.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const result = await db.insert(blogPosts).values(input); return { id: toInsertedId(result) }; }
 export async function updateBlogPost(id: number, input: Partial<typeof blogPosts.$inferInsert>) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.update(blogPosts).set(input).where(eq(blogPosts.id, id)); return { success: true }; }
 export async function updateOrderStatus(id: number, status: "pending" | "paid" | "processing" | "shipped" | "delivered" | "cancelled") { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.update(orders).set({ status }).where(eq(orders.id, id)); return { success: true }; }
