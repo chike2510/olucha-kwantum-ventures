@@ -124,7 +124,11 @@ export const appRouter = router({
   }),
   payments: router({
     initialize: protectedProcedure.input(paymentCheckoutInput).mutation(async ({ ctx, input }) => {
-      const origin = ctx.req.get("x-worker-request-origin") || `${ctx.req.protocol}://${ctx.req.get("host") || ""}`;
+      const request = ctx.req as unknown as {
+        get?: (name: string) => string | undefined;
+        protocol?: string;
+      };
+      const origin = request.get?.("x-worker-request-origin") || `${request.protocol ?? "https"}://${request.get?.("host") || ""}`;
       try {
         return await initializePaymentCheckout(input, ctx.user.id, origin, ENV.paystackSecretKey);
       } catch (error) {
