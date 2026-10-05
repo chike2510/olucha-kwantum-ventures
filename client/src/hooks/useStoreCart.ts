@@ -29,6 +29,7 @@ export function useStoreCart() {
   const add = useCallback((product: StoreProduct, quantity = 1) => sync(addToCart(readCart(), product, quantity)), [sync]);
   const update = useCallback((slug: string, delta: number) => sync(updateCartQuantity(readCart(), slug, delta)), [sync]);
   const remove = useCallback((slug: string) => sync(removeFromCart(readCart(), slug)), [sync]);
+  const clear = useCallback(() => sync([]), [sync]);
   const subtotal = useMemo(() => calculateCartSubtotal(items), [items]);
-  return { items, add, update, remove, subtotal };
+  return { items, add, update, remove, clear, subtotal };
 }

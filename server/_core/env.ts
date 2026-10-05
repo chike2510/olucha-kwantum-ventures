@@ -11,6 +11,7 @@ const runtimeVariableNames = [
   "BUILT_IN_FORGE_API_KEY",
   "ADMIN_LOGIN_EMAIL",
   "ADMIN_LOGIN_PASSWORD",
+  "PAYSTACK_SECRET_KEY",
 ] as const;
 
 let workerBindings: Record<string, string> | undefined;
@@ -65,5 +66,8 @@ export const ENV = {
   },
   get adminLoginPassword() {
     return getRuntimeEnv("ADMIN_LOGIN_PASSWORD");
+  },
+  get paystackSecretKey() {
+    return getRuntimeEnv("PAYSTACK_SECRET_KEY");
   },
 };

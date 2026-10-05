@@ -15,6 +15,13 @@
       "when": 1786639499938,
       "tag": "0001_warm_tomas",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1791219418599,
+      "tag": "0002_paystack_preview_payments",
+      "breakpoints": true
     }
   ]
 }

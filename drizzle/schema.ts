@@ -61,15 +61,26 @@ export const blogPosts = mysqlTable("blog_posts", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+export type PaymentIntentLine = {
+  productId: number;
+  productName: string;
+  quantity: number;
+  unitPriceKobo: number;
+  variant?: { size?: string; color?: string } | null;
+};
+
 export const orders = mysqlTable("orders", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId"),
   customerName: varchar("customerName", { length: 160 }).notNull(),
   customerEmail: varchar("customerEmail", { length: 320 }).notNull(),
+  customerPhone: varchar("customerPhone", { length: 50 }),
+  deliveryCountry: varchar("deliveryCountry", { length: 100 }),
+  deliveryAddress: text("deliveryAddress"),
   totalKobo: int("totalKobo").notNull(),
   currency: varchar("currency", { length: 8 }).default("NGN").notNull(),
   status: mysqlEnum("status", ["pending", "paid", "processing", "shipped", "delivered", "cancelled"]).default("pending").notNull(),
-  paystackReference: varchar("paystackReference", { length: 120 }),
+  paystackReference: varchar("paystackReference", { length: 120 }).unique(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -80,6 +91,24 @@ export const orderItems = mysqlTable("order_items", {
   productName: varchar("productName", { length: 180 }).notNull(),
   quantity: int("quantity").notNull(),
   unitPriceKobo: int("unitPriceKobo").notNull(),
+  variant: json("variant").$type<{ size?: string; color?: string } | null>(),
+});
+
+export const paymentIntents = mysqlTable("payment_intents", {
+  id: int("id").autoincrement().primaryKey(),
+  reference: varchar("reference", { length: 120 }).notNull().unique(),
+  userId: int("userId"),
+  customerName: varchar("customerName", { length: 160 }).notNull(),
+  customerEmail: varchar("customerEmail", { length: 320 }).notNull(),
+  customerPhone: varchar("customerPhone", { length: 50 }).notNull(),
+  deliveryCountry: varchar("deliveryCountry", { length: 100 }).notNull(),
+  deliveryAddress: text("deliveryAddress").notNull(),
+  totalKobo: int("totalKobo").notNull(),
+  currency: varchar("currency", { length: 8 }).notNull(),
+  lines: json("lines").$type<PaymentIntentLine[]>().notNull(),
+  status: mysqlEnum("status", ["initializing", "pending", "failed", "cancelled", "paid"]).default("initializing").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
 export type User = typeof users.$inferSelect;

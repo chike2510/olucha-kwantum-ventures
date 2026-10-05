@@ -21,7 +21,8 @@ Configure these in the Cloudflare Worker environment (Preview and Production sep
 | Binding | Type | Required | Purpose |
 | --- | --- | --- | --- |
 | `ASSETS` | Wrangler asset binding | Yes, created from `./dist/public` | Serves the React/Vite SPA and client assets. Configured in `wrangler.jsonc`. |
-| `DATABASE_URL` | Secret | Yes for persisted app features | TiDB Cloud Serverless URL, in the form `mysql://<username>:<password>@<host>/<database>`. Obtain the real URL and credentials for cluster `olucha-kwantum-prod`; they are not included in this checkout. Use a TiDB Cloud Starter or Essential endpoint supported by the HTTP driver, with a public endpoint (private endpoints are not supported by that driver). |
+| `DATABASE_URL` | Secret | Yes for persisted app features | TiDB Cloud Serverless URL, in the form `mysql://<username>:<password>@<host>/<database>`. Configure an isolated preview database URL for the Preview Worker; never bind production database credentials to preview. Use a TiDB Cloud Starter or Essential endpoint supported by the HTTP driver, with a public endpoint (private endpoints are not supported by that driver). |
+| `PAYSTACK_SECRET_KEY` | Secret | Yes for checkout in the preview Worker only | Paystack test secret beginning with `sk_test_`. Keep it server-side; never use a `VITE_*` variable, place it in source, or configure a live key for this preview flow. |
 | `ADMIN_LOGIN_EMAIL` | Secret | Yes for admin login | Administrator login email. |
 | `ADMIN_LOGIN_PASSWORD` | Secret | Yes for admin login | Administrator password. |
 | `JWT_SECRET` | Secret | Yes for signed admin sessions and app token signing | Long, random secret; keep it stable across requests and environments. |
@@ -37,9 +38,25 @@ The existing HTML also has optional Umami analytics placeholders, `VITE_ANALYTIC
 
 Use `wrangler secret put <NAME>` for each secret. Set ordinary values as Worker variables in the Cloudflare dashboard or through a local untracked Wrangler environment file. `VITE_OAUTH_PORTAL_URL` and the build-time copy of `VITE_APP_ID` must be present when the Vite build runs; they are not runtime substitutions into already-built JavaScript.
 
+For the Paystack checkout preview, bind `PAYSTACK_SECRET_KEY` only to the non-production Preview Worker after it exists. The application rejects keys that do not begin with `sk_test_`, and does not need the key in the browser build. Do not point the preview Worker at `olucha-kwantum-prod`; use an isolated preview database and its own `DATABASE_URL`.
+
 ## TiDB schema and migrations
 
-The Worker uses Drizzle's `drizzle-orm/tidb-serverless` adapter and `@tidbcloud/serverless`, which connect over HTTP from edge runtimes. The existing MySQL-compatible schema and migration files are retained. Apply the repository migrations to the selected cluster before using database-backed features; for example, from a trusted machine with network access and an untracked `DATABASE_URL` environment variable, run `pnpm exec drizzle-kit migrate`. Do not paste credentials into source files or deployment logs. The exact cluster endpoint, database name, username, and password still need to be supplied and verified.
+The Worker uses Drizzle's `drizzle-orm/tidb-serverless` adapter and `@tidbcloud/serverless`, which connect over HTTP from edge runtimes. Migration `0002_paystack_preview_payments.sql` adds durable payment intents, delivery details, item variants, and a unique Paystack-reference constraint used for idempotent order creation. It is generated locally but has **not** been applied. Apply migrations only to the isolated preview database, after its supported SQL-user path and access are available; do not use production database credentials. For example, from a trusted machine with an untracked preview `DATABASE_URL`, run `pnpm exec drizzle-kit migrate`. Do not paste credentials into source files or deployment logs.
+
+## Paystack test checkout endpoints
+
+The initializer accepts only active product rows from the preview `products` table and derives each item price from `priceKobo`; client-supplied prices and browser-only fallback catalogue items are not accepted. Populate the isolated preview catalogue before attempting checkout.
+
+After the non-production Worker has a public HTTPS hostname, set the webhook URL in the **Paystack test-mode** dashboard to:
+
+```text
+https://<preview-worker-host>/api/payments/paystack/webhook
+```
+
+The Worker validates `x-paystack-signature` against the untouched request body and test secret, following [Paystack's webhook guidance](https://paystack.com/docs/payments/webhooks/). Configure the test webhook on the test integration, not the live integration. Paystack's test-mode delivery retries failed webhook acknowledgements for up to 10 hours; transient verification or database errors receive a retryable `503`.
+
+The server initializes and verifies transactions using [Paystack's Transaction API](https://paystack.com/docs/api/transaction/). It supplies each transaction's callback URL as `https://<preview-worker-host>/api/payments/paystack/callback` and its `metadata.cancel_action` as `/api/payments/paystack/cancel?reference=<reference>`, as described in Paystack's [checkout cancellation guidance](https://paystack.com/docs/guides/using_the_paystack_checkout_in_a_mobile_webview/). The callback always triggers server-side verification; merely visiting it never marks an order paid. The cancellation route only updates checkout status and redirects; it never creates an order. Successful returns and `charge.success` webhooks both go through the same amount, currency, reference, and test-domain checks. The unique order reference and database transaction prevent repeat callback/webhook delivery from creating duplicate orders.
 
 ## OAuth callback allowlist
 
@@ -60,4 +77,4 @@ Replace the host placeholders with the actual hostname(s) assigned by Cloudflare
 
 ## Remaining launch settings
 
-The app currently has no implemented Paystack payment initialization/verification flow, so adding `PAYSTACK_*` values alone does not enable checkout payments. Confirm business contact details, catalog/pricing and fulfillment policy, and verify admin login, OAuth, product image uploads, database-backed pages, and public asset routing on a non-production Worker preview before any production launch.
+The direct Paystack test-mode code is implemented locally, but checkout cannot be exercised until the separate preview Worker, isolated preview database, and required migration are available. The database setup was not changed here; the Starter console's missing supported SQL Users path remains a blocker for applying the migration. Once preview infrastructure is ready, verify test webhook delivery, cancellation, payment failure, amount mismatch, and repeat webhook delivery. No production database, Cloudflare settings, Vercel settings, or deployed Worker were changed.

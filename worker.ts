@@ -1,6 +1,7 @@
 import { httpServerHandler } from "cloudflare:node";
 import { createWorkerApp } from "./server/_core/workerApp.js";
 import { setWorkerEnvironment } from "./server/_core/env.js";
+import { handlePaystackHttpRequest } from "./server/payments/http.js";
 
 interface AssetFetcher {
   fetch(request: Request): Promise<Response>;
@@ -36,9 +37,24 @@ export default {
     setWorkerEnvironment(env);
     const pathname = new URL(request.url).pathname;
 
+    if (pathname.startsWith("/api/payments/paystack/")) {
+      const paymentResponse = await handlePaystackHttpRequest(request);
+      if (paymentResponse) {
+        const headers = new Headers(paymentResponse.headers);
+        for (const [name, value] of Object.entries(securityHeaders)) headers.set(name, value);
+        headers.set("Cache-Control", "no-store");
+        return new Response(paymentResponse.body, {
+          status: paymentResponse.status,
+          statusText: paymentResponse.statusText,
+          headers,
+        });
+      }
+    }
+
     if (isApiRequest(pathname)) {
       const headers = new Headers(request.headers);
       headers.set("x-worker-request-protocol", new URL(request.url).protocol.slice(0, -1));
+      headers.set("x-worker-request-origin", new URL(request.url).origin);
       return expressWorker.fetch(new Request(request, { headers }), env, ctx);
     }
 

@@ -30,18 +30,23 @@ describe("commerce input validation", () => {
     })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
-  it("rejects an order with no line items", async () => {
+  it("requires an authenticated customer to initialize payment", async () => {
     const caller = appRouter.createCaller(createContext());
-    await expect(caller.account.createOrder({
+    await expect(caller.payments.initialize({
       customerName: "Test Buyer",
       customerEmail: "buyer@example.com",
-      totalKobo: 5000,
-      lines: [],
+      customerPhone: "+2348000000000",
+      deliveryCountry: "Nigeria",
+      deliveryAddress: "1 Example Street, Lagos",
+      items: [{ slug: "smart-home-essentials", quantity: 1 }],
     })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 
   it("rejects an invalid export inquiry status for administrators", async () => {
-    const adminContext = { ...createContext(), user: { id: 1, openId: "admin", name: "Admin", email: "admin@example.com", role: "admin" } as TrpcContext["user"] };
+    const adminContext = {
+      ...createContext(),
+      user: { id: 1, openId: "admin", name: "Admin", email: "admin@example.com", role: "admin" } as TrpcContext["user"],
+    };
     const caller = appRouter.createCaller(adminContext);
     await expect(caller.admin.updateInquiryStatus({ id: 1, status: "invalid" as never })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
