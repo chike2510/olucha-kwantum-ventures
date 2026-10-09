@@ -7,6 +7,7 @@ import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema.js";
 import * as db from "../db.js";
 import { ENV } from "./env.js";
+import { verifySupabaseAccessToken } from "./supabaseAuth.js";
 import type {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
@@ -251,20 +252,38 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<AuthenticatedUser> {
-    // 1. Prefer the session cookie (regular OAuth login).
-    const cookies = this.parseCookies(req.headers.cookie);
-    let sessionToken = cookies.get(COOKIE_NAME);
+    const authHeader = req.headers.authorization;
+    const bearerToken =
+      typeof authHeader === "string" && authHeader.startsWith("Bearer ")
+        ? authHeader.slice("Bearer ".length)
+        : null;
 
-    // 2. Fallback to the Authorization header (Preview auto-login via
-    //    sessionStorage), used when the browser blocks iframe cookies such as
-    //    Safari ITP, private browsing, or iOS/Android WebView.
-    if (!sessionToken) {
-      const authHeader = req.headers.authorization;
-      if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
-        sessionToken = authHeader.slice(7);
+    if (bearerToken) {
+      const supabaseUser = await verifySupabaseAccessToken(bearerToken, {
+        url: ENV.supabaseUrl,
+        publishableKey: ENV.supabasePublishableKey,
+      });
+      if (supabaseUser) {
+        const metadataName = supabaseUser.user_metadata.full_name ?? supabaseUser.user_metadata.name;
+        const name = typeof metadataName === "string" && metadataName.trim().length > 0
+          ? metadataName.trim()
+          : supabaseUser.email?.split("@")[0] ?? null;
+        await db.upsertUser({
+          openId: supabaseUser.id,
+          name,
+          email: supabaseUser.email,
+          loginMethod: "supabase-email",
+          lastSignedIn: new Date(),
+        });
+        const appUser = await db.getUserByOpenId(supabaseUser.id);
+        if (!appUser) throw ForbiddenError("User not found");
+        return appUser;
       }
     }
 
+    // Keep pre-existing signed app sessions working; new Preview logins use Supabase Auth.
+    const cookies = this.parseCookies(req.headers.cookie);
+    const sessionToken = cookies.get(COOKIE_NAME) ?? bearerToken;
     const session = await this.verifySession(sessionToken);
 
     if (!session) {

@@ -69,7 +69,7 @@ export default function Checkout() {
       window.location.assign(pendingAuthorization.authorizationUrl);
       return;
     }
-    if (!user) { startLogin(); return; }
+    if (!user) { startLogin("/checkout"); return; }
     if (!validate()) return;
     setNotice("");
     initializePayment.mutate({

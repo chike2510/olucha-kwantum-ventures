@@ -5,6 +5,8 @@ const runtimeVariableNames = [
   "JWT_SECRET",
   "DATABASE_URL",
   "DATABASE_PASSWORD",
+  "SUPABASE_URL",
+  "SUPABASE_PUBLISHABLE_KEY",
   "OAUTH_SERVER_URL",
   "OWNER_OPEN_ID",
   "NODE_ENV",
@@ -49,6 +51,12 @@ export const ENV = {
   },
   get databasePassword() {
     return getRuntimeEnv("DATABASE_PASSWORD");
+  },
+  get supabaseUrl() {
+    return getRuntimeEnv("SUPABASE_URL");
+  },
+  get supabasePublishableKey() {
+    return getRuntimeEnv("SUPABASE_PUBLISHABLE_KEY");
   },
   get oAuthServerUrl() {
     return getRuntimeEnv("OAUTH_SERVER_URL");

@@ -28,6 +28,10 @@ Drizzle generates PostgreSQL migrations into `supabase/migrations/`. Migration `
 
 The applied product rows and RLS/grants were verified. The app's real Drizzle lookup for a seeded product also succeeded through the strict-TLS pooler connection. Do not run these migrations against Production, `main`, or any other Supabase project.
 
+## Supabase Auth for the Preview app
+
+Customer sign-in on `cloudflare-preview` uses the isolated Supabase project's email/password Auth provider. The frontend uses only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`; the API verifies bearer tokens against Supabase Auth using `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. These values are public and must be scoped to Vercel Preview for `cloudflare-preview` only. Never use a service-role key in browser or app code. The app supports sign-in to an existing account only; it does not register users as part of the checkout test. The server maps a verified Supabase Auth user ID to the app's `users.openId` record and keeps protected checkout procedures authenticated.
+
 ## Paystack preview checks
 
 The Preview branch uses only the Paystack test key. Verify checkout against the active preview SKUs, using server-fetched product prices and server-side transaction verification; do not attempt a live payment. Keep callbacks and webhooks on the deployed Preview HTTPS hostname and configure test mode only. Preview test items are not for fulfillment.
