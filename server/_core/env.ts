@@ -4,6 +4,7 @@ const runtimeVariableNames = [
   "VITE_APP_ID",
   "JWT_SECRET",
   "DATABASE_URL",
+  "DATABASE_PASSWORD",
   "OAUTH_SERVER_URL",
   "OWNER_OPEN_ID",
   "NODE_ENV",
@@ -45,6 +46,9 @@ export const ENV = {
   },
   get databaseUrl() {
     return getRuntimeEnv("DATABASE_URL");
+  },
+  get databasePassword() {
+    return getRuntimeEnv("DATABASE_PASSWORD");
   },
   get oAuthServerUrl() {
     return getRuntimeEnv("OAUTH_SERVER_URL");

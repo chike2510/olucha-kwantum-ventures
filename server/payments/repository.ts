@@ -25,21 +25,8 @@ export type NewPaymentIntent = {
   lines: PaymentIntentLine[];
 };
 
-function toInsertedId(result: { lastInsertId: string | null }): number {
-  const id = Number(result.lastInsertId);
-  if (!Number.isSafeInteger(id) || id < 1) throw new Error("Database did not return a valid inserted row ID.");
-  return id;
-}
-
 function isDuplicateKeyError(error: unknown): boolean {
-  if (!error || typeof error !== "object") return false;
-  const candidate = error as { code?: unknown; errno?: unknown; message?: unknown };
-  return (
-    candidate.code === "ER_DUP_ENTRY" ||
-    candidate.code === "1062" ||
-    candidate.errno === 1062 ||
-    (typeof candidate.message === "string" && candidate.message.includes("Duplicate entry"))
-  );
+  return !!error && typeof error === "object" && (error as { code?: unknown }).code === "23505";
 }
 
 export async function getCheckoutProductsBySlug(slugs: string[]): Promise<CheckoutProduct[]> {
@@ -111,7 +98,7 @@ export async function createPaidOrderFromIntent(reference: string): Promise<{ or
         return { orderId: existing[0].id, created: false };
       }
 
-      const inserted = await tx.insert(orders).values({
+      const [inserted] = await tx.insert(orders).values({
         userId: intent.userId,
         customerName: intent.customerName,
         customerEmail: intent.customerEmail,
@@ -122,12 +109,13 @@ export async function createPaidOrderFromIntent(reference: string): Promise<{ or
         currency: intent.currency,
         status: "paid",
         paystackReference: reference,
-      });
-      const orderId = toInsertedId(inserted);
+      }).returning({ id: orders.id });
+      if (!inserted) throw new Error("Database did not return the order ID.");
+
       const lines = intent.lines as PaymentIntentLine[];
       if (!Array.isArray(lines) || lines.length === 0) throw new Error("Payment intent has no order lines.");
       await tx.insert(orderItems).values(lines.map((line) => ({
-        orderId,
+        orderId: inserted.id,
         productId: line.productId,
         productName: line.productName,
         quantity: line.quantity,
@@ -138,7 +126,7 @@ export async function createPaidOrderFromIntent(reference: string): Promise<{ or
         .update(paymentIntents)
         .set({ status: "paid" })
         .where(eq(paymentIntents.reference, reference));
-      return { orderId, created: true };
+      return { orderId: inserted.id, created: true };
     });
 
     if (result?.created) {
