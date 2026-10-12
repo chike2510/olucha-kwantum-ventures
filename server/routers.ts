@@ -3,6 +3,7 @@ import { z } from "zod";
 import { COOKIE_NAME } from "../shared/const.js";
 import { getSessionCookieOptions } from "./_core/cookies.js";
 import { ENV } from "./_core/env.js";
+import { getCheckoutRequestOrigin } from "./_core/requestOrigin.js";
 import { systemRouter } from "./_core/systemRouter.js";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc.js";
 import {
@@ -128,7 +129,7 @@ export const appRouter = router({
         get?: (name: string) => string | undefined;
         protocol?: string;
       };
-      const origin = request.get?.("x-worker-request-origin") || `${request.protocol ?? "https"}://${request.get?.("host") || ""}`;
+      const origin = getCheckoutRequestOrigin(request);
       try {
         return await initializePaymentCheckout(input, ctx.user.id, origin, ENV.paystackSecretKey);
       } catch (error) {
