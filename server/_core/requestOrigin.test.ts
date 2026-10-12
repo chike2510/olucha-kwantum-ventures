@@ -30,6 +30,13 @@ describe("getCheckoutRequestOrigin", () => {
     }))).toBe("https://preview.example");
   });
 
+  it("uses the first forwarded HTTPS protocol when Express sees internal HTTP", () => {
+    expect(getCheckoutRequestOrigin(fakeRequest({
+      "x-forwarded-proto": "https,http",
+      host: "preview.example",
+    }, "http"))).toBe("https://preview.example");
+  });
+
   it("uses the adapter protocol and host when no proxy origin is supplied", () => {
     expect(getCheckoutRequestOrigin(fakeRequest({ host: "preview.example" }))).toBe("https://preview.example");
   });

@@ -7,6 +7,8 @@ import { createContext } from "./context.js";
 
 export function createVercelApp() {
   const app = express();
+  // Vercel terminates TLS at its edge; trust its single forwarded proxy hop.
+  app.set("trust proxy", 1);
   app.disable("x-powered-by");
   app.use((_req: any, res: any, next: any) => {
     res.setHeader("X-Content-Type-Options", "nosniff");

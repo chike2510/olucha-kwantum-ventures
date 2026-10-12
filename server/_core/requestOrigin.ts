@@ -19,7 +19,9 @@ export function getCheckoutRequestOrigin(request: RequestWithOriginHeaders): str
     }
   }
 
-  const protocol = request.protocol?.trim() || "https";
+  const workerProtocol = request.get?.("x-worker-request-protocol")?.split(",")[0]?.trim();
+  const forwardedProtocol = request.get?.("x-forwarded-proto")?.split(",")[0]?.trim();
+  const protocol = workerProtocol || forwardedProtocol || request.protocol?.trim() || "https";
   const host = request.get?.("host")?.trim() || "";
   return `${protocol}://${host}`;
 }
