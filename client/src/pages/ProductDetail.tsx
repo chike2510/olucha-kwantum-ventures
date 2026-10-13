@@ -29,7 +29,7 @@ export default function ProductDetail() {
   const itemUnit = item?.unit || previewItem?.unit || "available to order";
   const itemColor = previewItem?.color || "from-[#1f5b9f] via-[#0b1736] to-[#cfa43a]";
   const normalizedCategory: StoreProduct["category"] = itemCategory.toLowerCase().includes("fashion") ? "Fashion" : itemCategory.toLowerCase().includes("agro") ? "Agro Products" : "Electronics";
-  const baseCartProduct: StoreProduct = previewItem || { id: item?.id || 999, slug: params?.slug || "product", name: itemName, category: normalizedCategory, price: numericPrice, unit: itemUnit, description: itemDescription, color: itemColor, tag: "Available", specs: Object.fromEntries(specifications) };
+  const baseCartProduct: StoreProduct = item ? { id: item.id, slug: params?.slug || "product", name: itemName, category: normalizedCategory, price: numericPrice, unit: itemUnit, description: itemDescription, color: itemColor, tag: "Available", specs: Object.fromEntries(specifications) } : previewItem!;
   const cartProduct: StoreProduct = { ...baseCartProduct, variant: { size: size || undefined, color: color || undefined } };
   const isFashion = itemCategory.toLowerCase().includes("fashion");
   const isElectronics = itemCategory.toLowerCase().includes("electronic");
