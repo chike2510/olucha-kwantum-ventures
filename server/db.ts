@@ -247,3 +247,35 @@ export async function updateOrderStatus(id: number, status: "pending" | "paid" |
   await db.update(orders).set({ status }).where(eq(orders.id, id));
   return { success: true };
 }
+
+export async function getOrderById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const result = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+  return result[0] ?? null;
+}
+
+type OrderStatusValue = "pending" | "paid" | "processing" | "shipped" | "delivered" | "cancelled";
+
+/** Updates an order's status only if it is still in the expected status (guards against races). */
+export async function updateOrderStatusFrom(id: number, from: OrderStatusValue, to: OrderStatusValue) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const updated = await db.update(orders).set({ status: to })
+    .where(and(eq(orders.id, id), eq(orders.status, from))!)
+    .returning({ id: orders.id });
+  return { success: updated.length > 0 };
+}
+
+export async function deleteBlogPost(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await db.delete(blogPosts).where(eq(blogPosts.id, id));
+  return { success: true };
+}
+
+export async function listContactMessages() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(contactMessages).orderBy(desc(contactMessages.createdAt));
+}

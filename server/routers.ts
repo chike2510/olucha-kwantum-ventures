@@ -11,10 +11,12 @@ import {
   createContactMessage,
   createExportInquiry,
   createProduct,
+  deleteBlogPost,
+  getOrderById,
   getProductBySlug,
   getPublishedBlogPost,
   listAllBlogPosts,
-  listAllOrders,
+  listContactMessages,
   listAllProducts,
   listExportInquiries,
   listOrdersForUser,
@@ -23,9 +25,10 @@ import {
   listPublishedBlogPosts,
   updateBlogPost,
   updateExportInquiryStatus,
-  updateOrderStatus,
+  updateOrderStatusFrom,
   updateProduct,
 } from "./db.js";
+import { canManuallyTransition, ORDER_STATUSES } from "../shared/orderStatus.js";
 import { initializePaymentCheckout } from "./payments/index.js";
 
 const inquiryInput = z.object({
@@ -43,7 +46,7 @@ const productInput = z.object({
   category: z.string().min(2).max(80),
   description: z.string().min(10),
   specifications: z.record(z.string(), z.string()),
-  priceKobo: z.number().int().nonnegative(),
+  priceKobo: z.number().int().positive("Price must be greater than zero."),
   currency: z.string().max(8).default("NGN"),
   unit: z.string().max(40).default("per item"),
   imageUrl: z.string().url().optional(),
@@ -66,10 +69,33 @@ const paymentCheckoutInput = z.object({
 });
 const orderStatusInput = z.object({
   id: z.number().int().positive(),
-  status: z.enum(["pending", "paid", "processing", "shipped", "delivered", "cancelled"]),
+  status: z.enum(ORDER_STATUSES),
 });
 const inquiryStatusInput = z.object({ id: z.number().int().positive(), status: z.enum(["new", "reviewing", "quoted", "closed"]) });
-const productUpdateInput = productInput.partial().extend({ id: z.number().int().positive() });
+const productUpdateInput = productInput.partial().extend({
+  id: z.number().int().positive(),
+  isActive: z.union([z.literal(0), z.literal(1)]).optional(),
+  imageUrl: z.string().url().nullable().optional(),
+});
+
+const SLUG_TAKEN_MESSAGE = "Another product already uses this slug. Choose a different one.";
+const isUniqueViolation = (error: unknown) => {
+  const candidates = [error, (error as { cause?: unknown } | null)?.cause];
+  return candidates.some((item) => !!item && typeof item === "object" && (item as { code?: unknown }).code === "23505");
+};
+async function assertSlugAvailable(slug: string, productId?: number) {
+  const existing = await getProductBySlug(slug);
+  if (existing && existing.id !== productId) throw new TRPCError({ code: "CONFLICT", message: SLUG_TAKEN_MESSAGE });
+}
+async function withSlugConflict<T>(run: () => Promise<T>) {
+  try {
+    return await run();
+  } catch (error) {
+    if (error instanceof TRPCError) throw error;
+    if (isUniqueViolation(error)) throw new TRPCError({ code: "CONFLICT", message: SLUG_TAKEN_MESSAGE });
+    throw error;
+  }
+}
 const blogPostInput = z.object({
   title: z.string().min(4).max(220),
   slug: z.string().regex(/^[a-z0-9-]+$/).max(240),
@@ -145,7 +171,28 @@ export const appRouter = router({
     products: adminProcedure.query(() => listAllProducts()),
     orders: adminProcedure.query(() => listAllOrdersWithItems()),
     blogPosts: adminProcedure.query(() => listAllBlogPosts()),
-    updateOrderStatus: adminProcedure.input(orderStatusInput).mutation(({ input }) => updateOrderStatus(input.id, input.status)),
+    contactMessages: adminProcedure.query(() => listContactMessages()),
+    updateOrderStatus: adminProcedure.input(orderStatusInput).mutation(async ({ input }) => {
+      if (input.status === "paid") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Orders are marked paid only by verified Paystack payments." });
+      }
+      if (input.status === "pending") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Orders cannot be moved back to pending." });
+      }
+      const order = await getOrderById(input.id);
+      if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "Order not found." });
+      if (!canManuallyTransition(order.status, input.status)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: order.status === "pending"
+            ? "Unpaid orders can only be cancelled."
+            : `An order that is ${order.status} cannot be moved to ${input.status}.`,
+        });
+      }
+      const result = await updateOrderStatusFrom(order.id, order.status, input.status);
+      if (!result.success) throw new TRPCError({ code: "CONFLICT", message: "This order changed while you were editing it. Refresh and try again." });
+      return { success: true, status: input.status };
+    }),
     updateInquiryStatus: adminProcedure.input(inquiryStatusInput).mutation(({ input }) => updateExportInquiryStatus(input.id, input.status)),
     createBlogPost: adminProcedure.input(blogPostInput).mutation(({ input }) => createBlogPost({
       ...input,
@@ -158,10 +205,15 @@ export const appRouter = router({
         publishedAt: values.status === "published" ? new Date() : values.status === "draft" ? null : undefined,
       });
     }),
-    createProduct: adminProcedure.input(productInput).mutation(({ input }) => createProduct(input)),
-    updateProduct: adminProcedure.input(productUpdateInput).mutation(({ input }) => {
+    deleteBlogPost: adminProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ input }) => deleteBlogPost(input.id)),
+    createProduct: adminProcedure.input(productInput).mutation(async ({ input }) => {
+      await assertSlugAvailable(input.slug);
+      return withSlugConflict(() => createProduct(input));
+    }),
+    updateProduct: adminProcedure.input(productUpdateInput).mutation(async ({ input }) => {
       const { id, ...values } = input;
-      return updateProduct(id, values);
+      if (values.slug) await assertSlugAvailable(values.slug, id);
+      return withSlugConflict(() => updateProduct(id, { ...values, updatedAt: new Date() }));
     }),
   }),
   account: router({
