@@ -1,7 +1,8 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { useEffect } from "react";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
@@ -13,6 +14,17 @@ import Cart from "@/pages/Cart";
 import Checkout from "@/pages/Checkout";
 import News from "@/pages/News";
 import NewsArticle from "@/pages/NewsArticle";
+import { About, FaqPage } from "@/pages/info/AboutFaq";
+import { PoliciesHub, PrivacyPolicy, ReturnsPolicy, ShippingPolicy, Terms } from "@/pages/info/PolicyPages";
+
+/** Scroll to the top on route changes (keeps in-page #anchor links working). */
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => {
+    if (!window.location.hash) window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location]);
+  return null;
+}
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -29,6 +41,14 @@ function Router() {
       <Route path={"/products/:slug"} component={ProductDetail} />
       <Route path={"/account/orders"} component={Account} />
       <Route path={"/account"} component={Account} />
+      <Route path={"/about"} component={About} />
+      <Route path={"/faq"} component={FaqPage} />
+      <Route path={"/terms"} component={Terms} />
+      <Route path={"/policies/privacy"} component={PrivacyPolicy} />
+      <Route path={"/policies/shipping"} component={ShippingPolicy} />
+      <Route path={"/policies/returns"} component={ReturnsPolicy} />
+      <Route path={"/policies"} component={PoliciesHub} />
+      <Route path={"/privacy"} component={PrivacyPolicy} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
@@ -50,6 +70,7 @@ function App() {
       >
         <TooltipProvider>
           <Toaster />
+          <ScrollToTop />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

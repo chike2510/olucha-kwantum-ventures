@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
-import { ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import BrandHeader from "@/components/BrandHeader";
+import SiteFooter from "@/components/SiteFooter";
+import { BUSINESS } from "@/lib/siteConfig";
 import { useStoreCart } from "@/hooks/useStoreCart";
 import { formatNaira } from "@/lib/storeCatalog";
 import { trpc } from "@/lib/trpc";
@@ -28,7 +30,7 @@ export default function Checkout() {
   const orderId = new URLSearchParams(window.location.search).get("order");
   const coupon = localStorage.getItem("olucha-cart-coupon") || "";
   const discount = coupon.toUpperCase() === "OLUCHA10" ? Math.round(subtotal * 0.1) : 0;
-  const shipping = subtotal === 0 ? 0 : subtotal >= 100000 ? 0 : 2500;
+  const shipping = subtotal === 0 ? 0 : subtotal >= BUSINESS.freeShippingThresholdNaira ? 0 : BUSINESS.flatShippingNaira;
   const tax = Math.round((subtotal - discount) * 0.075);
   const total = subtotal - discount + shipping + tax;
   const update = (field: keyof typeof form, value: string) => {
@@ -101,12 +103,12 @@ export default function Checkout() {
 
   return (
     <div className="min-h-screen bg-[#f6f7fb] text-[#14213d]">
-      <BrandHeader backHref="/cart" backLabel="Edit cart" section="Secure checkout" actionHref="/shop" actionLabel="Keep shopping" />
-      <main className="mx-auto max-w-7xl px-5 py-12 lg:px-8 lg:py-20">
-        <div className="mb-10">
+      <BrandHeader backHref="/cart" backLabel="Edit cart" section="Secure checkout" actionHref="/shop" actionLabel="Keep shopping" actionShortLabel="Shop" />
+      <main className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-20">
+        <div className="mb-8 lg:mb-10">
           <p className="eyebrow">Complete your order</p>
           <h1 className="section-title">Buy with confidence.</h1>
-          <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">Enter your details so Olucha can confirm delivery and prepare your secure Paystack test checkout.</p>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">Enter your details so Olucha can confirm delivery and prepare your secure Paystack test checkout.</p>
         </div>
         <div className="grid gap-8 lg:grid-cols-[1.1fr_.9fr]">
           <form className="rounded-[2rem] bg-white p-6 shadow-sm sm:p-9" onSubmit={submit} noValidate>
@@ -136,14 +138,15 @@ export default function Checkout() {
               </div>
             )}
             {notice && <p className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-800" role="alert">{notice}</p>}
-            <button className="mt-7 w-full rounded-full bg-[#f7b32b] px-5 py-3.5 text-sm font-bold text-[#0b1736] disabled:cursor-wait disabled:opacity-60" disabled={initializePayment.isPending}>
+            <button type="submit" className="pressable mt-7 min-h-12 w-full rounded-full bg-[#f7b32b] px-5 py-3.5 text-sm font-bold text-[#0b1736] disabled:cursor-wait disabled:opacity-60" disabled={initializePayment.isPending}>
               {initializePayment.isPending ? "Preparing secure checkout…" : pendingAuthorization ? `Continue to Paystack · ${formatNaira(serverTotal || 0)}` : !user ? "Sign in to continue" : "Continue to Paystack test checkout"}
             </button>
-            <div className="mt-3 flex justify-center gap-4 text-center text-xs text-slate-400"><Link href="/cart" className="font-semibold text-[#1f5b9f] underline">Edit cart</Link><span>No order is created if you cancel or payment is not verified.</span></div>
+            <Link href="/cart" className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-slate-200 bg-white px-5 text-sm font-bold text-[#0b1736] hover:border-[#1f5b9f]/40 hover:text-[#1f5b9f]"><ArrowLeft size={16} aria-hidden="true" />Edit cart</Link>
+            <p className="mx-auto mt-4 max-w-sm text-center text-xs leading-5 text-slate-500">No order is created if you cancel or payment is not verified. By continuing you agree to our <Link href="/terms" className="font-semibold text-[#1f5b9f] underline">Terms</Link> and <Link href="/policies/privacy" className="font-semibold text-[#1f5b9f] underline">Privacy Policy</Link>.</p>
           </form>
           <aside className="h-fit rounded-[2rem] bg-[#0b1736] p-7 text-white">
             <p className="text-xs font-bold uppercase tracking-[.16em] text-[#e1ba56]">Your order</p>
-            <div className="mt-7 space-y-4">{summaryLines.map((line, index) => <div key={`${line.name}-${index}`} className="flex justify-between gap-4 text-sm"><span className="text-white/70">{line.name}</span><span className="font-semibold">{formatNaira(line.total)}</span></div>)}{!items.length && <p className="text-sm text-white/60">Your cart is empty. <Link href="/shop" className="text-[#e1ba56] underline">Browse products</Link></p>}</div>
+            <div className="mt-7 space-y-4">{summaryLines.map((line, index) => <div key={`${line.name}-${index}`} className="flex justify-between gap-4 text-sm"><span className="min-w-0 text-white/70">{line.name}</span><span className="shrink-0 font-semibold">{formatNaira(line.total)}</span></div>)}{!items.length && <p className="text-sm text-white/60">Your cart is empty. <Link href="/shop" className="text-[#e1ba56] underline">Browse products</Link></p>}</div>
             <div className="my-7 space-y-3 border-t border-white/15 pt-6 text-sm"><div className="flex justify-between text-white/70"><span>Subtotal</span><span>{formatNaira(subtotal)}</span></div><div className="flex justify-between text-white/70"><span>Shipping</span><span>{shipping ? formatNaira(shipping) : "Free"}</span></div><div className="flex justify-between text-white/70"><span>Estimated tax</span><span>{formatNaira(tax)}</span></div><div className="flex justify-between text-white/70"><span>Discount</span><span>{discount ? `−${formatNaira(discount)}` : formatNaira(0)}</span></div></div>
             <div className="flex items-end justify-between"><span className="font-semibold">Estimated total</span><span className="text-2xl font-bold">{formatNaira(total)}</span></div>
             {serverTotal !== null && <p className="mt-3 text-sm font-semibold text-[#e1ba56]">Verified server-side total: {formatNaira(serverTotal)}</p>}
@@ -151,6 +154,7 @@ export default function Checkout() {
           </aside>
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }

@@ -5,7 +5,8 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Olucha Kwantum Ventures Limited — electronics, fashion and agro products in Nigeria, with export supply worldwide. Quality products, trusted globally." />
     <title>Olucha Kwantum Ventures Limited | Quality products, trusted globally.</title>
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/chike2510/olucha-kwantum-ventures/ab935a1/assets/okv-favicon.jpg" />
     <meta name="theme-color" content="#0b1736" />    
@@ -19,10 +20,16 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script
-      defer
-      src="%VITE_ANALYTICS_ENDPOINT%/umami"
-      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
+    <script>
+      // Load analytics only when it is configured (avoids a broken "/%VITE_ANALYTICS_ENDPOINT%/umami" request).
+      (function () {
+        var endpoint = "%VITE_ANALYTICS_ENDPOINT%", websiteId = "%VITE_ANALYTICS_WEBSITE_ID%";
+        if (!endpoint || endpoint.charAt(0) === "%" || !websiteId || websiteId.charAt(0) === "%") return;
+        var script = document.createElement("script");
+        script.defer = true; script.src = endpoint + "/umami"; script.setAttribute("data-website-id", websiteId);
+        document.body.appendChild(script);
+      })();
+    </script>
   </body>
 
 </html>

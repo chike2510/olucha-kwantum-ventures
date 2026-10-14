@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
 import { Plus } from "lucide-react";
+import { formatNairaAmount } from "@/lib/money";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../../server/routers";
 import {
@@ -24,8 +25,7 @@ export type AdminSection = "overview" | "products" | "orders" | "inquiries" | "c
 
 export const PRODUCT_CATEGORIES = ["Electronics", "Fashion", "Agro Products"] as const;
 
-const nairaFormatter = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", minimumFractionDigits: 0, maximumFractionDigits: 2 });
-export const formatNaira = (kobo: number) => nairaFormatter.format(kobo / 100);
+export const formatNaira = (kobo: number) => formatNairaAmount(kobo / 100);
 
 export const formatDate = (value: Date | string | null | undefined, withTime = false) => {
   if (!value) return "—";
@@ -94,7 +94,7 @@ export function EmptyState({ children }: { children: ReactNode }) {
 
 export function Pager({ page, pageCount, total, onPage }: { page: number; pageCount: number; total: number; onPage: (page: number) => void }) {
   if (pageCount <= 1) return <p className="pt-4 text-xs text-slate-400">{total} {total === 1 ? "record" : "records"}</p>;
-  return <div className="flex flex-wrap items-center justify-between gap-3 pt-4 text-xs text-slate-500"><span>{total} records · page {page} of {pageCount}</span><div className="flex gap-2"><button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} className="rounded-full border border-slate-200 px-3 py-1.5 font-semibold disabled:opacity-40">Previous</button><button type="button" disabled={page >= pageCount} onClick={() => onPage(page + 1)} className="rounded-full border border-slate-200 px-3 py-1.5 font-semibold disabled:opacity-40">Next</button></div></div>;
+  return <div className="flex flex-wrap items-center justify-between gap-3 pt-4 text-xs text-slate-500"><span>{total} records · page {page} of {pageCount}</span><div className="flex gap-2"><button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} className="min-h-10 rounded-full border border-slate-200 px-4 font-semibold disabled:opacity-40">Previous</button><button type="button" disabled={page >= pageCount} onClick={() => onPage(page + 1)} className="min-h-10 rounded-full border border-slate-200 px-4 font-semibold disabled:opacity-40">Next</button></div></div>;
 }
 
 // ---- Confirmation dialog -------------------------------------------------

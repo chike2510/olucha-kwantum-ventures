@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /checkout
+Disallow: /cart
+Disallow: /api/
+
+Sitemap: https://olucha-kwantum-ventures.onovochikeziri84.workers.dev/sitemap.xml

@@ -1,3 +1,5 @@
+import { formatNairaAmount } from "./money";
+
 export type StoreProduct = {
   id: number;
   slug: string;
@@ -25,7 +27,7 @@ export const storeProducts: StoreProduct[] = [
 export const storeCategories = ["All products", "Electronics", "Fashion", "Agro Products"] as const;
 
 export function formatNaira(value: number) {
-  return `₦${value.toLocaleString("en-NG")}`;
+  return formatNairaAmount(value);
 }
 
 export function findStoreProduct(slug: string) {

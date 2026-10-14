@@ -4,6 +4,8 @@ import { UserRound, PackageCheck, MapPin } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import BrandHeader from "@/components/BrandHeader";
+import SiteFooter from "@/components/SiteFooter";
+import { OKV_WORDMARK_URL } from "@/lib/siteConfig";
 import { formatNaira } from "@/lib/storeCatalog";
 
 function statusTone(status: string) {
@@ -53,28 +55,28 @@ export default function Account() {
   if (!user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0b1736] p-5 text-white">
-        <div className="w-full max-w-md rounded-3xl bg-white/10 p-8">
+        <div className="w-full max-w-md rounded-3xl bg-white/10 p-6 sm:p-8">
           <div className="mx-auto mb-6 w-40 rounded-2xl bg-white p-2 shadow-lg">
-            <img src="https://raw.githubusercontent.com/chike2510/olucha-kwantum-ventures/ab935a1/assets/okv-wordmark.png" alt="Olucha Kwantum Ventures" className="w-full object-contain" />
+            <img src={OKV_WORDMARK_URL} alt="Olucha Kwantum Ventures" className="h-10 w-full object-contain" />
           </div>
           <UserRound className="mx-auto mb-5 text-[#cfa43a]" size={40} />
           <h1 className="text-center text-3xl font-semibold">Your Olucha account</h1>
-          <p className="mt-3 text-center leading-7 text-white/65">Sign in with an existing account in the isolated Olucha Preview Supabase Auth project.</p>
-          <p className="mt-2 text-center text-sm leading-6 text-white/55">This Preview sign-in does not create or register a new account.</p>
-          {!authConfigured && <p className="mt-5 rounded-xl bg-rose-400/15 p-3 text-sm text-rose-100" role="alert">Supabase Auth is not configured for this Preview deployment.</p>}
+          <p className="mt-3 text-center leading-7 text-white/65">Sign in to check out faster and follow the status of your orders.</p>
+          <p className="mt-2 text-center text-sm leading-6 text-white/55">New accounts can’t be created online yet. Contact us if you need one.</p>
+          {!authConfigured && <p className="mt-5 rounded-xl bg-rose-400/15 p-3 text-sm text-rose-100" role="alert">Sign-in is temporarily unavailable. Please try again later or contact us on WhatsApp.</p>}
           {error && <p className="mt-5 rounded-xl bg-rose-400/15 p-3 text-sm text-rose-100" role="alert">{error}</p>}
           <form className="mt-6 space-y-4" onSubmit={submitSignIn}>
             <label className="block text-sm font-semibold text-white/80">Email address
-              <input className="field mt-2 w-full bg-white text-[#0b1736]" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} />
+              <input className="mt-2 block min-h-12 w-full rounded-2xl border border-white/15 bg-white px-4 text-base text-[#0b1736] outline-none placeholder:text-slate-400 focus:border-[#cfa43a] focus:ring-4 focus:ring-[#cfa43a]/30" placeholder="name@example.com" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} />
             </label>
             <label className="block text-sm font-semibold text-white/80">Password
-              <input className="field mt-2 w-full bg-white text-[#0b1736]" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
+              <input className="mt-2 block min-h-12 w-full rounded-2xl border border-white/15 bg-white px-4 text-base text-[#0b1736] outline-none placeholder:text-slate-400 focus:border-[#cfa43a] focus:ring-4 focus:ring-[#cfa43a]/30" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
             </label>
-            <button className="w-full rounded-full bg-[#f7b32b] px-6 py-3 text-sm font-bold text-[#0b1736] disabled:cursor-wait disabled:opacity-60" type="submit" disabled={!authConfigured || signingIn}>
+            <button className="min-h-12 w-full rounded-full bg-[#f7b32b] px-6 py-3 text-sm font-bold text-[#0b1736] disabled:cursor-wait disabled:opacity-60" type="submit" disabled={!authConfigured || signingIn}>
               {signingIn ? "Signing in…" : "Sign in securely"}
             </button>
           </form>
-          <p className="mt-5 text-center text-sm text-white/55"><Link href="/" className="underline">Return to store</Link></p>
+          <p className="mt-4 text-center text-sm text-white/60"><Link href="/" className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-white">Return to store</Link></p>
         </div>
       </div>
     );
@@ -86,8 +88,8 @@ export default function Account() {
       <main className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
         <p className="text-xs font-bold uppercase tracking-[.18em] text-[#1f5b9f]">Customer account</p>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-4xl font-semibold tracking-[-.05em] text-[#0b1736]">Welcome back, {user.name || "customer"}.</h1>
-          <button className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold" onClick={() => { void logout(); }}>Sign out</button>
+          <h1 className="text-3xl font-semibold tracking-[-.05em] text-[#0b1736] sm:text-4xl">Welcome back, {user.name || "customer"}.</h1>
+          <button className="min-h-11 rounded-full border border-slate-300 px-5 text-sm font-semibold hover:border-[#1f5b9f] hover:text-[#1f5b9f]" onClick={() => { void logout(); }}>Sign out</button>
         </div>
         <div className="mt-10 grid gap-5 lg:grid-cols-3">
           <div className="rounded-3xl bg-white p-6 shadow-sm">
@@ -101,7 +103,7 @@ export default function Account() {
             <h2 className="mt-6 font-semibold">Order history</h2>
             <p className="mt-2 text-sm text-slate-500">Your orders and current payment status.</p>
             <div className="mt-5 space-y-2">
-              {orders.data?.slice(0, 4).map((order) => <a href="#orders" key={order.id} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3 text-sm"><span className="font-semibold">Order #{order.id}</span><span className="ml-auto font-semibold text-[#1f5b9f]">{formatNaira(order.totalKobo / 100)}</span><span className={`rounded-full px-2 py-1 text-xs font-bold ${statusTone(order.status)}`}>{order.status}</span></a>)}
+              {orders.data?.slice(0, 4).map((order) => <a href="#orders" key={order.id} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3 text-sm"><span className="font-semibold">Order #{order.id}</span><span className="ml-auto font-semibold text-[#1f5b9f]">{formatNaira(order.totalKobo / 100)}</span><span className={`rounded-full px-2 py-1 text-xs font-bold capitalize ${statusTone(order.status)}`}>{order.status}</span></a>)}
               {!orders.data?.length && <span className="mt-3 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">No orders yet</span>}
             </div>
           </div>
@@ -109,7 +111,7 @@ export default function Account() {
             <MapPin className="text-[#1f5b9f]" size={22} />
             <h2 className="mt-6 font-semibold">Delivery tracking</h2>
             <p className="mt-2 text-sm text-slate-500">Track processing, dispatch, and delivery status from one place.</p>
-            <span className="mt-6 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{orders.data?.[0]?.status || "Ready for first order"}</span>
+            <span className="mt-6 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold capitalize text-slate-500">{orders.data?.[0]?.status || "Ready for first order"}</span>
           </div>
         </div>
         <section id="orders" className="mt-10 rounded-3xl bg-white p-6 shadow-sm">
@@ -126,16 +128,17 @@ export default function Account() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-lg font-bold text-[#0b1736]">{formatNaira(order.totalKobo / 100)}</span>
-                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusTone(order.status)}`}>{order.status}</span>
+                    <span className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${statusTone(order.status)}`}>{order.status}</span>
                   </div>
                 </div>
-                {order.items.length > 0 && <ul className="mt-4 space-y-1 border-t border-slate-100 pt-3 text-sm text-slate-600">{order.items.map((item) => <li key={item.id} className="flex justify-between gap-4"><span>{item.productName} × {item.quantity}</span><span>{formatNaira((item.unitPriceKobo * item.quantity) / 100)}</span></li>)}</ul>}
+                {order.items.length > 0 && <ul className="mt-4 space-y-1 border-t border-slate-100 pt-3 text-sm text-slate-600">{order.items.map((item) => <li key={item.id} className="flex justify-between gap-4"><span className="min-w-0">{item.productName} × {item.quantity}</span><span>{formatNaira((item.unitPriceKobo * item.quantity) / 100)}</span></li>)}</ul>}
                 {order.deliveryAddress && <p className="mt-3 text-xs text-slate-500">Deliver to: {order.deliveryAddress}</p>}
               </article>
             ))}
           </div>
         </section>
       </main>
+      <SiteFooter />
     </div>
   );
 }
