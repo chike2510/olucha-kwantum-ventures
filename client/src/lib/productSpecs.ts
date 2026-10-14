@@ -6,7 +6,9 @@
  * and keys are humanised ("countryOfOrigin" → "Country of origin").
  */
 const INTERNAL_KEY = /^(_|\$)|preview|test|internal|debug|admin|draft|hidden|flag|sku$|^id$/i;
-const BOOLEAN_VALUE = /^(true|false|yes|no|0|1|null|undefined)$/i;
+const BOOLEAN_VALUE = /^(true|false|yes|no|0|1|null|undefined|enabled|disabled|on|off|n\/a)$/i;
+/** Values that describe the store's own setup rather than the product (e.g. "Paystack test mode only"). */
+const INTERNAL_VALUE = /\btest mode\b|\bsandbox\b|\bpreview\b|\bstaging\b/i;
 
 export function humanizeSpecKey(key: string) {
   const spaced = key
@@ -25,7 +27,7 @@ export function customerSpecs(specs: Record<string, unknown> | null | undefined)
     if (!key.trim() || INTERNAL_KEY.test(key)) continue;
     if (raw === null || raw === undefined || typeof raw === "boolean" || typeof raw === "object") continue;
     const value = String(raw).trim();
-    if (!value || BOOLEAN_VALUE.test(value)) continue;
+    if (!value || BOOLEAN_VALUE.test(value) || INTERNAL_VALUE.test(value)) continue;
     rows.push([humanizeSpecKey(key), value]);
   }
   return rows;
