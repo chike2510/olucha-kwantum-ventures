@@ -21,6 +21,15 @@ let _pool: Pool | null = null;
 let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
+  // On Cloudflare Workers, TLS to Supabase's pooler is not possible directly; Hyperdrive
+  // holds the encrypted origin connection. Worker I/O objects cannot be shared across
+  // requests, so build a fresh lightweight pool per call (Hyperdrive does the pooling).
+  const hyperdrive = ENV.hyperdriveConnectionString;
+  if (hyperdrive) {
+    const pool = new Pool({ connectionString: hyperdrive, max: 1, idleTimeoutMillis: 1_000, allowExitOnIdle: true });
+    pool.on("error", (error) => console.warn("[Database] Hyperdrive connection error:", error));
+    return drizzle(pool);
+  }
   const databaseUrl = ENV.databaseUrl;
   if (!_db && databaseUrl) {
     try {

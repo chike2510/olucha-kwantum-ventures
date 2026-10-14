@@ -30,6 +30,10 @@ export function setWorkerEnvironment(bindings: RuntimeBindings): void {
     const value = bindings[name];
     if (typeof value === "string") nextBindings[name] = value;
   }
+  const hyperdrive = bindings.HYPERDRIVE as { connectionString?: unknown } | undefined;
+  if (hyperdrive && typeof hyperdrive.connectionString === "string") {
+    nextBindings.HYPERDRIVE_CONNECTION_STRING = hyperdrive.connectionString;
+  }
   workerBindings = nextBindings;
 }
 
@@ -40,6 +44,10 @@ export function getRuntimeEnv(name: string): string {
 }
 
 export const ENV = {
+  /** Cloudflare Hyperdrive connection string (Workers only); preferred over DATABASE_URL when present. */
+  get hyperdriveConnectionString() {
+    return workerBindings?.HYPERDRIVE_CONNECTION_STRING ?? "";
+  },
   get appId() {
     return getRuntimeEnv("VITE_APP_ID");
   },
