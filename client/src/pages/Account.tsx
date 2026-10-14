@@ -1,9 +1,17 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { UserRound, PackageCheck, MapPin } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import BrandHeader from "@/components/BrandHeader";
+import { formatNaira } from "@/lib/storeCatalog";
+
+function statusTone(status: string) {
+  if (status === "paid" || status === "delivered") return "bg-emerald-100 text-emerald-700";
+  if (status === "cancelled") return "bg-rose-100 text-rose-700";
+  if (status === "shipped" || status === "processing") return "bg-sky-100 text-sky-700";
+  return "bg-amber-100 text-amber-700";
+}
 
 function getSafeReturnPath() {
   const requested = new URLSearchParams(window.location.search).get("next") ?? "/account";
@@ -33,6 +41,12 @@ export default function Account() {
       setSigningIn(false);
     }
   };
+
+  useEffect(() => {
+    if (window.location.pathname === "/account/orders" && orders.data) {
+      document.getElementById("orders")?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [orders.data]);
 
   if (loading) return <div className="min-h-screen bg-[#f6f7fb] p-10 text-slate-500">Loading account…</div>;
 
@@ -87,7 +101,7 @@ export default function Account() {
             <h2 className="mt-6 font-semibold">Order history</h2>
             <p className="mt-2 text-sm text-slate-500">Your orders and current payment status.</p>
             <div className="mt-5 space-y-2">
-              {orders.data?.slice(0, 4).map((order) => <div key={order.id} className="flex items-center justify-between rounded-xl bg-slate-50 p-3 text-sm"><span className="font-semibold">Order #{order.id}</span><span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-bold text-amber-700">{order.status}</span></div>)}
+              {orders.data?.slice(0, 4).map((order) => <a href="#orders" key={order.id} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3 text-sm"><span className="font-semibold">Order #{order.id}</span><span className="ml-auto font-semibold text-[#1f5b9f]">{formatNaira(order.totalKobo / 100)}</span><span className={`rounded-full px-2 py-1 text-xs font-bold ${statusTone(order.status)}`}>{order.status}</span></a>)}
               {!orders.data?.length && <span className="mt-3 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">No orders yet</span>}
             </div>
           </div>
@@ -98,6 +112,29 @@ export default function Account() {
             <span className="mt-6 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">{orders.data?.[0]?.status || "Ready for first order"}</span>
           </div>
         </div>
+        <section id="orders" className="mt-10 rounded-3xl bg-white p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-[#0b1736]">Your orders</h2>
+          {orders.isLoading && <p className="mt-4 text-sm text-slate-500">Loading orders…</p>}
+          {!orders.isLoading && !orders.data?.length && <p className="mt-4 text-sm text-slate-500">No orders yet. <Link href="/shop" className="font-semibold text-[#1f5b9f] underline">Browse products</Link></p>}
+          <div className="mt-5 space-y-4">
+            {orders.data?.map((order) => (
+              <article key={order.id} className="rounded-2xl border border-slate-200 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-[#0b1736]">Order #{order.id}</p>
+                    <p className="mt-1 text-xs text-slate-500">{new Date(order.createdAt).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })}{order.paystackReference ? ` · Ref ${order.paystackReference}` : ""}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-bold text-[#0b1736]">{formatNaira(order.totalKobo / 100)}</span>
+                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusTone(order.status)}`}>{order.status}</span>
+                  </div>
+                </div>
+                {order.items.length > 0 && <ul className="mt-4 space-y-1 border-t border-slate-100 pt-3 text-sm text-slate-600">{order.items.map((item) => <li key={item.id} className="flex justify-between gap-4"><span>{item.productName} × {item.quantity}</span><span>{formatNaira((item.unitPriceKobo * item.quantity) / 100)}</span></li>)}</ul>}
+                {order.deliveryAddress && <p className="mt-3 text-xs text-slate-500">Deliver to: {order.deliveryAddress}</p>}
+              </article>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );

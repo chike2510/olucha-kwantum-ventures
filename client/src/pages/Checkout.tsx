@@ -40,6 +40,9 @@ export default function Checkout() {
     if (paymentStatus === "success") clear();
   }, [paymentStatus, clear]);
 
+  const accountOrders = trpc.account.orders.useQuery(undefined, { enabled: Boolean(user) && paymentStatus === "success" && Boolean(orderId) });
+  const confirmedOrder = accountOrders.data?.find((order) => String(order.id) === orderId);
+
   const initializePayment = trpc.payments.initialize.useMutation({
     onSuccess: (result) => {
       if (result.totalKobo !== Math.round(total * 100)) {
@@ -122,6 +125,15 @@ export default function Checkout() {
               <p className={`mt-5 rounded-2xl p-4 text-sm font-semibold leading-6 ${paymentStatus === "success" ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`} role="status">
                 {PAYMENT_MESSAGES[paymentStatus]}{paymentStatus === "success" && orderId ? ` Order #${orderId}.` : ""}
               </p>
+            )}
+            {confirmedOrder && (
+              <div className="mt-5 rounded-2xl border border-emerald-200 bg-white p-5 text-sm" aria-label="Order confirmation">
+                <p className="text-xs font-bold uppercase tracking-[.16em] text-emerald-700">Order confirmed</p>
+                <p className="mt-2 text-lg font-semibold text-[#0b1736]">Order #{confirmedOrder.id} · {formatNaira(confirmedOrder.totalKobo / 100)}</p>
+                {confirmedOrder.paystackReference && <p className="mt-1 break-all text-xs text-slate-500">Payment reference: {confirmedOrder.paystackReference}</p>}
+                <ul className="mt-3 space-y-1 text-slate-600">{confirmedOrder.items.map((item) => <li key={item.id} className="flex justify-between gap-4"><span>{item.productName} × {item.quantity}</span><span>{formatNaira((item.unitPriceKobo * item.quantity) / 100)}</span></li>)}</ul>
+                <Link href="/account/orders" className="mt-4 inline-block font-semibold text-[#1f5b9f] underline">View all orders</Link>
+              </div>
             )}
             {notice && <p className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-800" role="alert">{notice}</p>}
             <button className="mt-7 w-full rounded-full bg-[#f7b32b] px-5 py-3.5 text-sm font-bold text-[#0b1736] disabled:cursor-wait disabled:opacity-60" disabled={initializePayment.isPending}>

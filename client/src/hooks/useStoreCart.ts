@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { StoreProduct } from "@/lib/storeCatalog";
+import { trpc } from "@/lib/trpc";
 import { addToCart, calculateCartSubtotal, removeFromCart, updateCartQuantity, type CartLine } from "@/lib/cartState";
 
 const CART_KEY = "olucha-store-cart";
@@ -30,6 +31,18 @@ export function useStoreCart() {
   const update = useCallback((slug: string, delta: number) => sync(updateCartQuantity(readCart(), slug, delta)), [sync]);
   const remove = useCallback((slug: string) => sync(removeFromCart(readCart(), slug)), [sync]);
   const clear = useCallback(() => sync([]), [sync]);
-  const subtotal = useMemo(() => calculateCartSubtotal(items), [items]);
-  return { items, add, update, remove, clear, subtotal };
+  // Reprice cart lines from the live catalogue so stale localStorage prices never show.
+  const catalogue = trpc.catalogue.list.useQuery(undefined, { staleTime: 60_000 });
+  const pricedItems = useMemo(() => {
+    if (!catalogue.data?.length) return items;
+    const bySlug = new Map(catalogue.data.map((product) => [product.slug, product.priceKobo / 100]));
+    return items.map((line) => {
+      const livePrice = bySlug.get(line.product.slug);
+      return livePrice !== undefined && livePrice !== line.product.price
+        ? { ...line, product: { ...line.product, price: livePrice } }
+        : line;
+    });
+  }, [items, catalogue.data]);
+  const subtotal = useMemo(() => calculateCartSubtotal(pricedItems), [pricedItems]);
+  return { items: pricedItems, add, update, remove, clear, subtotal };
 }

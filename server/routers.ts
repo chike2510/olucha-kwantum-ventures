@@ -18,6 +18,7 @@ import {
   listAllProducts,
   listExportInquiries,
   listOrdersForUser,
+  listAllOrdersWithItems,
   listProducts,
   listPublishedBlogPosts,
   updateBlogPost,
@@ -142,7 +143,7 @@ export const appRouter = router({
   }),
   admin: router({
     products: adminProcedure.query(() => listAllProducts()),
-    orders: adminProcedure.query(() => listAllOrders()),
+    orders: adminProcedure.query(() => listAllOrdersWithItems()),
     blogPosts: adminProcedure.query(() => listAllBlogPosts()),
     updateOrderStatus: adminProcedure.input(orderStatusInput).mutation(({ input }) => updateOrderStatus(input.id, input.status)),
     updateInquiryStatus: adminProcedure.input(inquiryStatusInput).mutation(({ input }) => updateExportInquiryStatus(input.id, input.status)),

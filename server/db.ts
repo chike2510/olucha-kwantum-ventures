@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, or, type SQL } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, or, type SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import {
@@ -9,6 +9,7 @@ import {
   contactMessages,
   blogPosts,
   orders,
+  orderItems,
   Product,
   InsertProduct,
 } from "../drizzle/schema.js";
@@ -179,10 +180,25 @@ export async function listAllProducts() {
   return db.select().from(products).orderBy(desc(products.createdAt));
 }
 
+async function attachOrderItems<T extends { id: number }>(rows: T[]) {
+  const db = await getDb();
+  if (!db || rows.length === 0) return rows.map((row) => ({ ...row, items: [] as Array<typeof orderItems.$inferSelect> }));
+  const items = await db.select().from(orderItems).where(inArray(orderItems.orderId, rows.map((row) => row.id)));
+  return rows.map((row) => ({ ...row, items: items.filter((item) => item.orderId === row.id) }));
+}
+
 export async function listOrdersForUser(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
+  const rows = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
+  return attachOrderItems(rows);
+}
+
+export async function listAllOrdersWithItems() {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(orders).orderBy(desc(orders.createdAt));
+  return attachOrderItems(rows);
 }
 
 export async function listAllOrders() {
