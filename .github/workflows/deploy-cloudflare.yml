@@ -41,8 +41,8 @@ jobs:
         run: pnpm build
         env:
           # Public browser values (optional); set as repository variables to enable Supabase sign-in in the bundle.
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || 'https://zmaysbnlgctesemrhkqw.supabase.co' }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_8pcBpzfRuoA5p0xYmMg2Ug_MDSt_sQJ' }}
 
       - name: Require Cloudflare API token
         run: |
