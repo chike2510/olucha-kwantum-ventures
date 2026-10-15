@@ -36,6 +36,16 @@ Customer sign-in on `cloudflare-preview` uses the isolated Supabase project's em
 
 The Preview branch uses only the Paystack test key. Verify checkout against the active preview SKUs, using server-fetched product prices and server-side transaction verification; do not attempt a live payment. Keep callbacks and webhooks on the deployed Preview HTTPS hostname and configure test mode only. Preview test items are not for fulfillment.
 
+Live keys are gated in code: the server accepts an `sk_live_` key only when the Worker variable `PAYSTACK_LIVE_ENABLED` is exactly `true`. With it unset (the default — do not set it on Preview), only `sk_test_` keys and `test`-domain transactions are accepted. In both modes, verification requires the transaction's reference, amount (kobo) and currency to match the stored payment intent, and its domain (`test`/`live`) to match the mode of the configured key.
+
+## Automatic deploys (GitHub Actions)
+
+`.github/workflows/deploy-cloudflare.yml` runs on every push to `cloudflare-preview`: `pnpm install --frozen-lockfile`, `pnpm build`, then `npx wrangler deploy` with `wrangler.jsonc` (Worker + static assets). It needs the repository secret `CLOUDFLARE_API_TOKEN` (a Cloudflare API token with *Workers Scripts: Edit* on the account). The account ID `76f855d8825241bb134fb6c7098a9724` is built into the workflow; a `CLOUDFLARE_ACCOUNT_ID` secret or variable overrides it. Worker secrets (database, Supabase, Paystack, admin) stay in Cloudflare and are not touched by the workflow. The public build values `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are read from repository variables of the same names when set.
+
+## Error responses
+
+Outside `NODE_ENV=development`, tRPC responses never include stack traces, and unexpected server failures return a generic message; details are logged server-side (`wrangler tail`). Express errors return `{ "error": "Internal server error" }`.
+
 ## Validation
 
 The local TypeScript check passes, all 37 unit tests pass with disposable test-only admin values, and the Vite/Wrangler dry-run build passes. The generated browser assets were checked and contain no database CA, database password, or database URL. `main` and Vercel Production settings remain unchanged.

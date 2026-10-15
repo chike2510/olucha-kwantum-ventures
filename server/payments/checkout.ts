@@ -7,6 +7,7 @@ import {
   updatePaymentIntentStatus,
 } from "./repository.js";
 import {
+  getAllowedPaystackMode,
   initializePaystackTransaction,
   matchesVerifiedPayment,
   verifyPaystackTransaction,
@@ -72,7 +73,7 @@ export async function initializePaymentCheckout(
   requestOrigin: string,
   secretKey: string,
 ): Promise<{ authorizationUrl: string; reference: string; totalKobo: number; currency: "NGN" }> {
-  if (!secretKey.startsWith("sk_test_")) throw new Error("Online payment is not available right now. Please try again later.");
+  if (!getAllowedPaystackMode(secretKey)) throw new Error("Online payment is not available right now. Please try again later.");
   if (!Number.isSafeInteger(userId) || userId < 0) throw new Error("Sign in to continue to secure checkout.");
   const origin = validateOrigin(requestOrigin);
   if (input.items.length < 1 || input.items.length > 20) throw new Error("Your cart could not be checked. Please review it and try again.");
@@ -151,7 +152,8 @@ type PaymentCompleterDependencies = {
 
 export function createPaystackPaymentCompleter(dependencies: PaymentCompleterDependencies) {
   return async function complete(reference: string, secretKey: string): Promise<CompletePaymentResult> {
-    if (!secretKey.startsWith("sk_test_")) throw new Error("Online payment is not available right now. Please try again later.");
+    const mode = getAllowedPaystackMode(secretKey);
+    if (!mode) throw new Error("Online payment is not available right now. Please try again later.");
     const intent = await dependencies.getIntent(reference);
     if (!intent) return { outcome: "unknown" };
 
@@ -165,6 +167,7 @@ export function createPaystackPaymentCompleter(dependencies: PaymentCompleterDep
       reference: intent.reference,
       amountKobo: intent.totalKobo,
       currency: intent.currency,
+      mode,
     })) {
       await dependencies.updateIntentStatus(reference, "failed");
       return { outcome: "failed" };

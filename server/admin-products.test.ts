@@ -12,7 +12,7 @@ vi.mock("./db.js", async (importOriginal) => {
   return { ...actual, ...dbMocks };
 });
 
-const { appRouter } = await import("./routers");
+const { appRouter } = await import("./routers/index");
 
 const caller = () => appRouter.createCaller({
   user: { id: 1, openId: "admin", name: "Admin", email: "admin@example.com", role: "admin" } as TrpcContext["user"],

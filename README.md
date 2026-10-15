@@ -4,7 +4,7 @@ Olucha Kwantum Ventures is a product-led e-commerce and export platform for basi
 
 ## Current project status
 
-This repository contains the current implementation checkpoint. The storefront, Express/tRPC API, OAuth callbacks, storage proxy, admin foundation, and database-backed procedures are ported to a Cloudflare Workers deployment target. Paystack payment initialization and verification are not implemented; the app still requires its deployment credentials, the TiDB connection URL, and OAuth callback allowlisting before a live environment is functional.
+This repository contains the current implementation checkpoint. The storefront, Express/tRPC API (feature routers in `server/routers/`), storage proxy, admin foundation, Supabase customer sign-in, Paystack test-mode checkout, and database-backed procedures run on a Cloudflare Workers deployment target. Pushes to `cloudflare-preview` deploy automatically via GitHub Actions (see DEPLOYMENT.md).
 
 ## Local development
 
@@ -31,10 +31,10 @@ pnpm test
 
 ## Environment and deployment
 
-Do not commit `.env` files or secrets. Configure Worker secrets and variables in Cloudflare, and provide `VITE_OAUTH_PORTAL_URL` and `VITE_APP_ID` to the frontend build environment. The exact required bindings, TiDB connection requirements, and OAuth callback URLs are in [DEPLOYMENT.md](./DEPLOYMENT.md).
+Do not commit `.env` files or secrets. Configure Worker secrets and variables in Cloudflare, and provide the public `VITE_SUPABASE_*` values to the frontend build environment. The exact required bindings are in [DEPLOYMENT.md](./DEPLOYMENT.md).
 
 The project retains `vercel.json` and its existing Vercel adapter for the previous deployment target. Cloudflare Workers uses the separate `worker.ts` entrypoint and `wrangler.jsonc` configuration.
 
 ## Security
 
-Never place administrator passwords, session-signing keys, database credentials, OAuth secrets, or Forge credentials in source control or browser build variables. Use encrypted deployment secrets for server-only credentials.
+Never place administrator passwords, session-signing keys, database credentials, or storage/notification API credentials in source control or browser build variables. Use encrypted deployment secrets for server-only credentials.

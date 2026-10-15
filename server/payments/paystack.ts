@@ -1,3 +1,5 @@
+import { getRuntimeEnv } from "../_core/env.js";
+
 const PAYSTACK_API_BASE = "https://api.paystack.co";
 const PAYSTACK_CHECKOUT_HOST = "checkout.paystack.com";
 
@@ -23,14 +25,46 @@ export type PaystackInitializeResult = {
   reference: string;
 };
 
+export type PaystackMode = "test" | "live";
+
 export function isPaystackTestKey(secretKey: string): boolean {
   return secretKey.startsWith("sk_test_");
 }
 
-function requireTestKey(secretKey: string): void {
-  if (!isPaystackTestKey(secretKey)) {
-    throw new Error("Online payment is not available right now. Please try again later.");
-  }
+/** The mode a secret key operates in, or null for anything that is not a Paystack secret key. */
+export function getPaystackKeyMode(secretKey: string): PaystackMode | null {
+  if (secretKey.startsWith("sk_test_")) return "test";
+  if (secretKey.startsWith("sk_live_")) return "live";
+  return null;
+}
+
+/**
+ * Live payments are opt-in: a live key is accepted only when PAYSTACK_LIVE_ENABLED is exactly "true".
+ * Without it, only sk_test_ keys and test-domain transactions are accepted.
+ */
+export function isPaystackLiveEnabled(): boolean {
+  return getRuntimeEnv("PAYSTACK_LIVE_ENABLED") === "true";
+}
+
+/** Returns the key's mode when the key may be used right now, otherwise null. */
+export function getAllowedPaystackMode(
+  secretKey: string,
+  liveEnabled: boolean = isPaystackLiveEnabled(),
+): PaystackMode | null {
+  const mode = getPaystackKeyMode(secretKey);
+  if (mode === "test") return "test";
+  if (mode === "live" && liveEnabled) return "live";
+  return null;
+}
+
+export function isPaystackKeyAllowed(secretKey: string, liveEnabled: boolean = isPaystackLiveEnabled()): boolean {
+  return getAllowedPaystackMode(secretKey, liveEnabled) !== null;
+}
+
+function requireAllowedKey(secretKey: string): PaystackMode {
+  const mode = getAllowedPaystackMode(secretKey);
+  if (!mode) throw new Error("Online payment is not available right now. Please try again later.");
+  return mode;
 }
 
 function isValidReference(reference: string): boolean {
@@ -55,7 +89,7 @@ export async function initializePaystackTransaction(
   input: PaystackTransactionInitInput,
   fetcher: typeof fetch = fetch,
 ): Promise<PaystackInitializeResult> {
-  requireTestKey(secretKey);
+  requireAllowedKey(secretKey);
   if (!isValidReference(input.reference)) throw new Error("Invalid payment reference.");
   if (!Number.isSafeInteger(input.amountKobo) || input.amountKobo <= 0) throw new Error("Invalid payment amount.");
 
@@ -101,7 +135,7 @@ export async function verifyPaystackTransaction(
   reference: string,
   fetcher: typeof fetch = fetch,
 ): Promise<PaystackTransaction> {
-  requireTestKey(secretKey);
+  requireAllowedKey(secretKey);
   if (!isValidReference(reference)) throw new Error("Invalid payment reference.");
 
   const response = await fetcher(
@@ -130,12 +164,17 @@ export async function verifyPaystackTransaction(
   return transaction as PaystackTransaction;
 }
 
+/**
+ * A verified transaction counts only when its reference, amount (minor units) and currency match the
+ * stored intent AND its domain matches the mode of the key that verified it (test key -> "test", live key -> "live").
+ */
 export function matchesVerifiedPayment(
   transaction: PaystackTransaction,
-  expected: { reference: string; amountKobo: number; currency: string },
+  expected: { reference: string; amountKobo: number; currency: string; mode: PaystackMode },
 ): boolean {
   return (
-    transaction.domain === "test" &&
+    (expected.mode === "test" || expected.mode === "live") &&
+    transaction.domain === expected.mode &&
     transaction.status === "success" &&
     transaction.reference === expected.reference &&
     transaction.amount === expected.amountKobo &&
@@ -161,7 +200,7 @@ export async function verifyPaystackWebhookSignature(
   signature: string | null,
   secretKey: string,
 ): Promise<boolean> {
-  if (!signature || !isPaystackTestKey(secretKey)) return false;
+  if (!signature || !isPaystackKeyAllowed(secretKey)) return false;
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secretKey),

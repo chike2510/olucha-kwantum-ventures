@@ -2,7 +2,8 @@ import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth.js";
 import { registerStorageProxy } from "./storageProxy.js";
-import { appRouter } from "../routers.js";
+import { appRouter } from "../routers/index.js";
+import { expressErrorHandler, logTrpcError } from "./errorHandling.js";
 import { createContext } from "./context.js";
 
 export function createVercelApp() {
@@ -21,7 +22,8 @@ export function createVercelApp() {
   app.use(express.urlencoded({ limit: "10mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
-  app.use("/api/trpc", createExpressMiddleware({ router: appRouter, createContext }));
+  app.use("/api/trpc", createExpressMiddleware({ router: appRouter, createContext, onError: logTrpcError }));
+  app.use(expressErrorHandler);
   return app;
 }
 

@@ -1,0 +1,55 @@
+name: Deploy to Cloudflare (preview)
+
+on:
+  push:
+    branches:
+      - cloudflare-preview
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-cloudflare-preview
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy Worker
+    runs-on: ubuntu-latest
+    env:
+      # Cloudflare account ID is not secret; a repo secret or variable of the same name overrides it.
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID || '76f855d8825241bb134fb6c7098a9724' }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+        env:
+          # Public browser values (optional); set as repository variables to enable Supabase sign-in in the bundle.
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+
+      - name: Require Cloudflare API token
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::Repository secret CLOUDFLARE_API_TOKEN is not set. Add it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Deploy (wrangler.jsonc with static assets)
+        run: npx wrangler deploy

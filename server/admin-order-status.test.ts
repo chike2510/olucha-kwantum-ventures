@@ -12,7 +12,7 @@ vi.mock("./db.js", async (importOriginal) => {
   return { ...actual, getOrderById: dbMocks.getOrderById, updateOrderStatusFrom: dbMocks.updateOrderStatusFrom };
 });
 
-const { appRouter } = await import("./routers");
+const { appRouter } = await import("./routers/index");
 
 function adminCaller() {
   const ctx: TrpcContext = {

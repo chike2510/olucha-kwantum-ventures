@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useRef, useState, type ReactNod
 import { Plus } from "lucide-react";
 import { formatNairaAmount } from "@/lib/money";
 import type { inferRouterOutputs } from "@trpc/server";
-import type { AppRouter } from "../../../../server/routers";
+import type { AppRouter } from "../../../../server/routers/index";
 import {
   AlertDialog,
   AlertDialogAction,

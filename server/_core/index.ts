@@ -5,7 +5,8 @@ import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
-import { appRouter } from "../routers";
+import { appRouter } from "../routers/index";
+import { expressErrorHandler, logTrpcError } from "./errorHandling";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
@@ -56,6 +57,7 @@ async function startServer() {
     createExpressMiddleware({
       router: appRouter,
       createContext,
+      onError: logTrpcError,
     })
   );
   // development mode uses Vite, production mode uses static files
@@ -64,6 +66,7 @@ async function startServer() {
   } else {
     serveStatic(app);
   }
+  app.use(expressErrorHandler);
 
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);

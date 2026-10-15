@@ -7,7 +7,6 @@ const runtimeVariableNames = [
   "DATABASE_PASSWORD",
   "SUPABASE_URL",
   "SUPABASE_PUBLISHABLE_KEY",
-  "OAUTH_SERVER_URL",
   "OWNER_OPEN_ID",
   "NODE_ENV",
   "BUILT_IN_FORGE_API_URL",
@@ -15,6 +14,7 @@ const runtimeVariableNames = [
   "ADMIN_LOGIN_EMAIL",
   "ADMIN_LOGIN_PASSWORD",
   "PAYSTACK_SECRET_KEY",
+  "PAYSTACK_LIVE_ENABLED",
 ] as const;
 
 let workerBindings: Record<string, string> | undefined;
@@ -65,9 +65,6 @@ export const ENV = {
   },
   get supabasePublishableKey() {
     return getRuntimeEnv("SUPABASE_PUBLISHABLE_KEY");
-  },
-  get oAuthServerUrl() {
-    return getRuntimeEnv("OAUTH_SERVER_URL");
   },
   get ownerOpenId() {
     return getRuntimeEnv("OWNER_OPEN_ID");

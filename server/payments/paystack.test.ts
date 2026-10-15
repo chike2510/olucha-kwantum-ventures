@@ -78,9 +78,9 @@ describe("Paystack API client", () => {
     });
     const transaction = await verifyPaystackTransaction(TEST_KEY, "okv-test", fetcher);
     expect(transaction).toMatchObject({ reference: "okv-test", status: "success", amount: 123_450, currency: "NGN", domain: "test" });
-    expect(matchesVerifiedPayment(transaction, { reference: "okv-test", amountKobo: 123_450, currency: "ngn" })).toBe(true);
-    expect(matchesVerifiedPayment(transaction, { reference: "different", amountKobo: 123_450, currency: "NGN" })).toBe(false);
-    expect(matchesVerifiedPayment(transaction, { reference: "okv-test", amountKobo: 123_451, currency: "NGN" })).toBe(false);
+    expect(matchesVerifiedPayment(transaction, { reference: "okv-test", amountKobo: 123_450, currency: "ngn", mode: "test" })).toBe(true);
+    expect(matchesVerifiedPayment(transaction, { reference: "different", amountKobo: 123_450, currency: "NGN", mode: "test" })).toBe(false);
+    expect(matchesVerifiedPayment(transaction, { reference: "okv-test", amountKobo: 123_451, currency: "NGN", mode: "test" })).toBe(false);
   });
 
   it("checks Paystack's HMAC-SHA512 against the exact raw body", async () => {

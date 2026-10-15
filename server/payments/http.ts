@@ -1,6 +1,6 @@
 import { ENV } from "../_core/env.js";
 import { completePaystackPayment, markPaymentCancelled } from "./checkout.js";
-import { verifyPaystackWebhookSignature } from "./paystack.js";
+import { isPaystackKeyAllowed, verifyPaystackWebhookSignature } from "./paystack.js";
 
 export type PaymentHttpDependencies = {
   getSecretKey: () => string;
@@ -45,7 +45,7 @@ export function createPaystackHttpHandler(dependencies: PaymentHttpDependencies)
         return redirectToCheckout(request.url, url.searchParams.get("status") === "cancelled" ? "cancelled" : "failed");
       }
       const secretKey = dependencies.getSecretKey();
-      if (!secretKey.startsWith("sk_test_")) return redirectToCheckout(request.url, "pending");
+      if (!isPaystackKeyAllowed(secretKey)) return redirectToCheckout(request.url, "pending");
       try {
         const result = await dependencies.completePayment(reference, secretKey);
         if (result.outcome === "success") return redirectToCheckout(request.url, "success", result.orderId);
@@ -60,7 +60,7 @@ export function createPaystackHttpHandler(dependencies: PaymentHttpDependencies)
     if (path === "/api/payments/paystack/webhook") {
       if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
       const secretKey = dependencies.getSecretKey();
-      if (!secretKey.startsWith("sk_test_")) return new Response("Unavailable", { status: 503 });
+      if (!isPaystackKeyAllowed(secretKey)) return new Response("Unavailable", { status: 503 });
       const rawBody = await request.text();
       const validSignature = await dependencies.verifySignature(
         rawBody,

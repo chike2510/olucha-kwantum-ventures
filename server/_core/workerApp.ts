@@ -1,7 +1,8 @@
 import express from "express";
 import type { Express, NextFunction, Request, Response } from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { appRouter } from "../routers.js";
+import { appRouter } from "../routers/index.js";
+import { expressErrorHandler, logTrpcError } from "./errorHandling.js";
 import { createContext } from "./context.js";
 import { registerOAuthRoutes } from "./oauth.js";
 import { registerStorageProxy } from "./storageProxy.js";
@@ -90,6 +91,7 @@ export function createWorkerApp(): Express {
   app.use(workerBodyParser);
   registerStorageProxy(app);
   registerOAuthRoutes(app);
-  app.use("/api/trpc", createExpressMiddleware({ router: appRouter, createContext }));
+  app.use("/api/trpc", createExpressMiddleware({ router: appRouter, createContext, onError: logTrpcError }));
+  app.use(expressErrorHandler);
   return app;
 }
