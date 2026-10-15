@@ -13,10 +13,10 @@ import { trpc } from "@/lib/trpc";
 type PendingAuthorization = { authorizationUrl: string; totalKobo: number };
 
 const PAYMENT_MESSAGES: Record<string, string> = {
-  success: "Payment verified. Your order was created after the server confirmed the test transaction.",
+  success: "Payment received. Thank you — your order is confirmed.",
   cancelled: "Payment cancelled. Your cart is unchanged and no order was created.",
   failed: "Payment was not verified. No order was created; you can safely try again.",
-  pending: "Payment confirmation is still pending. No order is marked paid unless Paystack verification succeeds.",
+  pending: "We are still confirming your payment. Your order will appear in your account as soon as Paystack confirms it.",
 };
 
 export default function Checkout() {
@@ -99,6 +99,8 @@ export default function Checkout() {
     })),
     [items],
   );
+  const paymentMode = trpc.payments.mode.useQuery(undefined, { staleTime: 5 * 60_000 });
+  const testMode = paymentMode.data?.testMode === true;
   const serverTotal = pendingAuthorization ? pendingAuthorization.totalKobo / 100 : null;
 
   return (
@@ -108,7 +110,7 @@ export default function Checkout() {
         <div className="mb-8 lg:mb-10">
           <p className="eyebrow">Complete your order</p>
           <h1 className="section-title">Buy with confidence.</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">Enter your details so Olucha can confirm delivery and prepare your secure Paystack test checkout.</p>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">Enter your delivery details, then pay securely with Paystack.</p>
         </div>
         <div className="grid gap-8 lg:grid-cols-[1.1fr_.9fr]">
           <form className="rounded-[2rem] bg-white p-6 shadow-sm sm:p-9" onSubmit={submit} noValidate>
@@ -120,8 +122,9 @@ export default function Checkout() {
               <label className="field sm:col-span-2">Delivery address<textarea value={form.address} onChange={(event) => update("address", event.target.value)} rows={4} placeholder="Street, city, state, and delivery notes" /></label>
             </div>
             {errors.length > 0 && <div className="mt-6 rounded-2xl bg-rose-50 p-4 text-sm leading-6 text-rose-800" role="alert"><p className="font-bold">Please correct the following:</p><ul className="mt-2 list-disc pl-5">{errors.map((error) => <li key={error}>{error}</li>)}</ul></div>}
-            <div className="mt-8 rounded-2xl border border-[#1f5b9f]/20 bg-[#1f5b9f]/10 p-4 text-sm text-[#0b1736]">
-              <div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 shrink-0 text-[#1f5b9f]" size={18} /><p><strong>Paystack test mode.</strong> Your order is created only after the server verifies a successful test transaction, its reference, amount, and currency. No live key is accepted.</p></div>
+            <div className="mt-8 flex items-start gap-3 rounded-2xl border border-[#1f5b9f]/20 bg-[#1f5b9f]/10 p-4 text-sm text-[#0b1736]">
+              <ShieldCheck className="mt-0.5 shrink-0 text-[#1f5b9f]" size={18} /><p className="min-w-0 flex-1"><strong>Secure payment by Paystack.</strong> Pay by card, bank transfer or USSD on Paystack's secure page. Your order is confirmed as soon as payment is received.</p>
+              {testMode && <span className="shrink-0 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700" title="Payments are in Paystack test mode">Test mode</span>}
             </div>
             {paymentStatus && PAYMENT_MESSAGES[paymentStatus] && (
               <p className={`mt-5 rounded-2xl p-4 text-sm font-semibold leading-6 ${paymentStatus === "success" ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`} role="status">
@@ -139,7 +142,7 @@ export default function Checkout() {
             )}
             {notice && <p className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-800" role="alert">{notice}</p>}
             <button type="submit" className="pressable mt-7 min-h-12 w-full rounded-full bg-[#f7b32b] px-5 py-3.5 text-sm font-bold text-[#0b1736] disabled:cursor-wait disabled:opacity-60" disabled={initializePayment.isPending}>
-              {initializePayment.isPending ? "Preparing secure checkout…" : pendingAuthorization ? `Continue to Paystack · ${formatNaira(serverTotal || 0)}` : !user ? "Sign in to continue" : "Continue to Paystack test checkout"}
+              {initializePayment.isPending ? "Preparing secure checkout…" : pendingAuthorization ? `Continue to Paystack · ${formatNaira(serverTotal || 0)}` : !user ? "Sign in to continue" : "Pay securely with Paystack"}
             </button>
             <Link href="/cart" className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-slate-200 bg-white px-5 text-sm font-bold text-[#0b1736] hover:border-[#1f5b9f]/40 hover:text-[#1f5b9f]"><ArrowLeft size={16} aria-hidden="true" />Edit cart</Link>
             <p className="mx-auto mt-4 max-w-sm text-center text-xs leading-5 text-slate-500">No order is created if you cancel or payment is not verified. By continuing you agree to our <Link href="/terms" className="font-semibold text-[#1f5b9f] underline">Terms</Link> and <Link href="/policies/privacy" className="font-semibold text-[#1f5b9f] underline">Privacy Policy</Link>.</p>
@@ -149,8 +152,8 @@ export default function Checkout() {
             <div className="mt-7 space-y-4">{summaryLines.map((line, index) => <div key={`${line.name}-${index}`} className="flex justify-between gap-4 text-sm"><span className="min-w-0 text-white/70">{line.name}</span><span className="shrink-0 font-semibold">{formatNaira(line.total)}</span></div>)}{!items.length && <p className="text-sm text-white/60">Your cart is empty. <Link href="/shop" className="text-[#e1ba56] underline">Browse products</Link></p>}</div>
             <div className="my-7 space-y-3 border-t border-white/15 pt-6 text-sm"><div className="flex justify-between text-white/70"><span>Subtotal</span><span>{formatNaira(subtotal)}</span></div><div className="flex justify-between text-white/70"><span>Shipping</span><span>{shipping ? formatNaira(shipping) : "Free"}</span></div><div className="flex justify-between text-white/70"><span>Estimated tax</span><span>{formatNaira(tax)}</span></div><div className="flex justify-between text-white/70"><span>Discount</span><span>{discount ? `−${formatNaira(discount)}` : formatNaira(0)}</span></div></div>
             <div className="flex items-end justify-between"><span className="font-semibold">Estimated total</span><span className="text-2xl font-bold">{formatNaira(total)}</span></div>
-            {serverTotal !== null && <p className="mt-3 text-sm font-semibold text-[#e1ba56]">Verified server-side total: {formatNaira(serverTotal)}</p>}
-            <p className="mt-4 text-xs leading-5 text-white/50">The server recalculates product prices, coupon, delivery, and tax from the current catalogue before initializing payment. Paystack's hosted page shows the amount to be paid.</p>
+            {serverTotal !== null && <p className="mt-3 text-sm font-semibold text-[#e1ba56]">Total to pay: {formatNaira(serverTotal)}</p>}
+            <p className="mt-4 text-xs leading-5 text-white/50">Prices, delivery, discounts and tax are confirmed when you continue. Paystack's secure page shows the exact amount before you pay.</p>
           </aside>
         </div>
       </main>

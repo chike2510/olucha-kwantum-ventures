@@ -102,7 +102,7 @@ describe("Paystack checkout", () => {
     const fetcher = vi.fn<typeof fetch>();
     vi.stubGlobal("fetch", fetcher);
     await expect(initializePaymentCheckout(CHECKOUT_INPUT, 9, "https://preview.example", "sk_live_not_allowed"))
-      .rejects.toThrow("Paystack test mode is not configured.");
+      .rejects.toThrow("Online payment is not available right now. Please try again later.");
     expect(getCheckoutProductsBySlug).not.toHaveBeenCalled();
     expect(fetcher).not.toHaveBeenCalled();
   });

@@ -18,7 +18,7 @@ export function useAuth(options?: UseAuthOptions) {
   const logoutMutation = trpc.auth.logout.useMutation();
 
   const signIn = useCallback(async (email: string, password: string) => {
-    if (!supabase) throw new Error("Supabase Auth is not configured for this Preview.");
+    if (!supabase) throw new Error("Sign-in is temporarily unavailable. Please try again later.");
 
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -29,7 +29,7 @@ export function useAuth(options?: UseAuthOptions) {
     const verification = await meQuery.refetch();
     if (verification.error || !verification.data) {
       await supabase.auth.signOut();
-      throw verification.error ?? new Error("The Preview app could not verify this Supabase session.");
+      throw verification.error ?? new Error("We could not confirm your sign-in. Please sign in again.");
     }
     return verification.data;
   }, [meQuery.refetch]);

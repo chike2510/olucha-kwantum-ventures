@@ -29,7 +29,7 @@ import {
   updateProduct,
 } from "./db.js";
 import { canManuallyTransition, ORDER_STATUSES } from "../shared/orderStatus.js";
-import { initializePaymentCheckout } from "./payments/index.js";
+import { initializePaymentCheckout, isPaystackTestKey } from "./payments/index.js";
 
 const inquiryInput = z.object({
   fullName: z.string().min(2).max(160),
@@ -106,7 +106,7 @@ const blogPostInput = z.object({
 const blogPostUpdateInput = blogPostInput.partial().extend({ id: z.number().int().positive() });
 
 const safeCheckoutMessages = new Set([
-  "Paystack test mode is not configured.",
+  "Online payment is not available right now. Please try again later.",
   "Sign in to continue to secure checkout.",
   "The checkout host is not configured.",
   "Your cart could not be checked. Please review it and try again.",
@@ -151,6 +151,8 @@ export const appRouter = router({
     })).mutation(({ input }) => createContactMessage(input)),
   }),
   payments: router({
+    /** Only a boolean leaves the server: whether the configured Paystack key is a test key. Never the key itself. */
+    mode: publicProcedure.query(() => ({ testMode: isPaystackTestKey(ENV.paystackSecretKey || "") })),
     initialize: protectedProcedure.input(paymentCheckoutInput).mutation(async ({ ctx, input }) => {
       const request = ctx.req as unknown as {
         get?: (name: string) => string | undefined;

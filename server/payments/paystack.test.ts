@@ -52,7 +52,7 @@ describe("Paystack API client", () => {
       reference: "okv-test",
       callbackUrl: "https://preview.example/callback",
       cancelActionUrl: "https://preview.example/cancel",
-    }, fetcher)).rejects.toThrow("Paystack test mode is not configured.");
+    }, fetcher)).rejects.toThrow("Online payment is not available right now. Please try again later.");
     expect(fetcher).not.toHaveBeenCalled();
   });
 

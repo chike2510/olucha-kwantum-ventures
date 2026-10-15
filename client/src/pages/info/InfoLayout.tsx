@@ -8,7 +8,7 @@ import { BUSINESS } from "@/lib/siteConfig";
 /** Renders an owner-to-confirm value. Anything in [square brackets] is highlighted so it is obvious before launch. */
 export function Ph({ children }: { children: ReactNode }) {
   const text = typeof children === "string" ? children : "";
-  if (text.startsWith("[") && text.endsWith("]")) return <span className="okv-placeholder" title="Placeholder — to be confirmed by Olucha Kwantum Ventures">{text}</span>;
+  if (text.startsWith("[") && text.endsWith("]")) return <span className="okv-placeholder" title="To be confirmed by Olucha Kwantum Ventures">{text}</span>;
   return <>{children}</>;
 }
 

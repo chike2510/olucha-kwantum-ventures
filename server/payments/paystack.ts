@@ -29,7 +29,7 @@ export function isPaystackTestKey(secretKey: string): boolean {
 
 function requireTestKey(secretKey: string): void {
   if (!isPaystackTestKey(secretKey)) {
-    throw new Error("Paystack test mode is not configured.");
+    throw new Error("Online payment is not available right now. Please try again later.");
   }
 }
 
