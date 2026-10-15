@@ -1,8 +1,9 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { UserRound, PackageCheck, MapPin } from "lucide-react";
+import { UserRound, PackageCheck, MapPin, MailCheck, KeyRound } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
 import BrandHeader from "@/components/BrandHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { OKV_WORDMARK_URL } from "@/lib/siteConfig";
@@ -20,27 +21,158 @@ function getSafeReturnPath() {
   return requested.startsWith("/") && !requested.startsWith("//") ? requested : "/account";
 }
 
+type AuthView = "signin" | "signup" | "forgot" | "reset";
+
+const inputClass = "mt-2 block min-h-12 w-full rounded-2xl border border-white/15 bg-white px-4 text-base text-[#0b1736] outline-none placeholder:text-slate-400 focus:border-[#cfa43a] focus:ring-4 focus:ring-[#cfa43a]/30";
+const primaryButtonClass = "min-h-12 w-full rounded-full bg-[#f7b32b] px-6 py-3 text-sm font-bold text-[#0b1736] disabled:cursor-wait disabled:opacity-60";
+const linkButtonClass = "inline-flex min-h-11 items-center font-semibold text-[#f7b32b] underline underline-offset-4 hover:text-white";
+
+function isResetRequest() {
+  if (typeof window === "undefined") return false;
+  return new URLSearchParams(window.location.search).get("reset") === "1" || window.location.hash.includes("type=recovery");
+}
+
+function readUrlAuthError() {
+  if (typeof window === "undefined") return "";
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const query = new URLSearchParams(window.location.search);
+  const description = hash.get("error_description") ?? query.get("error_description");
+  if (!description) return "";
+  return /expired|invalid/i.test(description)
+    ? "That link has expired or was already used. Please request a new one."
+    : description.replace(/\+/g, " ");
+}
+
+function friendlyAuthError(cause: unknown, fallback: string) {
+  const message = cause instanceof Error ? cause.message : "";
+  if (/email not confirmed/i.test(message)) return "Please confirm your email first. Check your inbox for the link we sent.";
+  if (/invalid login credentials/i.test(message)) return "That email and password don’t match. Check your details and try again.";
+  if (/rate limit|too many/i.test(message)) return "Too many attempts right now. Please wait a few minutes and try again.";
+  if (/already registered/i.test(message)) return "An account with this email already exists. Try signing in instead.";
+  return message || fallback;
+}
+
 export default function Account() {
-  const { user, loading, logout, signIn, authConfigured } = useAuth();
+  const { user, loading, logout, signIn, signUp, requestPasswordReset, updatePassword, authConfigured } = useAuth();
   const [, setLocation] = useLocation();
-  const orders = trpc.account.orders.useQuery(undefined, { enabled: Boolean(user) });
+  const [view, setView] = useState<AuthView>(() => (isResetRequest() ? "reset" : "signin"));
+  const orders = trpc.account.orders.useQuery(undefined, { enabled: Boolean(user) && view !== "reset" });
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [signingIn, setSigningIn] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState(() => readUrlAuthError());
+  const [notice, setNotice] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [sentTo, setSentTo] = useState<{ kind: "signup" | "reset"; email: string } | null>(null);
+  const [hasRecoverySession, setHasRecoverySession] = useState<boolean | null>(null);
+
+  const switchView = (next: AuthView) => {
+    setView(next);
+    setError("");
+    setNotice("");
+    setSentTo(null);
+    setPassword("");
+    setConfirmPassword("");
+  };
+
+  useEffect(() => {
+    if (!supabase) return;
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setView("reset");
+        setHasRecoverySession(Boolean(session));
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (view !== "reset") return;
+    if (!supabase) {
+      setHasRecoverySession(false);
+      return;
+    }
+    void supabase.auth.getSession().then(({ data }) => setHasRecoverySession(Boolean(data.session)));
+  }, [view]);
 
   const submitSignIn = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
-    setSigningIn(true);
+    setSubmitting(true);
     try {
       await signIn(email, password);
       setPassword("");
       setLocation(getSafeReturnPath());
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Sign-in failed. Check your details and try again.");
+      setError(friendlyAuthError(cause, "Sign-in failed. Check your details and try again."));
     } finally {
-      setSigningIn(false);
+      setSubmitting(false);
+    }
+  };
+
+  const submitSignUp = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    if (password.length < 8) {
+      setError("Use a password with at least 8 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("The two passwords don’t match.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const result = await signUp(name, email, password);
+      setPassword("");
+      setConfirmPassword("");
+      if (result.needsConfirmation) setSentTo({ kind: "signup", email: email.trim() });
+      else setLocation(getSafeReturnPath());
+    } catch (cause) {
+      setError(friendlyAuthError(cause, "We couldn’t create your account. Please try again."));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitForgot = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    setSubmitting(true);
+    try {
+      await requestPasswordReset(email);
+      setSentTo({ kind: "reset", email: email.trim() });
+    } catch (cause) {
+      setError(friendlyAuthError(cause, "We couldn’t send the reset email. Please try again."));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitNewPassword = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    if (password.length < 8) {
+      setError("Use a password with at least 8 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("The two passwords don’t match.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await updatePassword(password);
+      setPassword("");
+      setConfirmPassword("");
+      window.history.replaceState(null, "", "/account");
+      setView("signin");
+      setNotice("Your password has been updated.");
+    } catch (cause) {
+      setError(friendlyAuthError(cause, "We couldn’t update your password. Please request a new reset link."));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -50,32 +182,131 @@ export default function Account() {
     }
   }, [orders.data]);
 
-  if (loading) return <div className="min-h-screen bg-[#f6f7fb] p-10 text-slate-500">Loading account…</div>;
+  if (loading && view !== "reset") return <div className="min-h-screen bg-[#f6f7fb] p-10 text-slate-500">Loading account…</div>;
 
-  if (!user) {
+  if (!user || view === "reset") {
+    const heading = sentTo
+      ? "Check your email"
+      : view === "signup" ? "Create account"
+      : view === "forgot" ? "Reset your password"
+      : view === "reset" ? "Set a new password"
+      : "Sign in";
+    const intro = sentTo
+      ? null
+      : view === "signup" ? "Create an account to check out faster and follow the status of your orders."
+      : view === "forgot" ? "Enter the email you use with us and we’ll send you a link to choose a new password."
+      : view === "reset" ? "Choose a new password for your account."
+      : "Sign in to check out faster and follow the status of your orders.";
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0b1736] p-5 text-white">
         <div className="w-full max-w-md rounded-3xl bg-white/10 p-6 sm:p-8">
           <div className="mx-auto mb-6 w-40 rounded-2xl bg-white p-2 shadow-lg">
             <img src={OKV_WORDMARK_URL} alt="Olucha Kwantum Ventures" className="h-10 w-full object-contain" />
           </div>
-          <UserRound className="mx-auto mb-5 text-[#cfa43a]" size={40} />
-          <h1 className="text-center text-3xl font-semibold">Your Olucha account</h1>
-          <p className="mt-3 text-center leading-7 text-white/65">Sign in to check out faster and follow the status of your orders.</p>
-          <p className="mt-2 text-center text-sm leading-6 text-white/55">New accounts can’t be created online yet. Contact us if you need one.</p>
+          {sentTo
+            ? <MailCheck className="mx-auto mb-5 text-[#cfa43a]" size={40} />
+            : view === "forgot" || view === "reset"
+              ? <KeyRound className="mx-auto mb-5 text-[#cfa43a]" size={40} />
+              : <UserRound className="mx-auto mb-5 text-[#cfa43a]" size={40} />}
+          <h1 className="text-center text-3xl font-semibold">{heading}</h1>
+          {intro && <p className="mt-3 text-center leading-7 text-white/65">{intro}</p>}
+
+          {(view === "signin" || view === "signup") && !sentTo && (
+            <div className="mt-6 grid grid-cols-2 gap-1 rounded-full bg-white/10 p-1" role="tablist" aria-label="Account options">
+              <button type="button" role="tab" aria-selected={view === "signin"} className={`min-h-11 rounded-full text-sm font-bold transition ${view === "signin" ? "bg-white text-[#0b1736]" : "text-white/75 hover:text-white"}`} onClick={() => switchView("signin")}>Sign in</button>
+              <button type="button" role="tab" aria-selected={view === "signup"} className={`min-h-11 rounded-full text-sm font-bold transition ${view === "signup" ? "bg-white text-[#0b1736]" : "text-white/75 hover:text-white"}`} onClick={() => switchView("signup")}>Create account</button>
+            </div>
+          )}
+
           {!authConfigured && <p className="mt-5 rounded-xl bg-rose-400/15 p-3 text-sm text-rose-100" role="alert">Sign-in is temporarily unavailable. Please try again later or contact us on WhatsApp.</p>}
+          {notice && <p className="mt-5 rounded-xl bg-emerald-400/15 p-3 text-sm text-emerald-100" role="status">{notice}</p>}
           {error && <p className="mt-5 rounded-xl bg-rose-400/15 p-3 text-sm text-rose-100" role="alert">{error}</p>}
-          <form className="mt-6 space-y-4" onSubmit={submitSignIn}>
-            <label className="block text-sm font-semibold text-white/80">Email address
-              <input className="mt-2 block min-h-12 w-full rounded-2xl border border-white/15 bg-white px-4 text-base text-[#0b1736] outline-none placeholder:text-slate-400 focus:border-[#cfa43a] focus:ring-4 focus:ring-[#cfa43a]/30" placeholder="name@example.com" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} />
-            </label>
-            <label className="block text-sm font-semibold text-white/80">Password
-              <input className="mt-2 block min-h-12 w-full rounded-2xl border border-white/15 bg-white px-4 text-base text-[#0b1736] outline-none placeholder:text-slate-400 focus:border-[#cfa43a] focus:ring-4 focus:ring-[#cfa43a]/30" type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
-            </label>
-            <button className="min-h-12 w-full rounded-full bg-[#f7b32b] px-6 py-3 text-sm font-bold text-[#0b1736] disabled:cursor-wait disabled:opacity-60" type="submit" disabled={!authConfigured || signingIn}>
-              {signingIn ? "Signing in…" : "Sign in securely"}
-            </button>
-          </form>
+
+          {sentTo && (
+            <div className="mt-5 space-y-4 text-center" role="status">
+              <p className="leading-7 text-white/75">
+                {sentTo.kind === "signup"
+                  ? <>We’ve sent a confirmation link to <strong className="break-all text-white">{sentTo.email}</strong>. Open it to activate your account, then sign in.</>
+                  : <>If an account exists for <strong className="break-all text-white">{sentTo.email}</strong>, we’ve sent a link to reset your password.</>}
+              </p>
+              <p className="text-sm leading-6 text-white/55">Can’t find it? Check your spam or promotions folder. The link expires after a while.</p>
+              <button type="button" className={primaryButtonClass} onClick={() => { setEmail(sentTo.email); switchView("signin"); }}>Back to sign in</button>
+            </div>
+          )}
+
+          {!sentTo && view === "signin" && (
+            <form className="mt-6 space-y-4" onSubmit={submitSignIn}>
+              <label className="block text-sm font-semibold text-white/80">Email address
+                <input className={inputClass} placeholder="name@example.com" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} />
+              </label>
+              <label className="block text-sm font-semibold text-white/80">Password
+                <input className={inputClass} type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
+              </label>
+              <div className="-mt-1 flex justify-end">
+                <button type="button" className={linkButtonClass + " text-sm"} onClick={() => switchView("forgot")}>Forgot password?</button>
+              </div>
+              <button className={primaryButtonClass} type="submit" disabled={!authConfigured || submitting}>
+                {submitting ? "Signing in…" : "Sign in securely"}
+              </button>
+            </form>
+          )}
+
+          {!sentTo && view === "signup" && (
+            <form className="mt-6 space-y-4" onSubmit={submitSignUp}>
+              <label className="block text-sm font-semibold text-white/80">Full name
+                <input className={inputClass} placeholder="Your name" type="text" autoComplete="name" required value={name} onChange={(event) => setName(event.target.value)} />
+              </label>
+              <label className="block text-sm font-semibold text-white/80">Email address
+                <input className={inputClass} placeholder="name@example.com" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} />
+              </label>
+              <label className="block text-sm font-semibold text-white/80">Password
+                <input className={inputClass} type="password" autoComplete="new-password" minLength={8} required value={password} onChange={(event) => setPassword(event.target.value)} aria-describedby="password-hint" />
+                <span id="password-hint" className="mt-1 block text-xs font-normal text-white/50">At least 8 characters.</span>
+              </label>
+              <label className="block text-sm font-semibold text-white/80">Confirm password
+                <input className={inputClass} type="password" autoComplete="new-password" minLength={8} required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} />
+              </label>
+              <button className={primaryButtonClass} type="submit" disabled={!authConfigured || submitting}>
+                {submitting ? "Creating account…" : "Create account"}
+              </button>
+            </form>
+          )}
+
+          {!sentTo && view === "forgot" && (
+            <form className="mt-6 space-y-4" onSubmit={submitForgot}>
+              <label className="block text-sm font-semibold text-white/80">Email address
+                <input className={inputClass} placeholder="name@example.com" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} />
+              </label>
+              <button className={primaryButtonClass} type="submit" disabled={!authConfigured || submitting}>
+                {submitting ? "Sending…" : "Send reset link"}
+              </button>
+              <p className="text-center text-sm"><button type="button" className={linkButtonClass} onClick={() => switchView("signin")}>Back to sign in</button></p>
+            </form>
+          )}
+
+          {!sentTo && view === "reset" && hasRecoverySession === null && <p className="mt-6 text-center text-sm text-white/60">Checking your reset link…</p>}
+          {!sentTo && view === "reset" && hasRecoverySession === false && (
+            <div className="mt-6 space-y-4 text-center">
+              {!error && <p className="rounded-xl bg-rose-400/15 p-3 text-sm text-rose-100" role="alert">This reset link has expired or was already used. Please request a new one.</p>}
+              <button type="button" className={primaryButtonClass} onClick={() => { window.history.replaceState(null, "", "/account"); switchView("forgot"); }}>Request a new link</button>
+            </div>
+          )}
+          {!sentTo && view === "reset" && hasRecoverySession && (
+            <form className="mt-6 space-y-4" onSubmit={submitNewPassword}>
+              <label className="block text-sm font-semibold text-white/80">New password
+                <input className={inputClass} type="password" autoComplete="new-password" minLength={8} required value={password} onChange={(event) => setPassword(event.target.value)} />
+                <span className="mt-1 block text-xs font-normal text-white/50">At least 8 characters.</span>
+              </label>
+              <label className="block text-sm font-semibold text-white/80">Confirm new password
+                <input className={inputClass} type="password" autoComplete="new-password" minLength={8} required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} />
+              </label>
+              <button className={primaryButtonClass} type="submit" disabled={submitting}>
+                {submitting ? "Saving…" : "Save new password"}
+              </button>
+            </form>
+          )}
+
           <p className="mt-4 text-center text-sm text-white/60"><Link href="/" className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-white">Return to store</Link></p>
         </div>
       </div>

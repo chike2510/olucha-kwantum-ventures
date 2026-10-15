@@ -34,6 +34,42 @@ export function useAuth(options?: UseAuthOptions) {
     return verification.data;
   }, [meQuery.refetch]);
 
+  const signUp = useCallback(async (name: string, email: string, password: string) => {
+    if (!supabase) throw new Error("Account creation is temporarily unavailable. Please try again later.");
+
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/account`,
+        data: { full_name: name.trim() },
+      },
+    });
+    if (error) throw error;
+
+    // With email confirmation on, Supabase returns no session until the link is clicked.
+    if (data.session) {
+      await meQuery.refetch();
+      return { needsConfirmation: false };
+    }
+    return { needsConfirmation: true };
+  }, [meQuery.refetch]);
+
+  const requestPasswordReset = useCallback(async (email: string) => {
+    if (!supabase) throw new Error("Password reset is temporarily unavailable. Please try again later.");
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/account?reset=1`,
+    });
+    if (error) throw error;
+  }, []);
+
+  const updatePassword = useCallback(async (password: string) => {
+    if (!supabase) throw new Error("Password reset is temporarily unavailable. Please try again later.");
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+    await meQuery.refetch();
+  }, [meQuery.refetch]);
+
   const logout = useCallback(async () => {
     try {
       await supabase?.auth.signOut();
@@ -74,6 +110,9 @@ export function useAuth(options?: UseAuthOptions) {
     authConfigured: isSupabaseAuthConfigured,
     refresh: () => meQuery.refetch(),
     signIn,
+    signUp,
+    requestPasswordReset,
+    updatePassword,
     logout,
   };
 }
