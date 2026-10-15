@@ -23,7 +23,7 @@ function getSafeReturnPath() {
 
 type AuthView = "signin" | "signup" | "forgot" | "reset";
 
-const inputClass = "mt-2 block min-h-12 w-full rounded-2xl border border-white/15 bg-white px-4 text-base text-[#0b1736] outline-none placeholder:text-slate-400 focus:border-[#cfa43a] focus:ring-4 focus:ring-[#cfa43a]/30";
+const inputClass = "mt-2 block min-h-12 w-full rounded-2xl border border-white/15 bg-white px-4 !text-base text-[#0b1736] outline-none placeholder:text-slate-400 focus:border-[#cfa43a] focus:ring-4 focus:ring-[#cfa43a]/30";
 const primaryButtonClass = "min-h-12 w-full rounded-full bg-[#f7b32b] px-6 py-3 text-sm font-bold text-[#0b1736] disabled:cursor-wait disabled:opacity-60";
 const linkButtonClass = "inline-flex min-h-11 items-center font-semibold text-[#f7b32b] underline underline-offset-4 hover:text-white";
 
