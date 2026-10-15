@@ -2,6 +2,7 @@ import { httpServerHandler } from "cloudflare:node";
 import { createWorkerApp } from "./server/_core/workerApp.js";
 import { setWorkerEnvironment } from "./server/_core/env.js";
 import { handlePaystackHttpRequest } from "./server/payments/http.js";
+import { isMissingFileFallback } from "./server/_core/staticFallback.js";
 
 interface AssetFetcher {
   fetch(request: Request): Promise<Response>;
@@ -59,6 +60,11 @@ export default {
     }
 
     const assetResponse = await env.ASSETS.fetch(request);
+    if (isMissingFileFallback(pathname, assetResponse.headers.get("content-type"))) {
+      const notFoundHeaders = new Headers({ "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
+      for (const [name, value] of Object.entries(securityHeaders)) notFoundHeaders.set(name, value);
+      return new Response("Not found", { status: 404, headers: notFoundHeaders });
+    }
     const headers = new Headers(assetResponse.headers);
     for (const [name, value] of Object.entries(securityHeaders)) {
       headers.set(name, value);
