@@ -110,7 +110,7 @@ export function FaqPage() {
     ] },
     { id: "delivery", title: "Delivery", items: [
       { q: "How much is delivery?", a: <>Delivery within Nigeria is a flat {flat} per order, and free on orders of {threshold} or more. See <Link href="/policies/shipping">Shipping & Delivery</Link>.</> },
-      { q: "How long will delivery take?", a: <>Typically <Ph>[e.g. 1–3 business days]</Ph> within <Ph>[city/state of dispatch]</Ph> and <Ph>[e.g. 3–7 business days]</Ph> elsewhere in Nigeria once dispatched. Times are estimates.</> },
+      { q: "How long will delivery take?", a: <>Typically <Ph>[e.g. 1–3 business days]</Ph> within Delta State and <Ph>[e.g. 3–7 business days]</Ph> elsewhere in Nigeria once dispatched. Times are estimates.</> },
       { q: "How do I track my order?", a: <>Sign in and open <Link href="/account/orders">My orders</Link> to see each order's status. We may also contact you by phone or WhatsApp to arrange delivery.</> },
       { q: "Do you ship outside Nigeria?", a: <>Yes, we supply export and international buyers. Export shipments are quoted individually. <a href="/#contact">Send us an inquiry</a> with the product, quantity and destination.</> },
     ] },

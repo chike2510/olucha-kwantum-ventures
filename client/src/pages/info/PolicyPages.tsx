@@ -68,7 +68,7 @@ export function PrivacyPolicy() {
       related={[{ href: "/terms", title: "Terms & Conditions" }, { href: "/policies", title: "All policies" }]}>
       <h2 id="who-we-are">1. Who we are</h2>
       <p>{BUSINESS.legalName} (RC <Ph>{BUSINESS.rcNumber}</Ph>), of <Ph>{BUSINESS.registeredAddress}</Ph>, Nigeria ("Olucha", "we", "us") runs this online store. We are the data controller for the personal data described here.</p>
-      <p>Data protection contact: <Ph>{BUSINESS.privacyEmail}</Ph>. <Ph>[Name of Data Protection Officer, if one has been appointed]</Ph></p>
+      <p>Data protection contact: <Ph>{BUSINESS.privacyEmail}</Ph>.</p>
 
       <h2 id="data-we-collect">2. Personal data we collect</h2>
       <ul>
@@ -163,7 +163,7 @@ export function ShippingPolicy() {
       <h2 id="timelines">3. Delivery timelines</h2>
       <p>Orders are processed after your payment has been verified. Typical delivery times once an order is dispatched:</p>
       <ul>
-        <li>Within <Ph>[city/state of dispatch]</Ph>: <Ph>[e.g. 1–3 business days]</Ph></li>
+        <li>Within Delta State: <Ph>[e.g. 1–3 business days]</Ph></li>
         <li>Other states in Nigeria: <Ph>[e.g. 3–7 business days]</Ph></li>
       </ul>
       <p>These are estimates, not guarantees. Public holidays, weather, security situations and courier delays can affect delivery. Agro products are subject to seasonal availability, and we will contact you if an item is unavailable.</p>
