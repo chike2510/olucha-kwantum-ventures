@@ -94,7 +94,7 @@ export function PrivacyPolicy() {
       <ul>
         <li><strong>Paystack</strong>: payment processing.</li>
         <li><strong>Hosting and database providers</strong> (currently Cloudflare and Supabase): to host the website, store accounts and orders.</li>
-        <li><strong>Delivery and logistics partners</strong>: your name, phone number and address so they can deliver your order. <Ph>[List of courier/logistics partners]</Ph></li>
+        <li><strong>Delivery and logistics partners</strong>: your name, phone number and address so they can deliver your order. We currently use GIG Logistics and Jumia Delivery.</li>
         <li><strong>Professional advisers and authorities</strong>: where the law requires it.</li>
       </ul>
 
