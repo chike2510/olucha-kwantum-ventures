@@ -25,7 +25,7 @@ export const BUSINESS = {
   businessHours: "[business hours, e.g. Monday–Friday, 9am–5pm WAT]",
   flatShippingNaira: 2500,
   freeShippingThresholdNaira: 100000,
-  vatRatePercent: 7.5,
+  vatRatePercent: 0, // prices are VAT-inclusive; no VAT added at checkout
   returnWindowDays: "[return window, e.g. 7]",
   refundProcessingDays: "[refund processing time, e.g. 5–10 business days]",
   policiesLastUpdated: "[date of last review]",

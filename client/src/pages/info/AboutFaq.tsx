@@ -106,7 +106,7 @@ export function FaqPage() {
     { id: "payment", title: "Payment", items: [
       { q: "How can I pay?", a: <>All payments are processed by Paystack, which supports cards, bank transfer, USSD and other methods it offers in your country. We never see or store your full card details.</> },
       { q: "When is my order confirmed?", a: <>Only after our server verifies a successful payment with Paystack. If you cancel or the payment is not verified, no order is created and you are not charged.</> },
-      { q: "Are prices inclusive of VAT?", a: <>Product prices are shown in Naira. Estimated VAT ({BUSINESS.vatRatePercent}%) and delivery are added and shown in your cart and at checkout before you pay.</> },
+      { q: "Are prices inclusive of VAT?", a: <>Yes. Product prices are shown in Naira and include VAT where applicable. Only delivery is added, and it is shown in your cart and at checkout before you pay.</> },
     ] },
     { id: "delivery", title: "Delivery", items: [
       { q: "How much is delivery?", a: <>Delivery within Nigeria is a flat {flat} per order, and free on orders of {threshold} or more. See <Link href="/policies/shipping">Shipping & Delivery</Link>.</> },

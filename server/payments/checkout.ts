@@ -45,7 +45,8 @@ export function calculateCheckoutTotals(subtotalKobo: number, coupon?: string): 
     ? Math.round((subtotalKobo / 100) * 0.1) * 100
     : 0;
   const shippingKobo = subtotalKobo >= 10_000_000 ? 0 : 250_000;
-  const taxKobo = Math.round(((subtotalKobo - discountKobo) / 100) * 0.075) * 100;
+  // Prices are VAT-inclusive (like Jumia), so no tax is added at checkout.
+  const taxKobo = 0;
   const totalKobo = subtotalKobo - discountKobo + shippingKobo + taxKobo;
   if (!Number.isSafeInteger(totalKobo) || totalKobo <= 0 || totalKobo > MAX_MYSQL_INT) {
     throw new Error("The cart total is outside the supported range.");

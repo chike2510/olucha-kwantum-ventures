@@ -43,13 +43,13 @@ beforeEach(() => {
 });
 
 describe("Paystack checkout", () => {
-  it("calculates shipping, coupon and tax in integer minor units", () => {
+  it("calculates shipping and coupon in integer minor units (VAT-inclusive prices, no tax added)", () => {
     expect(calculateCheckoutTotals(1_000_000, "olucha10")).toEqual({
       subtotalKobo: 1_000_000,
       discountKobo: 100_000,
       shippingKobo: 250_000,
-      taxKobo: 67_500,
-      totalKobo: 1_217_500,
+      taxKobo: 0,
+      totalKobo: 1_150_000,
     });
   });
 
@@ -79,7 +79,7 @@ describe("Paystack checkout", () => {
     const requestBody = JSON.parse(String(capturedRequest?.body));
     const intent = vi.mocked(createPaymentIntent).mock.calls[0]?.[0];
 
-    expect(requestBody.amount).toBe("1217500");
+    expect(requestBody.amount).toBe("1150000");
     expect(requestBody.currency).toBe("NGN");
     expect(requestBody.callback_url).toBe("https://preview.example/api/payments/paystack/callback");
     expect(requestBody.metadata.cancel_action).toContain("/api/payments/paystack/cancel?reference=");
@@ -91,10 +91,10 @@ describe("Paystack checkout", () => {
       unitPriceKobo: 500_000,
       variant: null,
     }]);
-    expect(intent?.totalKobo).toBe(1_217_500);
+    expect(intent?.totalKobo).toBe(1_150_000);
     expect(intent?.customerEmail).toBe("buyer@example.com");
     expect(result.authorizationUrl).toBe("https://checkout.paystack.com/test-checkout");
-    expect(result.totalKobo).toBe(1_217_500);
+    expect(result.totalKobo).toBe(1_150_000);
     expect(updatePaymentIntentStatus).toHaveBeenCalledWith(result.reference, "pending");
   });
 
@@ -110,10 +110,10 @@ describe("Paystack checkout", () => {
   it("creates an order only after successful verification matches reference, test domain, amount and currency", async () => {
     const fetcher: typeof fetch = async () => jsonResponse({
       status: true,
-      data: { reference: "okv-test-reference", status: "success", amount: 1_217_500, currency: "NGN", domain: "test" },
+      data: { reference: "okv-test-reference", status: "success", amount: 1_150_000, currency: "NGN", domain: "test" },
     });
     const completer = createPaystackPaymentCompleter({
-      getIntent: async () => ({ reference: "okv-test-reference", totalKobo: 1_217_500, currency: "NGN" }),
+      getIntent: async () => ({ reference: "okv-test-reference", totalKobo: 1_150_000, currency: "NGN" }),
       verifyTransaction: (secret, reference) => verifyPaystackTransaction(secret, reference, fetcher),
       updateIntentStatus: vi.fn().mockResolvedValue(undefined),
       createPaidOrder: vi.fn().mockResolvedValue({ orderId: 73, created: true }),
@@ -131,7 +131,7 @@ describe("Paystack checkout", () => {
       data: { reference: "okv-test-reference", status: "success", amount: 1, currency: "NGN", domain: "test" },
     });
     const completer = createPaystackPaymentCompleter({
-      getIntent: async () => ({ reference: "okv-test-reference", totalKobo: 1_217_500, currency: "NGN" }),
+      getIntent: async () => ({ reference: "okv-test-reference", totalKobo: 1_150_000, currency: "NGN" }),
       verifyTransaction: (secret, reference) => verifyPaystackTransaction(secret, reference, fetcher),
       updateIntentStatus: updateStatus,
       createPaidOrder,
@@ -146,10 +146,10 @@ describe("Paystack checkout", () => {
     const createPaidOrder = vi.fn().mockResolvedValue({ orderId: 73, created: true });
     const fetcher: typeof fetch = async () => jsonResponse({
       status: true,
-      data: { reference: "okv-test-reference", status: "success", amount: 1_217_500, currency: "NGN", domain: "live" },
+      data: { reference: "okv-test-reference", status: "success", amount: 1_150_000, currency: "NGN", domain: "live" },
     });
     const completer = createPaystackPaymentCompleter({
-      getIntent: async () => ({ reference: "okv-test-reference", totalKobo: 1_217_500, currency: "NGN" }),
+      getIntent: async () => ({ reference: "okv-test-reference", totalKobo: 1_150_000, currency: "NGN" }),
       verifyTransaction: (secret, reference) => verifyPaystackTransaction(secret, reference, fetcher),
       updateIntentStatus: vi.fn().mockResolvedValue(undefined),
       createPaidOrder,

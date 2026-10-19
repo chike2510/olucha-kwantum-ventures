@@ -154,7 +154,7 @@ export function ShippingPolicy() {
       <ul>
         <li><strong>Within Nigeria:</strong> a flat delivery fee of <strong>{flat}</strong> per order.</li>
         <li><strong>Free delivery</strong> on orders with a product subtotal of <strong>{threshold}</strong> or more.</li>
-        <li>The delivery fee, estimated VAT ({BUSINESS.vatRatePercent}%) and any discount are shown in your cart and at checkout before you pay. The amount on Paystack's payment page is the amount you will be charged.</li>
+        <li>Product prices include VAT where applicable. The delivery fee and any discount are shown in your cart and at checkout before you pay. The amount on Paystack's payment page is the amount you will be charged.</li>
       </ul>
 
       <h2 id="coverage">2. Where we deliver</h2>
@@ -287,7 +287,7 @@ export function Terms() {
       <h2 id="products">4. Products and prices</h2>
       <ul>
         <li>We sell electronics, fashion and agro products. We try to describe and picture every product accurately, but colours and appearance may vary slightly, and agro products are natural goods that vary by season and batch.</li>
-        <li>All prices are in Nigerian Naira (₦). Delivery, estimated VAT and any discount are shown before you pay.</li>
+        <li>All prices are in Nigerian Naira (₦). Prices include VAT where applicable. Delivery and any discount are shown before you pay.</li>
         <li>If a price is clearly wrong because of an error, we may cancel the order and refund you in full, even after payment.</li>
         <li>All products are subject to availability.</li>
       </ul>

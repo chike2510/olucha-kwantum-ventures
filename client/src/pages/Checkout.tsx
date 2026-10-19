@@ -31,7 +31,7 @@ export default function Checkout() {
   const coupon = localStorage.getItem("olucha-cart-coupon") || "";
   const discount = coupon.toUpperCase() === "OLUCHA10" ? Math.round(subtotal * 0.1) : 0;
   const shipping = subtotal === 0 ? 0 : subtotal >= BUSINESS.freeShippingThresholdNaira ? 0 : BUSINESS.flatShippingNaira;
-  const tax = Math.round((subtotal - discount) * 0.075);
+  const tax = 0; // prices are VAT-inclusive
   const total = subtotal - discount + shipping + tax;
   const update = (field: keyof typeof form, value: string) => {
     setPendingAuthorization(null);
@@ -150,10 +150,10 @@ export default function Checkout() {
           <aside className="h-fit rounded-[2rem] bg-[#0b1736] p-7 text-white">
             <p className="text-xs font-bold uppercase tracking-[.16em] text-[#e1ba56]">Your order</p>
             <div className="mt-7 space-y-4">{summaryLines.map((line, index) => <div key={`${line.name}-${index}`} className="flex justify-between gap-4 text-sm"><span className="min-w-0 text-white/70">{line.name}</span><span className="shrink-0 font-semibold">{formatNaira(line.total)}</span></div>)}{!items.length && <p className="text-sm text-white/60">Your cart is empty. <Link href="/shop" className="text-[#e1ba56] underline">Browse products</Link></p>}</div>
-            <div className="my-7 space-y-3 border-t border-white/15 pt-6 text-sm"><div className="flex justify-between text-white/70"><span>Subtotal</span><span>{formatNaira(subtotal)}</span></div><div className="flex justify-between text-white/70"><span>Shipping</span><span>{shipping ? formatNaira(shipping) : "Free"}</span></div><div className="flex justify-between text-white/70"><span>Estimated tax</span><span>{formatNaira(tax)}</span></div><div className="flex justify-between text-white/70"><span>Discount</span><span>{discount ? `−${formatNaira(discount)}` : formatNaira(0)}</span></div></div>
-            <div className="flex items-end justify-between"><span className="font-semibold">Estimated total</span><span className="text-2xl font-bold">{formatNaira(total)}</span></div>
+            <div className="my-7 space-y-3 border-t border-white/15 pt-6 text-sm"><div className="flex justify-between text-white/70"><span>Subtotal</span><span>{formatNaira(subtotal)}</span></div><div className="flex justify-between text-white/70"><span>Shipping</span><span>{shipping ? formatNaira(shipping) : "Free"}</span></div><div className="flex justify-between text-white/70"><span>Discount</span><span>{discount ? `−${formatNaira(discount)}` : formatNaira(0)}</span></div></div>
+            <div className="flex items-end justify-between"><span className="font-semibold">Total</span><span className="text-2xl font-bold">{formatNaira(total)}</span></div>
             {serverTotal !== null && <p className="mt-3 text-sm font-semibold text-[#e1ba56]">Total to pay: {formatNaira(serverTotal)}</p>}
-            <p className="mt-4 text-xs leading-5 text-white/50">Prices, delivery, discounts and tax are confirmed when you continue. Paystack's secure page shows the exact amount before you pay.</p>
+            <p className="mt-4 text-xs leading-5 text-white/50">Prices include VAT where applicable. Prices, delivery and discounts are confirmed when you continue. Paystack's secure page shows the exact amount before you pay.</p>
           </aside>
         </div>
       </main>
