@@ -13,7 +13,7 @@ export function greeting(date = new Date()) {
   return "Good evening";
 }
 
-export default function AdminOverview({ products, orders, inquiries, posts, onNavigate }: { products: AdminProduct[]; orders: AdminOrder[]; inquiries: AdminInquiry[]; posts: AdminBlogPost[]; onNavigate: (section: AdminSection) => void }) {
+export default function AdminOverview({ products, orders, inquiries, posts, loading, errors, onNavigate }: { products: AdminProduct[]; orders: AdminOrder[]; inquiries: AdminInquiry[]; posts: AdminBlogPost[]; loading: { products: boolean; orders: boolean; inquiries: boolean; posts: boolean }; errors: { products: boolean; orders: boolean; inquiries: boolean; posts: boolean }; onNavigate: (section: AdminSection) => void }) {
   const paidOrders = orders.filter((order) => PAID_STATUSES.has(order.status));
   const paidRevenue = paidOrders.reduce((sum, order) => sum + order.totalKobo, 0);
   const weekAgo = Date.now() - 7 * DAY_MS;
@@ -25,27 +25,28 @@ export default function AdminOverview({ products, orders, inquiries, posts, onNa
   const publishedPosts = posts.filter((post) => post.status === "published").length;
 
   const checklist = [
-    { label: "At least one active product in the catalogue", done: activeProducts.length > 0, detail: `${activeProducts.length} active` },
-    { label: "Every active product has an image", done: activeProducts.length > 0 && activeWithImages === activeProducts.length, detail: `${activeWithImages} of ${activeProducts.length} with images` },
+    { label: "At least one active product in the catalogue", done: !errors.products && !loading.products && activeProducts.length > 0, unavailable: errors.products || loading.products, detail: errors.products ? "Temporarily unavailable — reload to retry" : loading.products ? "Loading catalogue…" : `${activeProducts.length} active` },
+    { label: "Every active product has an image", done: !errors.products && !loading.products && activeProducts.length > 0 && activeWithImages === activeProducts.length, unavailable: errors.products || loading.products, detail: errors.products ? "Temporarily unavailable — reload to retry" : loading.products ? "Loading catalogue…" : `${activeWithImages} of ${activeProducts.length} with images` },
     { label: "WhatsApp contact number configured", done: WHATSAPP_NUMBER.trim().length > 0, detail: WHATSAPP_NUMBER ? "set in site config" : "missing in site config" },
     { label: "Facebook page linked", done: FACEBOOK_PAGE_URL.trim().length > 0, detail: FACEBOOK_PAGE_URL ? "linked" : "not set yet" },
-    { label: "At least one published news article", done: publishedPosts > 0, detail: `${publishedPosts} published` },
+    { label: "At least one published news article", done: !errors.posts && !loading.posts && publishedPosts > 0, unavailable: errors.posts || loading.posts, detail: errors.posts ? "Temporarily unavailable — reload to retry" : loading.posts ? "Loading articles…" : `${publishedPosts} published` },
   ];
   const doneCount = checklist.filter((item) => item.done).length;
+  const availableChecks = checklist.filter((item) => !item.unavailable).length;
 
   return <>
     <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-      <Stat label="Paid revenue" value={formatNaira(paidRevenue)} note={`${paidOrders.length} paid ${paidOrders.length === 1 ? "order" : "orders"}, all time`}/>
-      <Stat label="Paid orders · last 7 days" value={String(paidLastWeek)} note="paid, processing, shipped or delivered"/>
-      <Stat label="Pending orders" value={String(pendingOrders)} note="awaiting Paystack payment"/>
-      <Stat label="New inquiries" value={String(newInquiries)} note="needs review"/>
+      <Stat label="Paid revenue" value={loading.orders ? "Loading…" : errors.orders ? "Unavailable" : formatNaira(paidRevenue)} note={loading.orders ? "Loading orders…" : errors.orders ? "Orders could not be loaded — reload to retry" : `${paidOrders.length} paid ${paidOrders.length === 1 ? "order" : "orders"}, all time`}/>
+      <Stat label="Paid orders · last 7 days" value={loading.orders ? "Loading…" : errors.orders ? "Unavailable" : String(paidLastWeek)} note={loading.orders ? "Loading orders…" : errors.orders ? "Orders could not be loaded — reload to retry" : "paid, processing, shipped or delivered"}/>
+      <Stat label="Pending orders" value={loading.orders ? "Loading…" : errors.orders ? "Unavailable" : String(pendingOrders)} note={loading.orders ? "Loading orders…" : errors.orders ? "Orders could not be loaded — reload to retry" : "awaiting Paystack payment"}/>
+      <Stat label="New inquiries" value={loading.inquiries ? "Loading…" : errors.inquiries ? "Unavailable" : String(newInquiries)} note={loading.inquiries ? "Loading inquiries…" : errors.inquiries ? "Inquiries could not be loaded — reload to retry" : "needs review"}/>
     </div>
     <div className="mt-8 grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
       <div className="min-w-0 rounded-3xl bg-white p-4 shadow-sm sm:p-6"><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#1f5b9f]">Export desk</p><h2 className="mt-1 text-xl font-semibold">Recent inquiries</h2></div><button type="button" onClick={() => onNavigate("inquiries")} className="text-sm font-bold text-[#1f5b9f]">View all</button></div>
-        <div className="mt-6 space-y-3">{inquiries.slice(0, 4).map((item) => <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-4"><div className="min-w-0"><p className="truncate font-semibold">{item.productInterest}</p><p className="mt-1 truncate text-xs text-slate-500">{item.fullName} · {item.destinationCountry}</p></div><StatusBadge status={item.status}/></div>)}{!inquiries.length && <EmptyState>New export inquiries will appear here.</EmptyState>}</div>
+        <div className="mt-6 space-y-3">{loading.inquiries ? <EmptyState>Loading inquiries…</EmptyState> : errors.inquiries ? <EmptyState>Inquiries are temporarily unavailable. Reload the page to retry.</EmptyState> : <>{inquiries.slice(0, 4).map((item) => <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-4"><div className="min-w-0"><p className="truncate font-semibold">{item.productInterest}</p><p className="mt-1 truncate text-xs text-slate-500">{item.fullName} · {item.destinationCountry}</p></div><StatusBadge status={item.status}/></div>)}{!inquiries.length && <EmptyState>New export inquiries will appear here.</EmptyState>}</>}</div>
       </div>
-      <div className="rounded-3xl bg-[#0b1736] p-6 text-white"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#cfa43a]">Launch checklist</p><h2 className="mt-2 text-xl font-semibold">{doneCount} of {checklist.length} complete</h2><p className="mt-1 text-xs text-white/50">Checked live from the catalogue, content and site config.</p>
-        <ul className="mt-6 space-y-4 text-sm">{checklist.map((item) => <li key={item.label} className="flex items-start gap-3">{item.done ? <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-emerald-400"/> : <Circle size={18} className="mt-0.5 shrink-0 text-white/35"/>}<span><span className={item.done ? "text-white" : "text-white/75"}>{item.label}</span><span className="block text-xs text-white/45">{item.detail}</span></span></li>)}</ul>
+      <div className="rounded-3xl bg-[#0b1736] p-6 text-white"><p className="text-xs font-bold uppercase tracking-[.16em] text-[#cfa43a]">Launch checklist</p><h2 className="mt-2 text-xl font-semibold">{doneCount} of {availableChecks} available checks complete</h2><p className="mt-1 text-xs text-white/50">Checked live from the catalogue, content and site config.{availableChecks < checklist.length ? " Some checks are temporarily unavailable — reload to retry." : ""}</p>
+        <ul className="mt-6 space-y-4 text-sm">{checklist.map((item) => <li key={item.label} className="flex items-start gap-3">{item.unavailable ? <Circle size={18} className="mt-0.5 shrink-0 text-amber-300"/> : item.done ? <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-emerald-400"/> : <Circle size={18} className="mt-0.5 shrink-0 text-white/35"/>}<span><span className={item.unavailable ? "text-amber-100" : item.done ? "text-white" : "text-white/75"}>{item.label}</span><span className="block text-xs text-white/45">{item.detail}</span></span></li>)}</ul>
       </div>
     </div>
   </>;

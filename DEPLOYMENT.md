@@ -1,51 +1,62 @@
-# Olucha Kwantum Ventures — Preview deployment
+# Olucha Kwantum Ventures — Cloudflare test deployment
 
-## Deployment boundaries
+## Approved target and boundaries
 
-The approved preview branch is `cloudflare-preview`. Its Vercel deployment uses the Node.js Lambda/Express API (`api/[...path].ts`) and the Vite output in `dist/public`. Do not merge this work into `main`, change Vercel Production settings, or point it at a production database.
+The owner has approved the existing, unlaunched Cloudflare Worker `olucha-kwantum-ventures` as the test/Preview target, despite its Cloudflare environment label being Production. Its public URL is `https://olucha-kwantum-ventures.onovochikeziri84.workers.dev`. Do not create a second Worker, modify `main`, touch a production database, enable live Paystack, create CJ supplier orders, or make supplier payments.
 
-The repository retains a separate Cloudflare Worker entrypoint. `pnpm build` runs the Vite build and a Wrangler **dry run**; it does not publish a Worker or a Vercel deployment. Do not use `pnpm deploy:worker` to deploy this Vercel Preview. A push to `cloudflare-preview` triggers its Vercel Preview deployment.
+The working branch is `work/cjdropshipping-preview`, based on the current `cloudflare-preview` source. Keep changes uncommitted/unpushed until the combined catalogue, Admin-image, footer and CJ work is validated. A push to `cloudflare-preview` can trigger `.github/workflows/deploy-cloudflare.yml` and publish the Worker; do not push as a substitute for review or while deployment is paused.
 
-## Supabase preview database
+`pnpm build` performs a Vite build and Wrangler **dry run** only. It does not publish. Rebuild `dist/public` after all source changes; never deploy stale generated assets.
 
-Use only the isolated Supabase project `olucha-kwantum-preview` (`zmaysbnlgctesemrhkqw`, `eu-west-2`). The app connects directly to PostgreSQL through the Supabase **shared transaction pooler**. The pooler host came from this project's Connect panel; the custom-role username format is `[ROLE].[PROJECT-REF]`.
+## Preview database and Hyperdrive
 
-These variables are configured on Vercel Preview for branch `cloudflare-preview` only:
+Use only isolated Supabase project `zmaysbnlgctesemrhkqw` (`olucha-kwantum-preview`, eu-west-2). The existing binding is `HYPERDRIVE`, configuration ID `a6efd5bff1a2435a87e3f7740968de7d`, named `okv-preview-db`. Its origin is the Supabase shared pooler on port 5432, database `postgres`, with the dedicated Preview application role. Keep this exact binding in `wrangler.jsonc`; never substitute another resource.
 
-| Variable | Value or purpose | Handling |
-| --- | --- | --- |
-| `DATABASE_URL` | `postgresql://okv_preview_app.zmaysbnlgctesemrhkqw@aws-0-eu-west-2.pooler.supabase.com:6543/postgres` | Sensitive Preview variable; contains no password or `sslmode` query parameter. |
-| `DATABASE_PASSWORD` | Password for the `okv_preview_app` PostgreSQL login | Sensitive Preview secret; keep separate from the URL. |
-| `PAYSTACK_SECRET_KEY` | Paystack test secret beginning `sk_test_` | Sensitive Preview secret only; never use a live key or expose it as `VITE_*`. |
+Workers use the Hyperdrive-provided connection string. Node/Vercel development retains its separate strict-TLS PostgreSQL path using `DATABASE_URL` and `DATABASE_PASSWORD`. Keep passwords and connection credentials server-side. The app role is least-privilege; public/anon/authenticated roles must not gain direct access to application tables.
 
-The server parses the URL into host, port, role, and database, then passes `DATABASE_PASSWORD` separately to `pg`. This avoids `pg`'s connection-string parsing from overriding the separately supplied password. The pool supplies the Supabase Root 2021 CA and verifies both the certificate chain and hostname. Keep TLS verification enabled. The client pool is limited to one connection per warm serverless instance. Drizzle's node-postgres adapter does not name prepared statements, as required for Supavisor transaction mode.
+The CJ migration is `supabase/migrations/0001_cj_preview_manual_handoff.sql`. It adds RLS-protected `cj_product_links` and `orders.verifiedPaymentAt`. The coordinator reported that it has been applied only to the isolated Preview project. Do not reapply blindly or run it against another database. Verify schema/grants read-only before a future deployment.
 
-The server uses a least-privilege database login, not a browser key. RLS is enabled on the eight application tables; `okv_preview_app` has only `SELECT`/`INSERT`/`UPDATE` and sequence usage, with no `DELETE`, superuser, database-creation, role-creation, or RLS-bypass privilege. The Supabase `anon` and `authenticated` roles have no access to application tables. Do not put the database password or any Supabase secret in browser code or frontend build variables.
+## Runtime values for this test target
 
-## Schema and preview products
+| Name | Required handling |
+| --- | --- |
+| `VERCEL_ENV` | Exact value `preview`; retained as the server's existing CJ environment guard even on Cloudflare. |
+| `CJ_SYNC_ENABLED` | Exact value `true` only on this approved test target when ready to test. |
+| `CJ_API_KEY` | Cloudflare server-side secret from the saved CJ credential; never a `VITE_*` variable or client asset. |
+| `PAYSTACK_SECRET_KEY` | Saved `sk_test_` key only. Never use a live key. |
+| `PAYSTACK_LIVE_ENABLED` | Unset or exact `false`; never `true` on this target. |
+| `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | Approved Preview Auth project only; the API verifies bearer tokens. |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` | Public browser Auth values only; never service-role/database credentials. |
+| JWT/admin/storage secrets | Preserve existing server-side values and unrelated settings. |
 
-Drizzle generates PostgreSQL migrations into `supabase/migrations/`. Migration `supabase_preview_postgres_schema` is applied only to project `zmaysbnlgctesemrhkqw`; it creates the app tables, enables RLS, grants app-only access, adds timestamp triggers, and seeds three active, visibly labeled `[PREVIEW TEST]` products. Their descriptions and specifications state that the items are not for fulfillment and checkout is Paystack test mode only. Prices are small test amounts in NGN kobo.
+No Cloudflare runtime values have been changed as part of local source reconciliation. Confirm them before publishing; do not assume a local declaration proves a remote secret exists.
 
-The applied product rows and RLS/grants were verified. The app's real Drizzle lookup for a seeded product also succeeded through the strict-TLS pooler connection. Do not run these migrations against Production, `main`, or any other Supabase project.
+## Catalogue and Admin behavior
 
-## Supabase Auth for the Preview app
+The storefront must display only active backend products created through Admin, with explicit loading, error and empty states. Never fall back to hard-coded/demo products, including on direct product URLs or persisted-cart recovery. Keep legitimate orders, inquiries and contact messages; removing demo UI is not authorization to delete records.
 
-Customer sign-in on `cloudflare-preview` uses the isolated Supabase project's email/password Auth provider. The frontend uses only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`; the API verifies bearer tokens against Supabase Auth using `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. These values are public and must be scoped to Vercel Preview for `cloudflare-preview` only. Never use a service-role key in browser or app code. The app supports sign-in to an existing account only; it does not register users as part of the checkout test. The server maps a verified Supabase Auth user ID to the app's `users.openId` record and keeps protected checkout procedures authenticated.
+The legacy `0000_conscious_darwin.sql` migration inserts three clearly marked Preview test fixtures. Follow-up migration `0002_hide_preview_seed_products.sql` retains those rows (and all order references) but sets only those exact `previewTest` fixtures inactive. It is data-only and idempotent; it deletes no products or customer records. Public News cards/articles likewise come only from published Admin blog posts, with explicit loading, error and empty states rather than sample fallback articles.
 
-## Paystack preview checks
+The Admin product editor supports name, category, price, unit, image upload or link, description, save/cancel and a draft-only live preview. An accepted 8 MiB image expands to about 10.67 MiB in base64 JSON; the Worker body parser allows a bounded 12 MiB envelope and has a regression test.
 
-The Preview branch uses only the Paystack test key. Verify checkout against the active preview SKUs, using server-fetched product prices and server-side transaction verification; do not attempt a live payment. Keep callbacks and webhooks on the deployed Preview HTTPS hostname and configure test mode only. Preview test items are not for fulfillment.
+Remove only the footer sentence `Prices in Nigerian Naira (₦). Payments processed securely by Paystack.` Other payment copy is unchanged.
 
-Live keys are gated in code: the server accepts an `sk_live_` key only when the Worker variable `PAYSTACK_LIVE_ENABLED` is exactly `true`. With it unset (the default — do not set it on Preview), only `sk_test_` keys and `test`-domain transactions are accepted. In both modes, verification requires the transaction's reference, amount (kobo) and currency to match the stored payment intent, and its domain (`test`/`live`) to match the mode of the configured key.
+## CJ reads and manual review
 
-## Automatic deploys (GitHub Actions)
+CJ procedures require admin authentication, `VERCEL_ENV=preview`, `CJ_SYNC_ENABLED=true`, and a server-only key. Calls are restricted to authentication, product details and inventory reads. Supplier mappings/cache are separate from the retail catalogue and must not overwrite retail title, description, price or image or automatically publish supplier products.
 
-`.github/workflows/deploy-cloudflare.yml` runs on every push to `cloudflare-preview`: `pnpm install --frozen-lockfile`, `pnpm build`, then `npx wrangler deploy` with `wrangler.jsonc` (Worker + static assets). It needs the repository secret `CLOUDFLARE_API_TOKEN` (a Cloudflare API token with *Workers Scripts: Edit* on the account). The account ID `76f855d8825241bb134fb6c7098a9724` is built into the workflow; a `CLOUDFLARE_ACCOUNT_ID` secret or variable overrides it. Worker secrets (database, Supabase, Paystack, admin) stay in Cloudflare and are not touched by the workflow. The public build values `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are read from repository variables of the same names when set.
+Mapped products are blocked from checkout without a successful fresh stock check, after 24 hours, or when requested quantity exceeds stored stock. Unmapped products are unaffected.
 
-## Error responses
+A manual handoff is a downloadable JSON review draft only for a paid order with server-recorded Paystack verification timestamp. It does not submit a CJ order or authorize payment. Test orders must never be fulfilled.
 
-Outside `NODE_ENV=development`, tRPC responses never include stack traces, and unexpected server failures return a generic message; details are logged server-side (`wrangler tail`). Express errors return `{ "error": "Internal server error" }`.
+## Validation before any future publish
 
-## Validation
+Resolve all merge conflicts, install the matching lockfile, run TypeScript and the complete test suite with disposable test-only admin values, then run the fresh Vite/Wrangler dry run. Confirm both `ASSETS` and the exact `HYPERDRIVE` ID appear. Inspect client assets for secret leakage and verify no demo product fallback or removed footer sentence remains.
 
-The local TypeScript check passes, all 37 unit tests pass with disposable test-only admin values, and the Vite/Wrangler dry-run build passes. The generated browser assets were checked and contain no database CA, database password, or database URL. `main` and Vercel Production settings remain unchanged.
+After an explicitly authorized publish, smoke-test the public app, empty catalogue behavior, Admin upload, and one authenticated read-only CJ product/stock refresh. A build or dry run is not proof of deployed runtime compatibility. No live payments, supplier orders or supplier payments are permitted.
+
+## Current local verification
+
+The local source passes TypeScript and all 109 tests across 27 files. A fresh Vite/Wrangler dry run lists `ASSETS` and the exact approved `HYPERDRIVE` ID; it did not deploy. The storefront and News pages now show only backend-active products and published Admin posts, with separate loading, error and successful-empty states. Cart snapshots stay hidden until active products are verified. Admin metrics and record lists show loading/unavailable states instead of false zeroes after query failures. The data-only `0002_hide_preview_seed_products.sql` retains and deactivates only the marked legacy fixtures. A prior disconnected local UI check confirmed an empty backend yields no demo product cards and that name/category/price/unit/description update the separate draft-only preview; the draft was cancelled without saving. The Worker database path fails closed if its Hyperdrive binding is missing, and Preview rejects live Paystack keys even if a live-enable flag is accidentally present.
+
+No code has been pushed or deployed from this work. The combined source has not yet been tested as a deployed Cloudflare runtime or with a fresh authenticated CJ sync; those checks remain required after deployment is authorized.

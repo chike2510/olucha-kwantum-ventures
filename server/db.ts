@@ -10,6 +10,7 @@ import {
   blogPosts,
   orders,
   orderItems,
+  cjProductLinks,
   Product,
   InsertProduct,
 } from "../drizzle/schema.js";
@@ -30,6 +31,11 @@ export async function getDb() {
     pool.on("error", (error) => console.warn("[Database] Hyperdrive connection error:", error));
     return drizzle(pool);
   }
+  if (ENV.isWorkerRuntime) {
+    console.warn("[Database] Worker Hyperdrive binding is unavailable.");
+    return null;
+  }
+
   const databaseUrl = ENV.databaseUrl;
   if (!_db && databaseUrl) {
     try {
@@ -58,15 +64,12 @@ export async function getDb() {
         database: databaseName,
         password: databasePassword,
         ssl: { ca: SUPABASE_ROOT_CA, rejectUnauthorized: true },
-        // Supabase recommends a single app-side connection for serverless instances.
         max: 1,
         connectionTimeoutMillis: 10_000,
         idleTimeoutMillis: 10_000,
         allowExitOnIdle: true,
       });
       _pool.on("error", (error) => console.warn("[Database] Idle PostgreSQL connection error:", error));
-      // Drizzle's node-postgres adapter sends unnamed queries; Supavisor transaction mode
-      // does not support explicitly named/prepared statements.
       _db = drizzle(_pool);
     } catch (error) {
       console.warn("[Database] Failed to initialize:", error);
@@ -81,7 +84,6 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) throw new Error("User openId is required for upsert");
   const db = await getDb();
   if (!db) return;
-
   const values: InsertUser = { openId: user.openId };
   const updateSet: Partial<InsertUser> = {};
   for (const field of ["name", "email", "loginMethod"] as const) {
@@ -103,7 +105,6 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
   if (!values.lastSignedIn) values.lastSignedIn = new Date();
   if (!Object.keys(updateSet).length) updateSet.lastSignedIn = new Date();
-
   await db.insert(users).values(values).onConflictDoUpdate({ target: users.openId, set: updateSet });
 }
 
@@ -119,21 +120,42 @@ export async function listProducts(search?: string, category?: string) {
   if (!db) return [];
   const filters: SQL[] = [eq(products.isActive, 1)];
   if (category && category !== "All products") filters.push(eq(products.category, category));
-  if (search) {
-    filters.push(or(
-      ilike(products.name, `%${search}%`),
-      ilike(products.category, `%${search}%`),
-      ilike(products.description, `%${search}%`),
-    )!);
-  }
-  return db.select().from(products).where(and(...filters)!).orderBy(desc(products.createdAt));
+  if (search) filters.push(or(
+    ilike(products.name, `%${search}%`),
+    ilike(products.category, `%${search}%`),
+    ilike(products.description, `%${search}%`),
+  )!);
+  const rows = await db
+    .select({ product: products, link: cjProductLinks })
+    .from(products)
+    .leftJoin(cjProductLinks, eq(cjProductLinks.productId, products.id))
+    .where(and(...filters)!)
+    .orderBy(desc(products.createdAt))
+    .limit(100);
+  return rows.map(({ product, link }) => ({
+    ...product,
+    supplierMapped: Boolean(link),
+    supplierStock: link?.stockQuantity ?? null,
+    supplierStockSyncedAt: link?.stockSyncedAt ?? null,
+  }));
 }
 
 export async function getProductBySlug(slug: string) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(products).where(eq(products.slug, slug)).limit(1);
-  return result[0] ?? null;
+  const result = await db
+    .select({ product: products, link: cjProductLinks })
+    .from(products)
+    .leftJoin(cjProductLinks, eq(cjProductLinks.productId, products.id))
+    .where(and(eq(products.slug, slug), eq(products.isActive, 1))!)
+    .limit(1);
+  const row = result[0];
+  return row ? {
+    ...row.product,
+    supplierMapped: Boolean(row.link),
+    supplierStock: row.link?.stockQuantity ?? null,
+    supplierStockSyncedAt: row.link?.stockSyncedAt ?? null,
+  } : null;
 }
 
 export async function createProduct(input: InsertProduct) {
@@ -154,10 +176,7 @@ export async function createExportInquiry(input: typeof exportInquiries.$inferIn
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const [created] = await db.insert(exportInquiries).values(input).returning({ id: exportInquiries.id });
-  await notifyOwner({
-    title: "New export inquiry",
-    content: `${input.fullName} requested ${input.productInterest} for ${input.destinationCountry}. Contact: ${input.email}. Quantity: ${input.quantity || "Not specified"}.`,
-  }).catch((error) => console.warn("[Notification] Export inquiry alert failed:", error));
+  await notifyOwner({ title: "New export inquiry", content: `${input.fullName} requested ${input.productInterest} for ${input.destinationCountry}. Contact: ${input.email}. Quantity: ${input.quantity || "Not specified"}.` }).catch((error) => console.warn("[Notification] Export inquiry alert failed:", error));
   if (!created) throw new Error("Database did not return the export inquiry ID");
   return { id: created.id };
 }
@@ -186,7 +205,42 @@ export async function updateExportInquiryStatus(id: number, status: "new" | "rev
 export async function listAllProducts() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(products).orderBy(desc(products.createdAt));
+  const rows = await db.select({ product: products, cjLink: cjProductLinks }).from(products).leftJoin(cjProductLinks, eq(cjProductLinks.productId, products.id)).orderBy(desc(products.createdAt)).limit(200);
+  return rows.map(({ product, cjLink }) => ({ ...product, cjLink }));
+}
+
+export async function getCjProductLinkByProductId(productId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const result = await db.select().from(cjProductLinks).where(eq(cjProductLinks.productId, productId)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function saveCjProductMapping(productId: number, cjProductId: string, cjVariantId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const [link] = await db.insert(cjProductLinks).values({ productId, cjProductId, cjVariantId }).onConflictDoUpdate({
+    target: cjProductLinks.productId,
+    set: { cjProductId, cjVariantId, cjProductSku: null, cjVariantSku: null, cjProductName: null, cjVariantName: null, cjImageUrl: null, stockQuantity: null, stockSyncedAt: null },
+  }).returning();
+  if (!link) throw new Error("CJ product mapping could not be saved");
+  return link;
+}
+
+export async function updateCjProductSync(productId: number, cjProductId: string, cjVariantId: string, sync: {
+  cjProductName: string;
+  cjVariantName: string;
+  cjProductSku: string | null;
+  cjVariantSku: string | null;
+  cjImageUrl: string | null;
+  stockQuantity: number;
+  stockSyncedAt: Date;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const result = await db.update(cjProductLinks).set(sync).where(and(eq(cjProductLinks.productId, productId), eq(cjProductLinks.cjProductId, cjProductId), eq(cjProductLinks.cjVariantId, cjVariantId))).returning({ id: cjProductLinks.id });
+  if (!result[0]) throw new Error("CJ product mapping changed during sync; no stock data was saved.");
+  return { success: true };
 }
 
 async function attachOrderItems<T extends { id: number }>(rows: T[]) {
@@ -265,14 +319,10 @@ export async function getOrderById(id: number) {
 }
 
 type OrderStatusValue = "pending" | "paid" | "processing" | "shipped" | "delivered" | "cancelled";
-
-/** Updates an order's status only if it is still in the expected status (guards against races). */
 export async function updateOrderStatusFrom(id: number, from: OrderStatusValue, to: OrderStatusValue) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
-  const updated = await db.update(orders).set({ status: to })
-    .where(and(eq(orders.id, id), eq(orders.status, from))!)
-    .returning({ id: orders.id });
+  const updated = await db.update(orders).set({ status: to }).where(and(eq(orders.id, id), eq(orders.status, from))!).returning({ id: orders.id });
   return { success: updated.length > 0 };
 }
 

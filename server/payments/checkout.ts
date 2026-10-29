@@ -12,6 +12,7 @@ import {
   matchesVerifiedPayment,
   verifyPaystackTransaction,
 } from "./paystack.js";
+import { isSupplierQuantityAvailable } from "../../shared/supplierStock.js";
 
 export type CheckoutItem = {
   slug: string;
@@ -92,6 +93,14 @@ export async function initializePaymentCheckout(
     const product = bySlug.get(item.slug);
     if (!product || product.isActive !== 1 || product.priceKobo <= 0 || product.currency.toUpperCase() !== "NGN") {
       throw new Error("One or more products cannot be purchased in this checkout.");
+    }
+    if (!isSupplierQuantityAvailable({
+      mapped: product.supplierMappingId !== null,
+      stock: product.supplierStock,
+      syncedAt: product.supplierStockSyncedAt,
+      quantity: item.quantity,
+    })) {
+      throw new Error("One or more items are no longer in stock. Please refresh your cart.");
     }
     return {
       productId: product.id,

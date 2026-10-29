@@ -61,6 +61,9 @@ describe("Paystack checkout", () => {
       priceKobo: 500_000,
       currency: "NGN",
       isActive: 1,
+      supplierMappingId: null,
+      supplierStock: null,
+      supplierStockSyncedAt: null,
     }]);
     vi.mocked(createPaymentIntent).mockResolvedValue(undefined);
     vi.mocked(updatePaymentIntentStatus).mockResolvedValue(undefined);
@@ -96,6 +99,48 @@ describe("Paystack checkout", () => {
     expect(result.authorizationUrl).toBe("https://checkout.paystack.com/test-checkout");
     expect(result.totalKobo).toBe(1_150_000);
     expect(updatePaymentIntentStatus).toHaveBeenCalledWith(result.reference, "pending");
+  });
+
+  it("refuses to initialize payment for a mapped product with stale CJ stock", async () => {
+    vi.mocked(getCheckoutProductsBySlug).mockResolvedValue([{
+      id: 41,
+      slug: "sample-product",
+      name: "Server Priced Item",
+      priceKobo: 500_000,
+      currency: "NGN",
+      isActive: 1,
+      supplierMappingId: 9,
+      supplierStock: 50,
+      supplierStockSyncedAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
+    }]);
+    const fetcher = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", fetcher);
+
+    await expect(initializePaymentCheckout(CHECKOUT_INPUT, 9, "https://preview.example", TEST_KEY))
+      .rejects.toThrow("One or more items are no longer in stock.");
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(createPaymentIntent).not.toHaveBeenCalled();
+  });
+
+  it("refuses quantities above the last synced CJ stock before payment starts", async () => {
+    vi.mocked(getCheckoutProductsBySlug).mockResolvedValue([{
+      id: 41,
+      slug: "sample-product",
+      name: "Server Priced Item",
+      priceKobo: 500_000,
+      currency: "NGN",
+      isActive: 1,
+      supplierMappingId: 9,
+      supplierStock: 1,
+      supplierStockSyncedAt: new Date(),
+    }]);
+    const fetcher = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", fetcher);
+
+    await expect(initializePaymentCheckout(CHECKOUT_INPUT, 9, "https://preview.example", TEST_KEY))
+      .rejects.toThrow("One or more items are no longer in stock.");
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(createPaymentIntent).not.toHaveBeenCalled();
   });
 
   it("refuses non-test credentials before reading the catalogue or making an HTTP call", async () => {

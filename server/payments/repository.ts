@@ -1,7 +1,7 @@
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { notifyOwner } from "../_core/notification.js";
 import { getDb } from "../db.js";
-import { orders, orderItems, paymentIntents, products, type PaymentIntentLine } from "../../drizzle/schema.js";
+import { orders, orderItems, paymentIntents, products, cjProductLinks, type PaymentIntentLine } from "../../drizzle/schema.js";
 
 export type CheckoutProduct = {
   id: number;
@@ -10,6 +10,9 @@ export type CheckoutProduct = {
   priceKobo: number;
   currency: string;
   isActive: number;
+  supplierMappingId: number | null;
+  supplierStock: number | null;
+  supplierStockSyncedAt: Date | null;
 };
 
 export type NewPaymentIntent = {
@@ -41,8 +44,12 @@ export async function getCheckoutProductsBySlug(slugs: string[]): Promise<Checko
       priceKobo: products.priceKobo,
       currency: products.currency,
       isActive: products.isActive,
+      supplierMappingId: cjProductLinks.id,
+      supplierStock: cjProductLinks.stockQuantity,
+      supplierStockSyncedAt: cjProductLinks.stockSyncedAt,
     })
     .from(products)
+    .leftJoin(cjProductLinks, eq(cjProductLinks.productId, products.id))
     .where(and(inArray(products.slug, Array.from(new Set(slugs))), eq(products.isActive, 1)));
 }
 
@@ -109,6 +116,7 @@ export async function createPaidOrderFromIntent(reference: string): Promise<{ or
         currency: intent.currency,
         status: "paid",
         paystackReference: reference,
+        verifiedPaymentAt: new Date(),
       }).returning({ id: orders.id });
       if (!inserted) throw new Error("Database did not return the order ID.");
 

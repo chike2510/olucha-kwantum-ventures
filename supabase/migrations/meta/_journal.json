@@ -8,6 +8,20 @@
       "when": 1791399979993,
       "tag": "0000_conscious_darwin",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793039933751,
+      "tag": "0001_cj_preview_manual_handoff",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793268765000,
+      "tag": "0002_hide_preview_seed_products",
+      "breakpoints": true
     }
   ]
 }

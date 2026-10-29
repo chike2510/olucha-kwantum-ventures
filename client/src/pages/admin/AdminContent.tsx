@@ -25,7 +25,7 @@ function ArticlePreview({ article, onClose }: { article: (ArticleDraft & { publi
   </Sheet>;
 }
 
-export default function AdminContent({ posts }: { posts: AdminBlogPost[] }) {
+export default function AdminContent({ posts, loading, error }: { posts: AdminBlogPost[]; loading: boolean; error: boolean }) {
   const utils = trpc.useUtils();
   const confirm = useConfirm();
   const [showForm, setShowForm] = useState(false);
@@ -78,8 +78,8 @@ export default function AdminContent({ posts }: { posts: AdminBlogPost[] }) {
         <button type="button" disabled={setStatus.isPending} onClick={() => toggleStatus(post)} className="rounded-full bg-white px-3 py-2 text-xs font-bold text-slate-700">{post.status === "published" ? "Unpublish" : "Publish"}</button>
         <button type="button" disabled={deletePost.isPending} onClick={() => remove(post)} className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700"><Trash2 size={12}/>Delete</button>
       </div></div>)}
-      {!posts.length && <div className="rounded-2xl bg-slate-50 p-8 text-center"><Newspaper className="mx-auto mb-3 text-slate-300" size={34}/><p className="font-semibold">Your editorial workspace</p><p className="mt-2 text-sm text-slate-500">Draft and publish company news, product guides, and product stories from this area.</p></div>}
-      <div className="flex justify-center gap-3 pt-3 text-xs font-bold"><span className="rounded-full bg-white px-3 py-2 text-slate-600">{posts.filter((post) => post.status === "draft").length} drafts</span><span className="rounded-full bg-emerald-100 px-3 py-2 text-emerald-700">{posts.filter((post) => post.status === "published").length} published</span></div>
+      {loading ? <div className="rounded-2xl bg-slate-50 p-8 text-center text-sm text-slate-500">Loading articles…</div> : error ? <div className="rounded-2xl bg-rose-50 p-8 text-center text-sm text-rose-700">Articles are temporarily unavailable. Reload the page to retry.</div> : !posts.length && <div className="rounded-2xl bg-slate-50 p-8 text-center"><Newspaper className="mx-auto mb-3 text-slate-300" size={34}/><p className="font-semibold">Your editorial workspace</p><p className="mt-2 text-sm text-slate-500">Draft and publish company news, product guides, and product stories from this area.</p></div>}
+      {!loading && !error && <div className="flex justify-center gap-3 pt-3 text-xs font-bold"><span className="rounded-full bg-white px-3 py-2 text-slate-600">{posts.filter((post) => post.status === "draft").length} drafts</span><span className="rounded-full bg-emerald-100 px-3 py-2 text-emerald-700">{posts.filter((post) => post.status === "published").length} published</span></div>}
     </div></Panel>
     <ArticlePreview article={preview} onClose={() => setPreview(null)}/>
   </>;

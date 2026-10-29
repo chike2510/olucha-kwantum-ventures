@@ -2,12 +2,26 @@ import { useEffect, useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { buildManualHandoffPayload, isManualHandoffEligible } from "@/lib/manualHandoff";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { allowedManualTransitions, ORDER_STATUSES, type OrderStatus } from "@shared/orderStatus";
 import { EmptyState, Pager, Panel, StatusBadge, downloadCsv, errorMessage, formatDate, formatNaira, useConfirm, type AdminOrder } from "./ui";
 
 const PAGE_SIZE = 20;
 const statusLabels: Record<OrderStatus, string> = { pending: "Pending payment", paid: "Paid", processing: "Processing", shipped: "Shipped", delivered: "Delivered", cancelled: "Cancelled" };
+
+function downloadManualHandoff(order: AdminOrder) {
+  const payload = buildManualHandoffPayload(order);
+  const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `olucha-preview-order-${order.id}-manual-review.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast.success("Manual review draft downloaded");
+}
 
 function StatusControl({ order, compact = false }: { order: AdminOrder; compact?: boolean }) {
   const utils = trpc.useUtils();
@@ -42,7 +56,8 @@ function OrderDetail({ order, onClose }: { order: AdminOrder | null; onClose: ()
       {order && <>
         <SheetHeader><SheetTitle>Order #{order.id}</SheetTitle><SheetDescription>Placed {formatDate(order.createdAt, true)}</SheetDescription></SheetHeader>
         <div className="space-y-5 px-4 pb-8 text-sm">
-          <div className="flex flex-wrap items-center gap-3"><StatusBadge status={order.status}/><StatusControl order={order} compact/></div>
+          <div className="flex flex-wrap items-center gap-3"><StatusBadge status={order.status}/><StatusControl order={order} compact/>{isManualHandoffEligible(order) && <button type="button" onClick={() => downloadManualHandoff(order)} className="inline-flex items-center gap-1 rounded-full bg-[#0b1736] px-3 py-1.5 text-xs font-bold text-white"><Download size={13}/>Download manual review</button>}</div>
+          {isManualHandoffEligible(order) && <p className="rounded-xl bg-sky-50 p-3 text-xs leading-5 text-sky-800">Payment was verified server-side. This review/download draft is for administrator handoff only; it does not create a CJ order or authorize supplier payment.</p>}
           {order.status === "pending" && <p className="rounded-xl bg-amber-50 p-3 text-xs text-amber-800">Payment has not been verified. Pending orders move to paid automatically when Paystack confirms payment; they can only be cancelled by hand.</p>}
           <section><h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">Customer</h3><dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5"><dt className="text-slate-500">Name</dt><dd className="font-semibold">{order.customerName}</dd><dt className="text-slate-500">Email</dt><dd className="break-all"><a href={`mailto:${order.customerEmail}`} className="text-[#1f5b9f]">{order.customerEmail}</a></dd><dt className="text-slate-500">Phone</dt><dd>{order.customerPhone ? <a href={`tel:${order.customerPhone}`} className="text-[#1f5b9f]">{order.customerPhone}</a> : "—"}</dd></dl></section>
           <section><h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">Delivery</h3><p className="whitespace-pre-line">{order.deliveryAddress || "—"}</p><p className="mt-1 font-semibold">{order.deliveryCountry || "—"}</p></section>
@@ -54,7 +69,7 @@ function OrderDetail({ order, onClose }: { order: AdminOrder | null; onClose: ()
   </Sheet>;
 }
 
-export default function AdminOrders({ orders, loading }: { orders: AdminOrder[]; loading: boolean }) {
+export default function AdminOrders({ orders, loading, error }: { orders: AdminOrder[]; loading: boolean; error: boolean }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"all" | OrderStatus>("all");
   const [page, setPage] = useState(1);
@@ -99,7 +114,7 @@ export default function AdminOrders({ orders, loading }: { orders: AdminOrder[];
       <select aria-label="Filter orders by status" value={status} onChange={(event) => setStatus(event.target.value as typeof status)} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-[#1f5b9f]"><option value="all">All statuses</option>{ORDER_STATUSES.map((item) => <option key={item} value={item}>{statusLabels[item]}</option>)}</select>
       <button type="button" disabled={!filtered.length} onClick={exportCsv} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40"><Download size={14}/>Export CSV</button>
     </div>
-    {loading ? <EmptyState>Loading orders…</EmptyState> : !visible.length ? <EmptyState>{orders.length ? "No orders match these filters." : "No customer orders yet."}</EmptyState> : <>
+    {loading ? <EmptyState>Loading orders…</EmptyState> : error ? <EmptyState>Orders are temporarily unavailable. Reload the page to retry.</EmptyState> : !visible.length ? <EmptyState>{orders.length ? "No orders match these filters." : "No customer orders yet."}</EmptyState> : <>
       <div className="hidden md:block"><table className="w-full text-left text-sm"><thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-400"><tr><th className="py-3">Order</th><th>Date</th><th>Customer</th><th className="text-right">Total</th><th className="pl-4">Status</th><th></th></tr></thead><tbody>{visible.map((order) => <tr key={order.id} onClick={() => setSelectedId(order.id)} className="cursor-pointer border-b border-slate-100 hover:bg-slate-50"><td className="py-3 font-semibold">#{order.id}<span className="block max-w-[10rem] truncate font-mono text-[11px] font-normal text-slate-400">{order.paystackReference || "no reference"}</span></td><td className="whitespace-nowrap text-slate-600">{formatDate(order.createdAt, true)}</td><td><p className="font-semibold">{order.customerName}</p><p className="max-w-[14rem] truncate text-xs text-slate-400">{order.customerEmail}</p></td><td className="whitespace-nowrap text-right font-semibold text-[#1f5b9f]">{formatNaira(order.totalKobo)}</td><td className="pl-4"><StatusBadge status={order.status}/></td><td className="py-3 text-right"><button type="button" onClick={(event) => { event.stopPropagation(); setSelectedId(order.id); }} className="min-h-10 rounded-full border border-slate-200 px-4 text-xs font-bold text-[#1f5b9f]">View</button></td></tr>)}</tbody></table></div>
       <div className="space-y-3 md:hidden">{visible.map((order) => <button type="button" key={order.id} onClick={() => setSelectedId(order.id)} className="block w-full rounded-2xl bg-slate-50 p-4 text-left"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><p className="font-semibold">#{order.id} · {order.customerName}</p><p className="truncate text-xs text-slate-500">{order.customerEmail}</p></div><StatusBadge status={order.status}/></div><div className="mt-2 flex items-center justify-between text-xs text-slate-500"><span>{formatDate(order.createdAt, true)}</span><span className="text-sm font-semibold text-[#1f5b9f]">{formatNaira(order.totalKobo)}</span></div></button>)}</div>
       <Pager page={page} pageCount={pageCount} total={filtered.length} onPage={setPage}/>

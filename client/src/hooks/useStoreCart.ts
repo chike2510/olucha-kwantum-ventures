@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { StoreProduct } from "@/lib/storeCatalog";
 import { trpc } from "@/lib/trpc";
-import { addToCart, calculateCartSubtotal, removeFromCart, updateCartQuantity, type CartLine } from "@/lib/cartState";
+import {
+  addToCart,
+  calculateCartSubtotal,
+  reconcileCart,
+  removeFromCart,
+  updateCartQuantity,
+  type CartLine,
+} from "@/lib/cartState";
 
 const CART_KEY = "olucha-store-cart";
 const CART_EVENT = "olucha-cart-updated";
@@ -9,40 +16,101 @@ const CART_EVENT = "olucha-cart-updated";
 function readCart(): CartLine[] {
   try {
     const value = localStorage.getItem(CART_KEY);
-    return value ? JSON.parse(value) as CartLine[] : [];
+    return value ? (JSON.parse(value) as CartLine[]) : [];
   } catch {
     return [];
   }
 }
 
 export function useStoreCart() {
-  const [items, setItems] = useState<CartLine[]>(readCart);
+  // This is the persisted snapshot. It is deliberately not reconciled or
+  // overwritten until the backend catalogue has returned successfully.
+  const [persistedItems, setPersistedItems] = useState<CartLine[]>(readCart);
+  const catalogue = trpc.catalogue.list.useQuery(undefined, {
+    staleTime: 60_000,
+  });
+  const catalogueLoading = catalogue.isLoading;
+  const catalogueError = catalogue.isError;
+  const catalogueAvailable = catalogue.isSuccess;
+
   const sync = useCallback((next: CartLine[]) => {
-    setItems(next);
+    setPersistedItems(next);
     localStorage.setItem(CART_KEY, JSON.stringify(next));
     window.dispatchEvent(new CustomEvent(CART_EVENT));
   }, []);
+
   useEffect(() => {
-    const listener = () => setItems(readCart());
+    const listener = () => setPersistedItems(readCart());
     window.addEventListener(CART_EVENT, listener);
     return () => window.removeEventListener(CART_EVENT, listener);
   }, []);
-  const add = useCallback((product: StoreProduct, quantity = 1) => sync(addToCart(readCart(), product, quantity)), [sync]);
-  const update = useCallback((slug: string, delta: number) => sync(updateCartQuantity(readCart(), slug, delta)), [sync]);
-  const remove = useCallback((slug: string) => sync(removeFromCart(readCart(), slug)), [sync]);
+
+  useEffect(() => {
+    if (!catalogueAvailable || !catalogue.data) return;
+    const next = reconcileCart(readCart(), catalogue.data);
+    if (JSON.stringify(next) !== JSON.stringify(readCart())) sync(next);
+  }, [catalogueAvailable, catalogue.data, sync]);
+
+  // Never expose stale localStorage product objects while the active backend
+  // catalogue is unavailable. A successful query is the source of truth.
+  const items = useMemo(
+    () =>
+      catalogueAvailable && catalogue.data
+        ? reconcileCart(persistedItems, catalogue.data)
+        : [],
+    [catalogueAvailable, catalogue.data, persistedItems]
+  );
+
+  const add = useCallback(
+    (product: StoreProduct, quantity = 1) => {
+      if (
+        !catalogueAvailable ||
+        !catalogue.data?.some(
+          candidate =>
+            candidate.slug === product.slug && Boolean(candidate.isActive)
+        )
+      )
+        return;
+      const current = reconcileCart(readCart(), catalogue.data);
+      sync(
+        reconcileCart(addToCart(current, product, quantity), catalogue.data)
+      );
+    },
+    [catalogueAvailable, catalogue.data, sync]
+  );
+
+  const update = useCallback(
+    (slug: string, delta: number) => {
+      if (!catalogueAvailable || !catalogue.data) return;
+      sync(
+        reconcileCart(
+          updateCartQuantity(readCart(), slug, delta),
+          catalogue.data
+        )
+      );
+    },
+    [catalogueAvailable, catalogue.data, sync]
+  );
+
+  const remove = useCallback(
+    (slug: string) => {
+      if (!catalogueAvailable || !catalogue.data) return;
+      sync(reconcileCart(removeFromCart(readCart(), slug), catalogue.data));
+    },
+    [catalogueAvailable, catalogue.data, sync]
+  );
+
   const clear = useCallback(() => sync([]), [sync]);
-  // Reprice cart lines from the live catalogue so stale localStorage prices never show.
-  const catalogue = trpc.catalogue.list.useQuery(undefined, { staleTime: 60_000 });
-  const pricedItems = useMemo(() => {
-    if (!catalogue.data?.length) return items;
-    const bySlug = new Map(catalogue.data.map((product) => [product.slug, product.priceKobo / 100]));
-    return items.map((line) => {
-      const livePrice = bySlug.get(line.product.slug);
-      return livePrice !== undefined && livePrice !== line.product.price
-        ? { ...line, product: { ...line.product, price: livePrice } }
-        : line;
-    });
-  }, [items, catalogue.data]);
-  const subtotal = useMemo(() => calculateCartSubtotal(pricedItems), [pricedItems]);
-  return { items: pricedItems, add, update, remove, clear, subtotal };
+  const subtotal = useMemo(() => calculateCartSubtotal(items), [items]);
+
+  return {
+    items,
+    add,
+    update,
+    remove,
+    clear,
+    subtotal,
+    catalogueLoading,
+    catalogueError,
+  };
 }

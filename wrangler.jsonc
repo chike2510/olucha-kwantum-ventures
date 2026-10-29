@@ -2,6 +2,12 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "olucha-kwantum-ventures",
   "main": "./worker.ts",
+  "keep_vars": true,
+  "vars": {
+    "CJ_SYNC_ENABLED": "true",
+    "VERCEL_ENV": "preview",
+    "PAYSTACK_LIVE_ENABLED": "false"
+  },
   "compatibility_date": "2026-10-03",
   "compatibility_flags": [
     "nodejs_compat"

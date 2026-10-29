@@ -45,6 +45,22 @@ export const products = pgTable("products", {
   updatedAt: timestampColumn("updatedAt").defaultNow().notNull(),
 });
 
+export const cjProductLinks = pgTable("cj_product_links", {
+  id: serial("id").primaryKey(),
+  productId: integer("productId").notNull().references(() => products.id, { onDelete: "cascade" }).unique(),
+  cjProductId: varchar("cjProductId", { length: 200 }).notNull(),
+  cjVariantId: varchar("cjVariantId", { length: 200 }).notNull().unique(),
+  cjProductSku: varchar("cjProductSku", { length: 200 }),
+  cjVariantSku: varchar("cjVariantSku", { length: 200 }),
+  cjProductName: varchar("cjProductName", { length: 180 }),
+  cjVariantName: varchar("cjVariantName", { length: 180 }),
+  cjImageUrl: text("cjImageUrl"),
+  stockQuantity: integer("stockQuantity"),
+  stockSyncedAt: timestampColumn("stockSyncedAt"),
+  createdAt: timestampColumn("createdAt").defaultNow().notNull(),
+  updatedAt: timestampColumn("updatedAt").defaultNow().notNull(),
+});
+
 export const exportInquiries = pgTable("export_inquiries", {
   id: serial("id").primaryKey(),
   fullName: varchar("fullName", { length: 160 }).notNull(),
@@ -98,6 +114,7 @@ export const orders = pgTable("orders", {
   currency: varchar("currency", { length: 8 }).default("NGN").notNull(),
   status: orderStatusEnum("status").default("pending").notNull(),
   paystackReference: varchar("paystackReference", { length: 120 }).unique(),
+  verifiedPaymentAt: timestampColumn("verifiedPaymentAt"),
   createdAt: timestampColumn("createdAt").defaultNow().notNull(),
 });
 

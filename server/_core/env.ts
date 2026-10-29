@@ -15,15 +15,14 @@ const runtimeVariableNames = [
   "ADMIN_LOGIN_PASSWORD",
   "PAYSTACK_SECRET_KEY",
   "PAYSTACK_LIVE_ENABLED",
+  "CJ_API_KEY",
+  "CJ_SYNC_ENABLED",
+  "VERCEL_ENV",
 ] as const;
 
 let workerBindings: Record<string, string> | undefined;
 
-/**
- * Cloudflare Workers provide environment bindings per invocation, not through
- * process.env. Their values are deployment-wide and therefore identical for
- * every request handled by this Worker isolate.
- */
+/** Bindings are deployment-wide and identical for requests in a Worker isolate. */
 export function setWorkerEnvironment(bindings: RuntimeBindings): void {
   const nextBindings: Record<string, string> = {};
   for (const name of runtimeVariableNames) {
@@ -44,47 +43,22 @@ export function getRuntimeEnv(name: string): string {
 }
 
 export const ENV = {
-  /** Cloudflare Hyperdrive connection string (Workers only); preferred over DATABASE_URL when present. */
-  get hyperdriveConnectionString() {
-    return workerBindings?.HYPERDRIVE_CONNECTION_STRING ?? "";
-  },
-  get appId() {
-    return getRuntimeEnv("VITE_APP_ID");
-  },
-  get cookieSecret() {
-    return getRuntimeEnv("JWT_SECRET");
-  },
-  get databaseUrl() {
-    return getRuntimeEnv("DATABASE_URL");
-  },
-  get databasePassword() {
-    return getRuntimeEnv("DATABASE_PASSWORD");
-  },
-  get supabaseUrl() {
-    return getRuntimeEnv("SUPABASE_URL");
-  },
-  get supabasePublishableKey() {
-    return getRuntimeEnv("SUPABASE_PUBLISHABLE_KEY");
-  },
-  get ownerOpenId() {
-    return getRuntimeEnv("OWNER_OPEN_ID");
-  },
-  get isProduction() {
-    return getRuntimeEnv("NODE_ENV") === "production";
-  },
-  get forgeApiUrl() {
-    return getRuntimeEnv("BUILT_IN_FORGE_API_URL");
-  },
-  get forgeApiKey() {
-    return getRuntimeEnv("BUILT_IN_FORGE_API_KEY");
-  },
-  get adminLoginEmail() {
-    return getRuntimeEnv("ADMIN_LOGIN_EMAIL");
-  },
-  get adminLoginPassword() {
-    return getRuntimeEnv("ADMIN_LOGIN_PASSWORD");
-  },
-  get paystackSecretKey() {
-    return getRuntimeEnv("PAYSTACK_SECRET_KEY");
-  },
+  get isWorkerRuntime() { return workerBindings !== undefined; },
+  get hyperdriveConnectionString() { return workerBindings?.HYPERDRIVE_CONNECTION_STRING ?? ""; },
+  get appId() { return getRuntimeEnv("VITE_APP_ID"); },
+  get cookieSecret() { return getRuntimeEnv("JWT_SECRET"); },
+  get databaseUrl() { return getRuntimeEnv("DATABASE_URL"); },
+  get databasePassword() { return getRuntimeEnv("DATABASE_PASSWORD"); },
+  get supabaseUrl() { return getRuntimeEnv("SUPABASE_URL"); },
+  get supabasePublishableKey() { return getRuntimeEnv("SUPABASE_PUBLISHABLE_KEY"); },
+  get ownerOpenId() { return getRuntimeEnv("OWNER_OPEN_ID"); },
+  get isProduction() { return getRuntimeEnv("NODE_ENV") === "production"; },
+  get forgeApiUrl() { return getRuntimeEnv("BUILT_IN_FORGE_API_URL"); },
+  get forgeApiKey() { return getRuntimeEnv("BUILT_IN_FORGE_API_KEY"); },
+  get adminLoginEmail() { return getRuntimeEnv("ADMIN_LOGIN_EMAIL"); },
+  get adminLoginPassword() { return getRuntimeEnv("ADMIN_LOGIN_PASSWORD"); },
+  get paystackSecretKey() { return getRuntimeEnv("PAYSTACK_SECRET_KEY"); },
+  get cjApiKey() { return getRuntimeEnv("CJ_API_KEY"); },
+  get cjSyncEnabled() { return getRuntimeEnv("CJ_SYNC_ENABLED") === "true"; },
+  get vercelEnv() { return getRuntimeEnv("VERCEL_ENV"); },
 };

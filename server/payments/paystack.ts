@@ -53,7 +53,7 @@ export function getAllowedPaystackMode(
 ): PaystackMode | null {
   const mode = getPaystackKeyMode(secretKey);
   if (mode === "test") return "test";
-  if (mode === "live" && liveEnabled) return "live";
+  if (mode === "live" && liveEnabled && getRuntimeEnv("VERCEL_ENV") !== "preview") return "live";
   return null;
 }
 

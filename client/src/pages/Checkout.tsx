@@ -14,67 +14,110 @@ type PendingAuthorization = { authorizationUrl: string; totalKobo: number };
 
 const PAYMENT_MESSAGES: Record<string, string> = {
   success: "Payment received. Thank you — your order is confirmed.",
-  cancelled: "Payment cancelled. Your cart is unchanged and no order was created.",
-  failed: "Payment was not verified. No order was created; you can safely try again.",
-  pending: "We are still confirming your payment. Your order will appear in your account as soon as Paystack confirms it.",
+  cancelled:
+    "Payment cancelled. Your cart is unchanged and no order was created.",
+  failed:
+    "Payment was not verified. No order was created; you can safely try again.",
+  pending:
+    "We are still confirming your payment. Your order will appear in your account as soon as Paystack confirms it.",
 };
 
 export default function Checkout() {
   const { user } = useAuth();
-  const { items, subtotal, clear } = useStoreCart();
+  const { items, subtotal, clear, catalogueLoading, catalogueError } =
+    useStoreCart();
+  const catalogueUnavailable = catalogueLoading || catalogueError;
   const [notice, setNotice] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
-  const [pendingAuthorization, setPendingAuthorization] = useState<PendingAuthorization | null>(null);
-  const [form, setForm] = useState({ fullName: user?.name || "", email: user?.email || "", phone: "", country: "Nigeria", address: "" });
-  const paymentStatus = new URLSearchParams(window.location.search).get("payment") || "";
+  const [pendingAuthorization, setPendingAuthorization] =
+    useState<PendingAuthorization | null>(null);
+  const [form, setForm] = useState({
+    fullName: user?.name || "",
+    email: user?.email || "",
+    phone: "",
+    country: "Nigeria",
+    address: "",
+  });
+  const paymentStatus =
+    new URLSearchParams(window.location.search).get("payment") || "";
   const orderId = new URLSearchParams(window.location.search).get("order");
   const coupon = localStorage.getItem("olucha-cart-coupon") || "";
-  const discount = coupon.toUpperCase() === "OLUCHA10" ? Math.round(subtotal * 0.1) : 0;
-  const shipping = subtotal === 0 ? 0 : subtotal >= BUSINESS.freeShippingThresholdNaira ? 0 : BUSINESS.flatShippingNaira;
+  const discount =
+    coupon.toUpperCase() === "OLUCHA10" ? Math.round(subtotal * 0.1) : 0;
+  const shipping =
+    subtotal === 0
+      ? 0
+      : subtotal >= BUSINESS.freeShippingThresholdNaira
+        ? 0
+        : BUSINESS.flatShippingNaira;
   const tax = 0; // prices are VAT-inclusive
   const total = subtotal - discount + shipping + tax;
   const update = (field: keyof typeof form, value: string) => {
     setPendingAuthorization(null);
-    setForm((current) => ({ ...current, [field]: value }));
+    setForm(current => ({ ...current, [field]: value }));
   };
 
   useEffect(() => {
     if (paymentStatus === "success") clear();
   }, [paymentStatus, clear]);
 
-  const accountOrders = trpc.account.orders.useQuery(undefined, { enabled: Boolean(user) && paymentStatus === "success" && Boolean(orderId) });
-  const confirmedOrder = accountOrders.data?.find((order) => String(order.id) === orderId);
+  const accountOrders = trpc.account.orders.useQuery(undefined, {
+    enabled: Boolean(user) && paymentStatus === "success" && Boolean(orderId),
+  });
+  const confirmedOrder = accountOrders.data?.find(
+    order => String(order.id) === orderId
+  );
 
   const initializePayment = trpc.payments.initialize.useMutation({
-    onSuccess: (result) => {
+    onSuccess: result => {
       if (result.totalKobo !== Math.round(total * 100)) {
-        setPendingAuthorization({ authorizationUrl: result.authorizationUrl, totalKobo: result.totalKobo });
-        setNotice("The store's current server-side prices changed the amount. Review the verified amount below, then continue if you want to pay it.");
+        setPendingAuthorization({
+          authorizationUrl: result.authorizationUrl,
+          totalKobo: result.totalKobo,
+        });
+        setNotice(
+          "The store's current server-side prices changed the amount. Review the verified amount below, then continue if you want to pay it."
+        );
         return;
       }
       window.location.assign(result.authorizationUrl);
     },
-    onError: (error) => setNotice(error.message),
+    onError: error => setNotice(error.message),
   });
 
   const validate = () => {
     const next: string[] = [];
     if (form.fullName.trim().length < 2) next.push("Enter your full name.");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) next.push("Enter a valid email address.");
-    if (!/^\+?[0-9\s()-]{7,}$/.test(form.phone)) next.push("Enter a valid phone number.");
-    if (form.address.trim().length < 8) next.push("Enter a complete delivery address.");
-    if (!items.length) next.push("Your cart is empty. Add a product before checkout.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      next.push("Enter a valid email address.");
+    if (!/^\+?[0-9\s()-]{7,}$/.test(form.phone))
+      next.push("Enter a valid phone number.");
+    if (form.address.trim().length < 8)
+      next.push("Enter a complete delivery address.");
+    if (!items.length)
+      next.push("Your cart is empty. Add a product before checkout.");
     setErrors(next);
     return next.length === 0;
   };
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (catalogueUnavailable) {
+      setNotice(
+        catalogueLoading
+          ? "The latest catalogue is still loading. Please wait before starting checkout."
+          : "The catalogue could not be loaded. No checkout can be started until it is available."
+      );
+      return;
+    }
     if (pendingAuthorization) {
       window.location.assign(pendingAuthorization.authorizationUrl);
       return;
     }
-    if (!user) { startLogin("/checkout"); return; }
+    if (!user) {
+      startLogin("/checkout");
+      return;
+    }
     if (!validate()) return;
     setNotice("");
     initializePayment.mutate({
@@ -93,67 +136,324 @@ export default function Checkout() {
   };
 
   const summaryLines = useMemo(
-    () => items.map(({ product, quantity }) => ({
-      name: `${product.name}${product.variant?.size || product.variant?.color ? ` (${[product.variant.size, product.variant.color].filter(Boolean).join(", ")})` : ""} × ${quantity}`,
-      total: product.price * quantity,
-    })),
-    [items],
+    () =>
+      items.map(({ product, quantity }) => ({
+        name: `${product.name}${product.variant?.size || product.variant?.color ? ` (${[product.variant.size, product.variant.color].filter(Boolean).join(", ")})` : ""} × ${quantity}`,
+        total: product.price * quantity,
+      })),
+    [items]
   );
-  const paymentMode = trpc.payments.mode.useQuery(undefined, { staleTime: 5 * 60_000 });
+  const paymentMode = trpc.payments.mode.useQuery(undefined, {
+    staleTime: 5 * 60_000,
+  });
   const testMode = paymentMode.data?.testMode === true;
-  const serverTotal = pendingAuthorization ? pendingAuthorization.totalKobo / 100 : null;
+  const serverTotal = pendingAuthorization
+    ? pendingAuthorization.totalKobo / 100
+    : null;
 
   return (
     <div className="min-h-screen bg-[#f6f7fb] text-[#14213d]">
-      <BrandHeader backHref="/cart" backLabel="Edit cart" section="Secure checkout" actionHref="/shop" actionLabel="Keep shopping" actionShortLabel="Shop" />
+      <BrandHeader
+        backHref="/cart"
+        backLabel="Edit cart"
+        section="Secure checkout"
+        actionHref="/shop"
+        actionLabel="Keep shopping"
+        actionShortLabel="Shop"
+      />
       <main className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-20">
         <div className="mb-8 lg:mb-10">
           <p className="eyebrow">Complete your order</p>
           <h1 className="section-title">Buy with confidence.</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">Enter your delivery details, then pay securely with Paystack.</p>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
+            Enter your delivery details, then pay securely with Paystack.
+          </p>
         </div>
         <div className="grid gap-8 lg:grid-cols-[1.1fr_.9fr]">
-          <form className="rounded-[2rem] bg-white p-6 shadow-sm sm:p-9" onSubmit={submit} noValidate>
+          <form
+            className="rounded-[2rem] bg-white p-6 shadow-sm sm:p-9"
+            onSubmit={submit}
+            noValidate
+          >
             <div className="grid gap-5 sm:grid-cols-2">
-              <label className="field">Full name<input value={form.fullName} onChange={(event) => update("fullName", event.target.value)} placeholder="Your full name" /></label>
-              <label className="field">Email address<input value={form.email} onChange={(event) => update("email", event.target.value)} type="email" placeholder="name@example.com" /></label>
-              <label className="field">Phone number<input value={form.phone} onChange={(event) => update("phone", event.target.value)} placeholder="+234 ..." /></label>
-              <label className="field">Country<select value={form.country} onChange={(event) => update("country", event.target.value)}><option>Nigeria</option><option>Ghana</option><option>United Kingdom</option><option>United States</option></select></label>
-              <label className="field sm:col-span-2">Delivery address<textarea value={form.address} onChange={(event) => update("address", event.target.value)} rows={4} placeholder="Street, city, state, and delivery notes" /></label>
+              <label className="field">
+                Full name
+                <input
+                  value={form.fullName}
+                  onChange={event => update("fullName", event.target.value)}
+                  placeholder="Your full name"
+                />
+              </label>
+              <label className="field">
+                Email address
+                <input
+                  value={form.email}
+                  onChange={event => update("email", event.target.value)}
+                  type="email"
+                  placeholder="name@example.com"
+                />
+              </label>
+              <label className="field">
+                Phone number
+                <input
+                  value={form.phone}
+                  onChange={event => update("phone", event.target.value)}
+                  placeholder="+234 ..."
+                />
+              </label>
+              <label className="field">
+                Country
+                <select
+                  value={form.country}
+                  onChange={event => update("country", event.target.value)}
+                >
+                  <option>Nigeria</option>
+                  <option>Ghana</option>
+                  <option>United Kingdom</option>
+                  <option>United States</option>
+                </select>
+              </label>
+              <label className="field sm:col-span-2">
+                Delivery address
+                <textarea
+                  value={form.address}
+                  onChange={event => update("address", event.target.value)}
+                  rows={4}
+                  placeholder="Street, city, state, and delivery notes"
+                />
+              </label>
             </div>
-            {errors.length > 0 && <div className="mt-6 rounded-2xl bg-rose-50 p-4 text-sm leading-6 text-rose-800" role="alert"><p className="font-bold">Please correct the following:</p><ul className="mt-2 list-disc pl-5">{errors.map((error) => <li key={error}>{error}</li>)}</ul></div>}
+            {catalogueLoading && (
+              <div
+                className="mt-6 rounded-2xl bg-sky-50 p-4 text-sm leading-6 text-sky-800"
+                role="status"
+              >
+                <p className="font-bold">Loading the latest catalogue…</p>
+                <p className="mt-1">
+                  Your saved cart is being checked against currently active
+                  products.
+                </p>
+              </div>
+            )}
+            {catalogueError && (
+              <div
+                className="mt-6 rounded-2xl bg-rose-50 p-4 text-sm leading-6 text-rose-800"
+                role="alert"
+              >
+                <p className="font-bold">We couldn’t load the catalogue.</p>
+                <p className="mt-1">
+                  Your saved cart is unchanged. Checkout is unavailable until
+                  the catalogue can be verified.
+                </p>
+              </div>
+            )}
+            {errors.length > 0 && (
+              <div
+                className="mt-6 rounded-2xl bg-rose-50 p-4 text-sm leading-6 text-rose-800"
+                role="alert"
+              >
+                <p className="font-bold">Please correct the following:</p>
+                <ul className="mt-2 list-disc pl-5">
+                  {errors.map(error => (
+                    <li key={error}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="mt-8 flex items-start gap-3 rounded-2xl border border-[#1f5b9f]/20 bg-[#1f5b9f]/10 p-4 text-sm text-[#0b1736]">
-              <ShieldCheck className="mt-0.5 shrink-0 text-[#1f5b9f]" size={18} /><p className="min-w-0 flex-1"><strong>Secure payment by Paystack.</strong> Pay by card, bank transfer or USSD on Paystack's secure page. Your order is confirmed as soon as payment is received.</p>
-              {testMode && <span className="shrink-0 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700" title="Payments are in Paystack test mode">Test mode</span>}
+              <ShieldCheck
+                className="mt-0.5 shrink-0 text-[#1f5b9f]"
+                size={18}
+              />
+              <p className="min-w-0 flex-1">
+                <strong>Secure payment by Paystack.</strong> Pay by card, bank
+                transfer or USSD on Paystack's secure page. Your order is
+                confirmed as soon as payment is received.
+              </p>
+              {testMode && (
+                <span
+                  className="shrink-0 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700"
+                  title="Payments are in Paystack test mode"
+                >
+                  Test mode
+                </span>
+              )}
             </div>
             {paymentStatus && PAYMENT_MESSAGES[paymentStatus] && (
-              <p className={`mt-5 rounded-2xl p-4 text-sm font-semibold leading-6 ${paymentStatus === "success" ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`} role="status">
-                {PAYMENT_MESSAGES[paymentStatus]}{paymentStatus === "success" && orderId ? ` Order #${orderId}.` : ""}
+              <p
+                className={`mt-5 rounded-2xl p-4 text-sm font-semibold leading-6 ${paymentStatus === "success" ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`}
+                role="status"
+              >
+                {PAYMENT_MESSAGES[paymentStatus]}
+                {paymentStatus === "success" && orderId
+                  ? ` Order #${orderId}.`
+                  : ""}
               </p>
             )}
             {confirmedOrder && (
-              <div className="mt-5 rounded-2xl border border-emerald-200 bg-white p-5 text-sm" aria-label="Order confirmation">
-                <p className="text-xs font-bold uppercase tracking-[.16em] text-emerald-700">Order confirmed</p>
-                <p className="mt-2 text-lg font-semibold text-[#0b1736]">Order #{confirmedOrder.id} · {formatNaira(confirmedOrder.totalKobo / 100)}</p>
-                {confirmedOrder.paystackReference && <p className="mt-1 break-all text-xs text-slate-500">Payment reference: {confirmedOrder.paystackReference}</p>}
-                <ul className="mt-3 space-y-1 text-slate-600">{confirmedOrder.items.map((item) => <li key={item.id} className="flex justify-between gap-4"><span>{item.productName} × {item.quantity}</span><span>{formatNaira((item.unitPriceKobo * item.quantity) / 100)}</span></li>)}</ul>
-                <Link href="/account/orders" className="mt-4 inline-block font-semibold text-[#1f5b9f] underline">View all orders</Link>
+              <div
+                className="mt-5 rounded-2xl border border-emerald-200 bg-white p-5 text-sm"
+                aria-label="Order confirmation"
+              >
+                <p className="text-xs font-bold uppercase tracking-[.16em] text-emerald-700">
+                  Order confirmed
+                </p>
+                <p className="mt-2 text-lg font-semibold text-[#0b1736]">
+                  Order #{confirmedOrder.id} ·{" "}
+                  {formatNaira(confirmedOrder.totalKobo / 100)}
+                </p>
+                {confirmedOrder.paystackReference && (
+                  <p className="mt-1 break-all text-xs text-slate-500">
+                    Payment reference: {confirmedOrder.paystackReference}
+                  </p>
+                )}
+                <ul className="mt-3 space-y-1 text-slate-600">
+                  {confirmedOrder.items.map(item => (
+                    <li key={item.id} className="flex justify-between gap-4">
+                      <span>
+                        {item.productName} × {item.quantity}
+                      </span>
+                      <span>
+                        {formatNaira(
+                          (item.unitPriceKobo * item.quantity) / 100
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/account/orders"
+                  className="mt-4 inline-block font-semibold text-[#1f5b9f] underline"
+                >
+                  View all orders
+                </Link>
               </div>
             )}
-            {notice && <p className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-800" role="alert">{notice}</p>}
-            <button type="submit" className="pressable mt-7 min-h-12 w-full rounded-full bg-[#f7b32b] px-5 py-3.5 text-sm font-bold text-[#0b1736] disabled:cursor-wait disabled:opacity-60" disabled={initializePayment.isPending}>
-              {initializePayment.isPending ? "Preparing secure checkout…" : pendingAuthorization ? `Continue to Paystack · ${formatNaira(serverTotal || 0)}` : !user ? "Sign in to continue" : "Pay securely with Paystack"}
+            {notice && (
+              <p
+                className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-800"
+                role="alert"
+              >
+                {notice}
+              </p>
+            )}
+            <button
+              type="submit"
+              className="pressable mt-7 min-h-12 w-full rounded-full bg-[#f7b32b] px-5 py-3.5 text-sm font-bold text-[#0b1736] disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={initializePayment.isPending || catalogueUnavailable}
+            >
+              {catalogueLoading
+                ? "Loading catalogue…"
+                : catalogueError
+                  ? "Catalogue unavailable"
+                  : initializePayment.isPending
+                    ? "Preparing secure checkout…"
+                    : pendingAuthorization
+                      ? `Continue to Paystack · ${formatNaira(serverTotal || 0)}`
+                      : !user
+                        ? "Sign in to continue"
+                        : "Pay securely with Paystack"}
             </button>
-            <Link href="/cart" className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-slate-200 bg-white px-5 text-sm font-bold text-[#0b1736] hover:border-[#1f5b9f]/40 hover:text-[#1f5b9f]"><ArrowLeft size={16} aria-hidden="true" />Edit cart</Link>
-            <p className="mx-auto mt-4 max-w-sm text-center text-xs leading-5 text-slate-500">No order is created if you cancel or payment is not verified. By continuing you agree to our <Link href="/terms" className="font-semibold text-[#1f5b9f] underline">Terms</Link> and <Link href="/policies/privacy" className="font-semibold text-[#1f5b9f] underline">Privacy Policy</Link>.</p>
+            <Link
+              href="/cart"
+              className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-slate-200 bg-white px-5 text-sm font-bold text-[#0b1736] hover:border-[#1f5b9f]/40 hover:text-[#1f5b9f]"
+            >
+              <ArrowLeft size={16} aria-hidden="true" />
+              Edit cart
+            </Link>
+            <p className="mx-auto mt-4 max-w-sm text-center text-xs leading-5 text-slate-500">
+              No order is created if you cancel or payment is not verified. By
+              continuing you agree to our{" "}
+              <Link
+                href="/terms"
+                className="font-semibold text-[#1f5b9f] underline"
+              >
+                Terms
+              </Link>{" "}
+              and{" "}
+              <Link
+                href="/policies/privacy"
+                className="font-semibold text-[#1f5b9f] underline"
+              >
+                Privacy Policy
+              </Link>
+              .
+            </p>
           </form>
           <aside className="h-fit rounded-[2rem] bg-[#0b1736] p-7 text-white">
-            <p className="text-xs font-bold uppercase tracking-[.16em] text-[#e1ba56]">Your order</p>
-            <div className="mt-7 space-y-4">{summaryLines.map((line, index) => <div key={`${line.name}-${index}`} className="flex justify-between gap-4 text-sm"><span className="min-w-0 text-white/70">{line.name}</span><span className="shrink-0 font-semibold">{formatNaira(line.total)}</span></div>)}{!items.length && <p className="text-sm text-white/60">Your cart is empty. <Link href="/shop" className="text-[#e1ba56] underline">Browse products</Link></p>}</div>
-            <div className="my-7 space-y-3 border-t border-white/15 pt-6 text-sm"><div className="flex justify-between text-white/70"><span>Subtotal</span><span>{formatNaira(subtotal)}</span></div><div className="flex justify-between text-white/70"><span>Shipping</span><span>{shipping ? formatNaira(shipping) : "Free"}</span></div><div className="flex justify-between text-white/70"><span>Discount</span><span>{discount ? `−${formatNaira(discount)}` : formatNaira(0)}</span></div></div>
-            <div className="flex items-end justify-between"><span className="font-semibold">Total</span><span className="text-2xl font-bold">{formatNaira(total)}</span></div>
-            {serverTotal !== null && <p className="mt-3 text-sm font-semibold text-[#e1ba56]">Total to pay: {formatNaira(serverTotal)}</p>}
-            <p className="mt-4 text-xs leading-5 text-white/50">Prices include VAT where applicable. Prices, delivery and discounts are confirmed when you continue. Paystack's secure page shows the exact amount before you pay.</p>
+            <p className="text-xs font-bold uppercase tracking-[.16em] text-[#e1ba56]">
+              Your order
+            </p>
+            <div className="mt-7 space-y-4">
+              {catalogueLoading && (
+                <p className="text-sm text-white/70" role="status">
+                  Loading the latest catalogue…
+                </p>
+              )}
+              {catalogueError && (
+                <p className="text-sm text-rose-200" role="alert">
+                  Catalogue unavailable. Your saved cart is unchanged.
+                </p>
+              )}
+              {!catalogueUnavailable &&
+                summaryLines.map((line, index) => (
+                  <div
+                    key={`${line.name}-${index}`}
+                    className="flex justify-between gap-4 text-sm"
+                  >
+                    <span className="min-w-0 text-white/70">{line.name}</span>
+                    <span className="shrink-0 font-semibold">
+                      {formatNaira(line.total)}
+                    </span>
+                  </div>
+                ))}
+              {!catalogueUnavailable && !items.length && (
+                <p className="text-sm text-white/60">
+                  Your cart is empty.{" "}
+                  <Link href="/shop" className="text-[#e1ba56] underline">
+                    Browse products
+                  </Link>
+                </p>
+              )}
+            </div>
+            {catalogueUnavailable ? (
+              <p className="my-7 border-t border-white/15 pt-6 text-sm text-white/70" role={catalogueError ? "alert" : "status"}>
+                {catalogueLoading ? "Order totals will appear after the current catalogue has been checked." : "Order totals are unavailable because the current catalogue could not be verified."}
+              </p>
+            ) : (
+              <>
+            <div className="my-7 space-y-3 border-t border-white/15 pt-6 text-sm">
+              <div className="flex justify-between text-white/70">
+                <span>Subtotal</span>
+                <span>{formatNaira(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-white/70">
+                <span>Shipping</span>
+                <span>{shipping ? formatNaira(shipping) : "Free"}</span>
+              </div>
+              <div className="flex justify-between text-white/70">
+                <span>Discount</span>
+                <span>
+                  {discount ? `−${formatNaira(discount)}` : formatNaira(0)}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-end justify-between">
+              <span className="font-semibold">Total</span>
+              <span className="text-2xl font-bold">{formatNaira(total)}</span>
+            </div>
+            {serverTotal !== null && (
+              <p className="mt-3 text-sm font-semibold text-[#e1ba56]">
+                Total to pay: {formatNaira(serverTotal)}
+              </p>
+            )}
+              </>
+            )}
+            <p className="mt-4 text-xs leading-5 text-white/50">
+              Prices include VAT where applicable. Prices, delivery and
+              discounts are confirmed when you continue. Paystack's secure page
+              shows the exact amount before you pay.
+            </p>
           </aside>
         </div>
       </main>

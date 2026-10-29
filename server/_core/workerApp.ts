@@ -7,7 +7,9 @@ import { createContext } from "./context.js";
 import { registerOAuthRoutes } from "./oauth.js";
 import { registerStorageProxy } from "./storageProxy.js";
 
-const MAX_BODY_CHARACTERS = 10 * 1024 * 1024;
+// An 8 MiB image becomes about 10.67 MiB when base64-encoded in a data URL.
+// Leave headroom for the JSON envelope while keeping a bounded Worker request.
+const MAX_BODY_CHARACTERS = 12 * 1024 * 1024;
 const JSON_CONTENT_TYPE = /^application\/(?:[a-z0-9.+-]*\+)?json$/i;
 const FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
 
@@ -26,7 +28,7 @@ function parseUrlEncodedBody(body: string): Record<string, string | string[]> {
   return result;
 }
 
-function workerBodyParser(
+export function workerBodyParser(
   req: Request,
   res: Response,
   next: NextFunction,
