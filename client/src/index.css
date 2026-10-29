@@ -62,6 +62,26 @@ button:active, a:active { transform: scale(.97); }
 .shimmer-button:hover::after { animation: olucha-shimmer .75s ease; }
 @media (prefers-reduced-motion: reduce) { .motion-rise, .motion-float { animation: none !important; } .interactive-card:hover, .link-lift:hover, .okv-filter:hover { transform: none; } }
 
+@keyframes olucha-card-arrive { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.store-product-card { box-shadow: 0 8px 28px rgba(11,23,54,.045); transition: transform .35s cubic-bezier(.23,1,.32,1), box-shadow .35s ease, border-color .35s ease; animation: olucha-card-arrive .65s cubic-bezier(.23,1,.32,1) both; animation-delay: var(--card-delay, 0ms); }
+.store-product-card:hover { transform: translateY(-6px); border-color: rgba(207,164,58,.48); box-shadow: 0 26px 58px rgba(11,23,54,.14); }
+.store-product-visual { text-decoration: none; }
+.store-product-photo { transition: transform .75s cubic-bezier(.23,1,.32,1), filter .5s ease; }
+.store-product-card:hover .store-product-photo { transform: scale(1.055); filter: saturate(1.06); }
+.store-product-card:focus-within { border-color: rgba(207,164,58,.78); box-shadow: 0 0 0 3px rgba(207,164,58,.16), 0 20px 48px rgba(11,23,54,.12); }
+.product-image-stage { box-shadow: 0 28px 75px rgba(11,23,54,.16); }
+.product-image-button img { transition: transform .8s cubic-bezier(.23,1,.32,1); }
+.product-image-button:hover img { transform: scale(1.035); }
+.product-detail-panel { box-shadow: 0 20px 70px rgba(11,23,54,.07); }
+.product-lightbox { animation: olucha-rise .28s cubic-bezier(.23,1,.32,1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .store-product-card { animation: none !important; transition: none !important; }
+  .store-product-card:hover { transform: none !important; }
+  .group:hover .store-hero-photo, .group:hover .store-hero-arrow, .store-product-card:hover .store-card-arrow { transform: none !important; }
+  .store-product-photo, .product-image-button img, .product-lightbox { transition: none !important; animation: none !important; }
+  .store-product-card:hover .store-product-photo, .product-image-button:hover img { transform: none !important; }
+}
+
 /* Variant chips: visible keyboard focus distinct from the selected state */
 .variant-chip { transition: background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease; }
 .variant-chip:focus-visible { outline: 3px solid rgba(31, 91, 159, .55); outline-offset: 2px; }
