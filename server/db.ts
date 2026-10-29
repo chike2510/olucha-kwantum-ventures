@@ -285,7 +285,10 @@ export async function updateExportInquiryStatus(id: number, status: "new" | "rev
 export async function listAllProducts() {
   const db = await getDb();
   if (!db) return [];
-  const rows = await db.select({ product: products, cjLink: cjProductLinks }).from(products).leftJoin(cjProductLinks, eq(cjProductLinks.productId, products.id)).orderBy(desc(products.createdAt)).limit(200);
+  // Admin reads must reflect completed edits/deletions. PostgreSQL's STABLE
+  // CURRENT_TIMESTAMP makes this query non-cacheable by Hyperdrive; the read
+  // marker stays internal and the approved binding/configuration is unchanged.
+  const rows = await db.select({ product: products, cjLink: cjProductLinks, readAt: sql<Date>`current_timestamp` }).from(products).leftJoin(cjProductLinks, eq(cjProductLinks.productId, products.id)).orderBy(desc(products.createdAt)).limit(200);
   return rows.map(({ product, cjLink }) => ({ ...product, cjLink }));
 }
 

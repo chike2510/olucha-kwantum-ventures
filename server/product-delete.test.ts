@@ -11,7 +11,7 @@ vi.mock("pg", () => ({ Pool: drivers.pool }));
 vi.mock("drizzle-orm/node-postgres", () => ({ drizzle: drivers.drizzle }));
 
 const { setWorkerEnvironment } = await import("./_core/env");
-const { deleteProduct } = await import("./db");
+const { deleteProduct, listAllProducts } = await import("./db");
 
 const targetId = 741;
 const dialect = new PgDialect();
@@ -100,5 +100,21 @@ describe("Preview product-delete privilege migration", () => {
     const migration = readFileSync(new URL("../supabase/migrations/0005_admin_product_delete_privilege.sql", import.meta.url), "utf8")
       .replace(/--[^\n]*/g, "").trim();
     expect(migration).toBe("GRANT DELETE ON TABLE public.products TO okv_preview_app;");
+  });
+});
+
+describe("Admin product read-after-write freshness", () => {
+  it("bypasses Hyperdrive query caching with a real stable function and omits that marker from the response", async () => {
+    const limit = vi.fn().mockResolvedValue([{ product: { id: 19, name: "Isolated fixture" }, cjLink: null, readAt: new Date() }]);
+    const orderBy = vi.fn().mockReturnValue({ limit });
+    const leftJoin = vi.fn().mockReturnValue({ orderBy });
+    const from = vi.fn().mockReturnValue({ leftJoin });
+    const select = vi.fn().mockReturnValue({ from });
+    drivers.drizzle.mockReturnValue({ select });
+
+    await expect(listAllProducts()).resolves.toEqual([{ id: 19, name: "Isolated fixture", cjLink: null }]);
+    expect(dialect.sqlToQuery(select.mock.calls[0][0].readAt).sql).toBe("current_timestamp");
+    expect(from).toHaveBeenCalledWith(products);
+    expect(limit).toHaveBeenCalledWith(200);
   });
 });
