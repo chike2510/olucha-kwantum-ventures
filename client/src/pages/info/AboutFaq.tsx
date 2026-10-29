@@ -25,7 +25,6 @@ export function About() {
           <div className="okv-prose mt-2">
             <p>Olucha Kwantum Ventures was founded on a simple idea: buying online in Nigeria should feel as dependable as buying from someone you trust. We pick products for how well they do their job, describe them clearly and stand behind every order.</p>
             <p>Today we serve households, retailers and growing businesses across Nigeria, and work with international buyers who want reliable supply of Nigerian agro products.</p>
-            <p><Ph>[Optional: founding year, founder's name and a line on the company's history]</Ph></p>
           </div>
         </div>
         <div className="rounded-[2rem] bg-[#0b1736] p-6 text-white sm:p-10">
@@ -105,19 +104,19 @@ export function FaqPage() {
     ] },
     { id: "payment", title: "Payment", items: [
       { q: "How can I pay?", a: <>All payments are processed by Paystack, which supports cards, bank transfer, USSD and other methods it offers in your country. We never see or store your full card details.</> },
-      { q: "When is my order confirmed?", a: <>Only after our server verifies a successful payment with Paystack. If you cancel or the payment is not verified, no order is created and you are not charged.</> },
+      { q: "When is my order confirmed?", a: <>Only after Paystack confirms a successful payment. If you cancel payment or it cannot be confirmed, no order is placed.</> },
       { q: "Are prices inclusive of VAT?", a: <>Yes. Product prices are shown in Naira and include VAT where applicable. Only delivery is added, and it is shown in your cart and at checkout before you pay.</> },
     ] },
     { id: "delivery", title: "Delivery", items: [
       { q: "How much is delivery?", a: <>Delivery within Nigeria is a flat {flat} per order, and free on orders of {threshold} or more. See <Link href="/policies/shipping">Shipping & Delivery</Link>.</> },
-      { q: "How long will delivery take?", a: <>Typically <Ph>[e.g. 1–3 business days]</Ph> within Delta State and <Ph>[e.g. 3–7 business days]</Ph> elsewhere in Nigeria once dispatched. Times are estimates.</> },
+      { q: "How long will delivery take?", a: <>Delivery times depend on your location. Contact us for an estimated timeframe for your order. Estimates are not guarantees.</> },
       { q: "How do I track my order?", a: <>Sign in and open <Link href="/account/orders">My orders</Link> to see each order's status. We may also contact you by phone or WhatsApp to arrange delivery.</> },
       { q: "Do you ship outside Nigeria?", a: <>Yes, we supply export and international buyers. Export shipments are quoted individually. <a href="/#contact">Send us an inquiry</a> with the product, quantity and destination.</> },
     ] },
     { id: "returns", title: "Returns & refunds", items: [
-      { q: "Can I return an item?", a: <>Eligible, unused items can be returned within <Ph>{BUSINESS.returnWindowDays}</Ph> days of delivery. Some items, such as food and agro products, cannot be returned unless faulty. See <Link href="/policies/returns">Returns & Refunds</Link>.</> },
-      { q: "What if my item arrives damaged or wrong?", a: <>Contact us within <Ph>[e.g. 48 hours]</Ph> of delivery with photos and your order number. We will replace it or refund you, including delivery.</> },
-      { q: "How long do refunds take?", a: <>We start approved refunds within <Ph>{BUSINESS.refundProcessingDays}</Ph>, back to your original payment method through Paystack. Your bank may take a few extra days.</> },
+      { q: "Can I return an item?", a: <>{BUSINESS.returnWindowDays ? <>Eligible, unused items can be returned within {BUSINESS.returnWindowDays} days of delivery.</> : <>Contact us to confirm the return window and whether your item is eligible.</>} Some items, such as food and agro products, cannot be returned unless faulty. See <Link href="/policies/returns">Returns & Refunds</Link>.</> },
+      { q: "What if my item arrives damaged or wrong?", a: <>Contact us promptly after delivery with photos and your order number. We will replace it or refund you, including delivery.</> },
+      { q: "How long do refunds take?", a: <>Approved refunds go back to your original payment method through Paystack. {BUSINESS.refundProcessingDays ? <>We start the refund within {BUSINESS.refundProcessingDays}.</> : <>We will confirm the processing timeframe when your refund is approved.</>} Your bank may take extra time to show it.</> },
     ] },
     { id: "bulk", title: "Bulk & business orders", items: [
       { q: "Do you offer wholesale or bulk prices?", a: <>Yes. For bulk, wholesale or export quantities, <a href="/#contact">send an inquiry</a> or WhatsApp us on {BUSINESS.whatsappDisplay} for a quotation.</> },

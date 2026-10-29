@@ -17,7 +17,7 @@ const PAYMENT_MESSAGES: Record<string, string> = {
   cancelled:
     "Payment cancelled. Your cart is unchanged and no order was created.",
   failed:
-    "Payment was not verified. No order was created; you can safely try again.",
+    "We couldn’t confirm your payment, so no order was placed. You can safely try again.",
   pending:
     "We are still confirming your payment. Your order will appear in your account as soon as Paystack confirms it.",
 };
@@ -86,7 +86,7 @@ export default function Checkout() {
           totalKobo: result.totalKobo,
         });
         setNotice(
-          "The store's current server-side prices changed the amount. Review the verified amount below, then continue if you want to pay it."
+          "The latest store prices changed your total. Review the updated total below, then continue if you would like to pay it."
         );
         return;
       }
@@ -117,8 +117,8 @@ export default function Checkout() {
     if (catalogueUnavailable) {
       setNotice(
         catalogueLoading
-          ? "The latest catalogue is still loading. Please wait before starting checkout."
-          : "The catalogue could not be loaded. No checkout can be started until it is available."
+          ? "We’re still checking product availability. Please wait a moment before starting checkout."
+          : "We couldn’t confirm the latest product information, so checkout is temporarily unavailable. Please try again shortly."
       );
       return;
     }
@@ -240,7 +240,7 @@ export default function Checkout() {
                 />
               </label>
               <label className="field">
-                State / region
+                State or region
                 <input
                   value={form.region}
                   onChange={event => update("region", event.target.value)}
@@ -268,7 +268,7 @@ export default function Checkout() {
                 />
               </label>
               <label className="field sm:col-span-2">
-                Address line 2 <span className="text-xs font-normal text-slate-400">(optional)</span>
+                Additional address details <span className="text-xs font-normal text-slate-400">(optional)</span>
                 <input
                   value={form.address2}
                   onChange={event => update("address2", event.target.value)}
@@ -282,10 +282,9 @@ export default function Checkout() {
                 className="mt-6 rounded-2xl bg-sky-50 p-4 text-sm leading-6 text-sky-800"
                 role="status"
               >
-                <p className="font-bold">Loading the latest catalogue…</p>
+                <p className="font-bold">Checking the latest products…</p>
                 <p className="mt-1">
-                  Your saved cart is being checked against currently active
-                  products.
+                  We’re checking that the products in your cart are still available and up to date.
                 </p>
               </div>
             )}
@@ -294,10 +293,9 @@ export default function Checkout() {
                 className="mt-6 rounded-2xl bg-rose-50 p-4 text-sm leading-6 text-rose-800"
                 role="alert"
               >
-                <p className="font-bold">We couldn’t load the catalogue.</p>
+                <p className="font-bold">We couldn’t load the latest products.</p>
                 <p className="mt-1">
-                  Your saved cart is unchanged. Checkout is unavailable until
-                  the catalogue can be verified.
+                  Your cart is unchanged. Checkout will be available once we confirm the latest product prices and availability.
                 </p>
               </div>
             )}
@@ -329,7 +327,7 @@ export default function Checkout() {
                   className="shrink-0 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700"
                   title="Payments are in Paystack test mode"
                 >
-                  Test mode
+                  Test payments
                 </span>
               )}
             </div>
@@ -397,9 +395,9 @@ export default function Checkout() {
               disabled={initializePayment.isPending || catalogueUnavailable}
             >
               {catalogueLoading
-                ? "Loading catalogue…"
+                ? "Checking product availability…"
                 : catalogueError
-                  ? "Catalogue unavailable"
+                  ? "Products temporarily unavailable"
                   : initializePayment.isPending
                     ? "Preparing secure checkout…"
                     : pendingAuthorization
@@ -416,7 +414,7 @@ export default function Checkout() {
               Edit cart
             </Link>
             <p className="mx-auto mt-4 max-w-sm text-center text-xs leading-5 text-slate-500">
-              No order is created if you cancel or payment is not verified. By
+              If you cancel payment or we can’t confirm it, no order will be placed. By
               continuing you agree to our{" "}
               <Link
                 href="/terms"
@@ -441,12 +439,12 @@ export default function Checkout() {
             <div className="mt-7 space-y-4">
               {catalogueLoading && (
                 <p className="text-sm text-white/70" role="status">
-                  Loading the latest catalogue…
+                  Checking the latest products…
                 </p>
               )}
               {catalogueError && (
                 <p className="text-sm text-rose-200" role="alert">
-                  Catalogue unavailable. Your saved cart is unchanged.
+                  Products temporarily unavailable. Your saved cart is unchanged.
                 </p>
               )}
               {!catalogueUnavailable &&
@@ -472,7 +470,7 @@ export default function Checkout() {
             </div>
             {catalogueUnavailable ? (
               <p className="my-7 border-t border-white/15 pt-6 text-sm text-white/70" role={catalogueError ? "alert" : "status"}>
-                {catalogueLoading ? "Order totals will appear after the current catalogue has been checked." : "Order totals are unavailable because the current catalogue could not be verified."}
+                {catalogueLoading ? "Your order total will appear once we confirm the latest product prices and availability." : "We can’t show your order total because we couldn’t confirm the latest product prices and availability. Please try again shortly."}
               </p>
             ) : (
               <>
@@ -504,8 +502,8 @@ export default function Checkout() {
               </>
             )}
             <p className="mt-4 text-xs leading-5 text-white/50">
-              Prices include VAT where applicable. Prices, delivery and
-              discounts are confirmed when you continue. Paystack's secure page
+              Prices include VAT where applicable. Your final total, delivery cost and
+              discount will be confirmed when you continue. Paystack’s secure payment page
               shows the exact amount before you pay.
             </p>
           </aside>

@@ -38,7 +38,7 @@ function StatusControl({ order, compact = false }: { order: AdminOrder; compact?
     const ok = await confirm({
       title: cancelling ? `Cancel order #${order.id}?` : `Mark order #${order.id} as ${status}?`,
       description: cancelling
-        ? order.status === "pending" ? "This unpaid order will be closed. This cannot be undone from the admin console." : "This order has been paid. Cancelling does not refund the customer automatically — issue any refund in Paystack. This cannot be undone from the admin console."
+        ? order.status === "pending" ? "This unpaid order will be closed. This cannot be undone from the admin area." : "This order has been paid. Cancelling does not refund the customer automatically — issue any refund in Paystack. This cannot be undone from the admin area."
         : `The order moves from ${order.status} to ${status}.`,
       confirmLabel: cancelling ? "Cancel order" : `Mark ${status}`,
       destructive: cancelling,
@@ -58,7 +58,7 @@ function OrderDetail({ order, onClose }: { order: AdminOrder | null; onClose: ()
         <SheetHeader><SheetTitle>Order #{order.id}</SheetTitle><SheetDescription>Placed {formatDate(order.createdAt, true)}</SheetDescription></SheetHeader>
         <div className="space-y-5 px-4 pb-8 text-sm">
           <div className="flex flex-wrap items-center gap-3"><StatusBadge status={order.status}/><StatusControl order={order} compact/>{isManualHandoffEligible(order) && <button type="button" onClick={() => downloadManualHandoff(order)} className="inline-flex items-center gap-1 rounded-full bg-[#0b1736] px-3 py-1.5 text-xs font-bold text-white"><Download size={13}/>Download manual review</button>}</div>
-          {isManualHandoffEligible(order) && <p className="rounded-xl bg-sky-50 p-3 text-xs leading-5 text-sky-800">Payment was verified server-side. This review/download draft is for administrator handoff only; it does not create a CJ order or authorize supplier payment.</p>}
+          {isManualHandoffEligible(order) && <p className="rounded-xl bg-sky-50 p-3 text-xs leading-5 text-sky-800">Payment was verified. This review/download draft is for administrator handoff only; it does not create a supplier order or authorize supplier payment.</p>}
           {order.status === "pending" && <p className="rounded-xl bg-amber-50 p-3 text-xs text-amber-800">Payment has not been verified. Pending orders move to paid automatically when Paystack confirms payment; they can only be cancelled by hand.</p>}
           <CjOrderControls order={order}/>
           <section><h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">Customer</h3><dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5"><dt className="text-slate-500">Name</dt><dd className="font-semibold">{order.customerName}</dd><dt className="text-slate-500">Email</dt><dd className="break-all"><a href={`mailto:${order.customerEmail}`} className="text-[#1f5b9f]">{order.customerEmail}</a></dd><dt className="text-slate-500">Phone</dt><dd>{order.customerPhone ? <a href={`tel:${order.customerPhone}`} className="text-[#1f5b9f]">{order.customerPhone}</a> : "—"}</dd></dl></section>

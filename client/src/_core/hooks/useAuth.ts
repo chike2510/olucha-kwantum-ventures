@@ -29,7 +29,7 @@ export function useAuth(options?: UseAuthOptions) {
     const verification = await meQuery.refetch();
     if (verification.error || !verification.data) {
       await supabase.auth.signOut();
-      throw verification.error ?? new Error("We could not confirm your sign-in. Please sign in again.");
+      throw verification.error ?? new Error("We couldn’t complete your sign-in. Please try again.");
     }
     return verification.data;
   }, [meQuery.refetch]);

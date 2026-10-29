@@ -21,7 +21,7 @@ function ContactBlock() {
       <li>Phone: <Ph>{BUSINESS.supportPhone}</Ph></li>
       <li>WhatsApp: <a href={WHATSAPP_URL} target="_blank" rel="noreferrer">{BUSINESS.whatsappDisplay}</a></li>
       <li>Post: {BUSINESS.legalName}, <Ph>{BUSINESS.registeredAddress}</Ph></li>
-      <li>Hours: <Ph>{BUSINESS.businessHours}</Ph></li>
+      {BUSINESS.businessHours && <li>Hours: {BUSINESS.businessHours}</li>}
     </ul>
   );
 }
@@ -102,7 +102,7 @@ export function PrivacyPolicy() {
       <p>Some of our service providers may store or process data on servers outside Nigeria. Where this happens we rely on the transfer grounds allowed by the NDPA, such as adequate protection in the destination country, appropriate contractual safeguards, or transfers necessary to perform our contract with you (for example, an export order to another country).</p>
 
       <h2 id="retention">6. How long we keep it</h2>
-      <p>We keep order and payment records for as long as the law requires for tax and accounting purposes, <Ph>[retention period for order records, e.g. 6 years]</Ph>. Account data is kept while your account is active. Messages are kept for <Ph>[retention period for enquiries]</Ph> after the matter is resolved. We then delete or anonymise the data.</p>
+      <p>We keep order and payment records for as long as the law requires for tax and accounting purposes. Account data is kept while your account is active. Contact us if you would like information about how long a particular record is kept.</p>
 
       <h2 id="security">7. Security</h2>
       <p>We use encrypted connections (HTTPS), access controls and reputable providers to protect your data. No online service is completely risk-free. If a personal data breach is likely to put your rights at risk, we will notify the NDPC within 72 hours of becoming aware of it and tell affected customers without undue delay, as the NDPA requires.</p>
@@ -121,13 +121,13 @@ export function PrivacyPolicy() {
       <p>To exercise a right, contact <Ph>{BUSINESS.privacyEmail}</Ph>. We will respond within the time the law allows. If you are not satisfied, you can complain to the Nigeria Data Protection Commission (NDPC).</p>
 
       <h2 id="cookies">9. Cookies and local storage</h2>
-      <p>We use essential browser storage to keep you signed in and to remember your cart and coupon on your device. These are needed for the store to work. <Ph>[State whether any analytics or advertising cookies are used. None are used at present.]</Ph></p>
+      <p>We use essential browser storage to keep you signed in and to remember your cart and coupon on your device. These are needed for the store to work. We do not currently use analytics or advertising cookies.</p>
 
       <h2 id="children">10. Children</h2>
       <p>The store is meant for adults. We do not knowingly collect personal data from children under 18. If you think a child has given us personal data, please contact us so we can delete it.</p>
 
       <h2 id="changes">11. Changes to this policy</h2>
-      <p>We may update this policy from time to time. The latest version will always be on this page with its "last updated" date.</p>
+      <p>We may update this policy from time to time. The latest version will always be on this page with a review date when available.</p>
 
       <h2 id="contact">12. Contact us</h2>
       <ContactBlock />
@@ -158,14 +158,10 @@ export function ShippingPolicy() {
       </ul>
 
       <h2 id="coverage">2. Where we deliver</h2>
-      <p>We deliver to addresses across Nigeria. <Ph>[Confirm any states or areas not covered, or where extra charges apply]</Ph></p>
+      <p>We deliver to addresses across Nigeria.</p>
 
       <h2 id="timelines">3. Delivery timelines</h2>
-      <p>Orders are processed after your payment has been verified. Typical delivery times once an order is dispatched:</p>
-      <ul>
-        <li>Within Delta State: <Ph>[e.g. 1–3 business days]</Ph></li>
-        <li>Other states in Nigeria: <Ph>[e.g. 3–7 business days]</Ph></li>
-      </ul>
+      <p>Orders are processed after payment is confirmed. Delivery times depend on your location. Contact us for an estimated timeframe for your order.</p>
       <p>These are estimates, not guarantees. Public holidays, weather, security situations and courier delays can affect delivery. Agro products are subject to seasonal availability, and we will contact you if an item is unavailable.</p>
 
       <h2 id="tracking">4. Order status</h2>
@@ -174,12 +170,12 @@ export function ShippingPolicy() {
       <h2 id="receiving">5. Receiving your order</h2>
       <ul>
         <li>Please give a complete address and a phone number you can be reached on.</li>
-        <li>Check the package when it arrives. If it is visibly damaged, note this with the courier and contact us within <Ph>[e.g. 48 hours]</Ph> of delivery.</li>
-        <li>If delivery fails because the address was wrong or nobody was available, a re-delivery fee may apply. <Ph>[Confirm re-delivery policy]</Ph></li>
+        <li>Check the package when it arrives. If it is visibly damaged, note this with the courier and contact us promptly after delivery.</li>
+        <li>If delivery fails because the address was wrong or nobody was available, a re-delivery fee may apply.</li>
       </ul>
 
       <h2 id="export">6. International and export orders</h2>
-      <p>We supply buyers outside Nigeria, especially for agro products and bulk orders. Export shipments are quoted individually based on product, quantity, destination, packaging and documentation. For a quote, <a href="/#contact">send us an inquiry</a> or message us on WhatsApp. <Ph>[Confirm how international orders placed through online checkout are charged and fulfilled]</Ph></p>
+      <p>We supply buyers outside Nigeria, especially for agro products and bulk orders. Export shipments are quoted individually based on product, quantity, destination, packaging and documentation. For a quote, <a href="/#contact">send us an inquiry</a> or message us on WhatsApp.</p>
       <p>Import duties, taxes and customs clearance in the destination country are the buyer's responsibility unless we agree otherwise in writing.</p>
 
       <h2 id="issues">7. Delays, damage and loss</h2>
@@ -207,7 +203,7 @@ export function ReturnsPolicy() {
       intro={<p>If something is not right with your order, we will help put it right. This policy does not affect your rights under the Federal Competition and Consumer Protection Act 2018.</p>}
       related={[{ href: "/policies/shipping", title: "Shipping & Delivery" }, { href: "/faq", title: "FAQ" }]}>
       <h2 id="window">1. Return window</h2>
-      <p>You can ask to return eligible items within <Ph>{BUSINESS.returnWindowDays}</Ph> days of delivery.</p>
+      <p>{BUSINESS.returnWindowDays ? <>You can ask to return eligible items within {BUSINESS.returnWindowDays} days of delivery.</> : <>Contact us to confirm the return window and whether your item is eligible before sending it back.</>}</p>
 
       <h2 id="eligible">2. What can be returned</h2>
       <p>To be eligible, an item must be:</p>
@@ -225,23 +221,22 @@ export function ReturnsPolicy() {
         <li>items that have been used, altered or damaged after delivery;</li>
         <li>custom or bulk orders made to your specification, unless agreed in writing.</li>
       </ul>
-      <p><Ph>[Confirm or adjust this list of non-returnable items]</Ph></p>
 
       <h2 id="faulty">4. Faulty, damaged or wrong items</h2>
-      <p>If an item arrives faulty, damaged or different from what you ordered, contact us within <Ph>[e.g. 48 hours]</Ph> of delivery with photos and your order number. We will offer a replacement, repair or full refund, including the delivery fee. Electronics may need a short inspection to confirm the fault.</p>
+      <p>If an item arrives faulty, damaged or different from what you ordered, contact us promptly after delivery with photos and your order number. We will offer a replacement, repair or full refund, including the delivery fee. Electronics may need a short inspection to confirm the fault.</p>
 
       <h2 id="how">5. How to return an item</h2>
       <ol>
         <li>Contact us using the details below with your order number and the reason for the return.</li>
         <li>We will confirm whether the item is eligible and tell you how to send it back.</li>
-        <li>Pack the item securely. Unless the item is faulty or wrong, return delivery costs are paid by you. <Ph>[Confirm who pays return shipping]</Ph></li>
+        <li>Pack the item securely. Unless the item is faulty or wrong, return delivery costs are paid by you.</li>
         <li>Once we receive and inspect the item, we will let you know whether your refund is approved.</li>
       </ol>
 
       <h2 id="refunds">6. Refunds</h2>
       <ul>
         <li>Approved refunds go back to your original payment method through Paystack.</li>
-        <li>We start the refund within <Ph>{BUSINESS.refundProcessingDays}</Ph> of approving it. Your bank or card issuer may take extra time to show it.</li>
+        <li>{BUSINESS.refundProcessingDays ? <>We start the refund within {BUSINESS.refundProcessingDays} of approving it.</> : <>We will confirm the processing timeframe when your refund is approved.</>} Your bank or card issuer may take extra time to show it.</li>
         <li>The original delivery fee is refunded only if the item was faulty, damaged or wrong, or the whole order is cancelled before dispatch.</li>
         <li>If you cancel a paid order before it is dispatched, we will refund it in full.</li>
       </ul>
@@ -295,7 +290,7 @@ export function Terms() {
       <h2 id="orders">5. Orders and payment</h2>
       <ul>
         <li>Payments are processed securely by Paystack. We never see or store your full card details.</li>
-        <li>An order is only created after our server verifies a successful payment with Paystack. If you cancel or the payment is not verified, no order is created.</li>
+        <li>An order is only placed after Paystack confirms a successful payment. If you cancel payment or it cannot be confirmed, no order is placed.</li>
         <li>Our acceptance of your order takes effect when we confirm it. We may decline or cancel an order (for example, if an item is out of stock or the payment looks fraudulent), and we will refund any amount paid.</li>
         <li>Coupons and promotions are subject to their own conditions, cannot be exchanged for cash, and may be withdrawn at any time.</li>
       </ul>
@@ -316,7 +311,7 @@ export function Terms() {
       <p>Nothing in these terms limits any rights you have as a consumer under Nigerian law, including the Federal Competition and Consumer Protection Act 2018, or our liability for death or personal injury caused by our negligence, or for fraud. Otherwise, we are not responsible for losses that were not foreseeable, for business losses when you buy as a consumer, or for delays caused by events outside our reasonable control. Our total liability for any order is limited to the amount you paid for it.</p>
 
       <h2 id="law">11. Governing law and disputes</h2>
-      <p>These terms are governed by the laws of the Federal Republic of Nigeria. If something goes wrong, please contact us first and we will try to resolve it quickly and fairly. If we cannot, disputes will be handled by the courts of <Ph>[State whose courts will have jurisdiction, e.g. Delta State or Lagos State]</Ph>, Nigeria. <Ph>[Optional: arbitration or mediation clause]</Ph></p>
+      <p>These terms are governed by the laws of the Federal Republic of Nigeria. If something goes wrong, please contact us first and we will try to resolve it quickly and fairly.</p>
 
       <h2 id="changes">12. Changes to these terms</h2>
       <p>We may update these terms from time to time. The version on this page when you place an order applies to that order.</p>

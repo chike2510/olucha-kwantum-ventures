@@ -5,10 +5,8 @@ import BrandHeader from "@/components/BrandHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { BUSINESS } from "@/lib/siteConfig";
 
-/** Renders an owner-to-confirm value. Anything in [square brackets] is highlighted so it is obvious before launch. */
+/** Shared wrapper for confirmed business details. */
 export function Ph({ children }: { children: ReactNode }) {
-  const text = typeof children === "string" ? children : "";
-  if (text.startsWith("[") && text.endsWith("]")) return <span className="okv-placeholder" title="To be confirmed by Olucha Kwantum Ventures">{text}</span>;
   return <>{children}</>;
 }
 
@@ -48,7 +46,7 @@ export default function InfoLayout({ title, eyebrow, intro, children, backHref =
           <p className="eyebrow">{eyebrow}</p>
           <h1 className="section-title">{title}</h1>
           <div className="mt-5 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">{intro}</div>
-          {lastUpdated && <p className="mt-4 text-sm text-slate-500">Last updated: <Ph>{BUSINESS.policiesLastUpdated}</Ph></p>}
+          {lastUpdated && BUSINESS.policiesLastUpdated && <p className="mt-4 text-sm text-slate-500">Last updated: <Ph>{BUSINESS.policiesLastUpdated}</Ph></p>}
         </div>
         <div className={`mt-10 grid gap-8 ${toc?.length ? "lg:grid-cols-[15rem_1fr]" : ""}`}>
           {toc?.length ? (

@@ -85,7 +85,7 @@ export default function Cart() {
                     size={38}
                   />
                   <h2 className="text-xl font-semibold text-[#0b1736]">
-                    Loading the latest catalogue…
+                    Loading the latest products…
                   </h2>
                   <p className="mt-2 text-sm text-slate-500">
                     We’re checking which products are currently available.
@@ -102,7 +102,7 @@ export default function Cart() {
                     size={38}
                   />
                   <h2 className="text-xl font-semibold text-[#0b1736]">
-                    We couldn’t load the catalogue
+                    We couldn’t load the latest products
                   </h2>
                   <p className="mt-2 text-sm text-slate-500">
                     Your saved cart is unchanged. Please try again shortly.
@@ -200,7 +200,7 @@ export default function Cart() {
                     Your cart is empty
                   </h2>
                   <p className="mt-2 text-sm text-slate-500">
-                    Browse the catalogue and add items to see them here.
+                    Browse our products and add items to see them here.
                   </p>
                   <Link
                     href="/shop"
@@ -218,7 +218,7 @@ export default function Cart() {
             </p>
             {catalogueUnavailable ? (
               <p className="mt-6 text-sm text-white/70" role={catalogueError ? "alert" : "status"}>
-                {catalogueLoading ? "Order totals will appear after the current catalogue has been checked." : "Order totals are unavailable because the current catalogue could not be verified."}
+                {catalogueLoading ? "Your order total will appear once we confirm the latest product prices and availability." : "We can’t show your order total because we couldn’t confirm the latest product prices and availability. Please try again shortly."}
               </p>
             ) : (
               <>
@@ -276,9 +276,9 @@ export default function Cart() {
               className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#f7b32b] px-5 text-sm font-bold text-[#0b1736]"
             >
               {catalogueLoading
-                ? "Loading catalogue…"
+                ? "Checking product availability…"
                 : catalogueError
-                  ? "Catalogue unavailable"
+                  ? "Products temporarily unavailable"
                   : items.length
                     ? "Continue to checkout"
                     : "Browse products"}{" "}

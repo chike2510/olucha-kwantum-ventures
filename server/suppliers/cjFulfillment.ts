@@ -46,15 +46,15 @@ function supplierInputForOrder(
   if (!order.customerName || !order.customerEmail || !order.customerPhone || !order.deliveryCountry || !order.deliveryCountryCode || !order.deliveryAddress || !order.deliveryCity || !order.deliveryRegion) {
     throw new Error("The order is missing required customer delivery details.");
   }
-  if (!items.length || items.length > 20) throw new Error("The local order has no valid supplier-order lines.");
+  if (!items.length || items.length > 20) throw new Error("The order has no valid supplier-order lines.");
   const mappedItems = items.map((item) => {
     const mapping = item.mapping;
-    if (!mapping) throw new Error("Every item must have a CJ mapping before automatic supplier submission.");
-    if (!mapping.cjVariantSku) throw new Error("A mapped CJ variant SKU is missing; refresh the mapping before submission.");
+    if (!mapping) throw new Error("Every item must have a CJ product link before automatic supplier submission.");
+    if (!mapping.cjVariantSku) throw new Error("A linked CJ option SKU is missing; check the product link before submission.");
     const selectedVariant = item.variant && typeof item.variant === "object" ? item.variant as Record<string, unknown> : {};
     const hasCustomerSelectedVariant = [selectedVariant.size, selectedVariant.color].some((value) => typeof value === "string" && value.trim().length > 0);
     if (hasCustomerSelectedVariant && mapping.isFixedVariant !== true) {
-      throw new Error("This order contains a customer-selected variant that is not bound to the saved CJ variant.");
+      throw new Error("This order contains a customer-selected option that is not bound to the saved CJ option.");
     }
     return {
       productId: mapping.cjProductId,
@@ -134,7 +134,7 @@ async function attemptSupplierCreate(orderId: number, isRetry: boolean): Promise
   } catch {
     // CJ has confirmed order creation; any local persistence error is ambiguous and must never enable another create attempt.
   }
-  const message = "CJ returned an order, but the local order could not be updated. Reconcile by the stable order reference before any retry.";
+  const message = "CJ returned an order, but this order could not be updated. Check the existing CJ order by its reference before any retry.";
   await setCjSupplierOrderState(orderId, "needs_reconciliation", message);
   return { outcome: "needs_reconciliation", message };
 }
@@ -174,11 +174,11 @@ export async function retryCjSupplierOrder(orderId: number, confirmedNoMatchingO
   if (!confirmedNoMatchingOrder) return { outcome: "confirmation-required" };
   const record = await getCjSupplierOrder(orderId);
   if (!record || record.order.cjSubmissionStatus !== "blocked") {
-    return { outcome: "reconciliation-only", message: "An ambiguous supplier submission cannot be retried automatically. Reconcile the existing CJ order instead." };
+    return { outcome: "reconciliation-only", message: "An unclear supplier submission cannot be retried automatically. Check the existing CJ order instead." };
   }
   const reconciliation = await reconcileCjSupplierOrder(orderId);
   if (reconciliation.outcome === "reconciled") return { outcome: "reconciled" };
-  if (reconciliation.outcome === "mismatch") return { outcome: "mismatch", message: "CJ returned an order record that does not match this local order. No retry was submitted." };
+  if (reconciliation.outcome === "mismatch") return { outcome: "mismatch", message: "CJ returned an order record that does not match this order. No retry was submitted." };
   if (reconciliation.outcome === "ineligible") return { outcome: "ineligible" };
   if (reconciliation.outcome === "unavailable") return { outcome: "reconciliation-unavailable", message: "CJ could not confirm the order reference. No retry was submitted." };
   if (reconciliation.outcome !== "not-found") return { outcome: "reconciliation-only" };
@@ -187,14 +187,14 @@ export async function retryCjSupplierOrder(orderId: number, confirmedNoMatchingO
 
 /** Read CJ tracking, verify the returned supplier order identity, then update only this exact local order row. */
 export async function syncCjTrackingForOrder(orderId: number): Promise<{ trackingNumber: string | null; trackingStatus: string | null; orderStatus: string | null }> {
-  if (ENV.vercelEnv !== "preview" || !ENV.cjSyncEnabled || !ENV.cjApiKey) throw new Error("CJ tracking sync is not configured for this Preview deployment.");
+  if (ENV.vercelEnv !== "preview" || !ENV.cjSyncEnabled || !ENV.cjApiKey) throw new Error("CJ tracking is not available here.");
   const record = await getCjSupplierOrder(orderId);
   if (!record || !isLiveVerifiedPaidOrder(record.order) || record.order.cjSubmissionStatus !== "created_unpaid" || !record.order.cjOrderId) {
     throw new Error("This order has no verified, matching CJ supplier order to track.");
   }
   const client = createCjClient(ENV.cjApiKey);
   const detail = await client.getOrderDetail(record.order.cjOrderId);
-  if (!detailMatchesLocalOrder(detail, record.order)) throw new Error("CJ order details did not match this local order; no tracking data was saved.");
+  if (!detailMatchesLocalOrder(detail, record.order)) throw new Error("CJ order details did not match this order; no tracking data was saved.");
   const currentTrackNumber = detail.trackNumber ?? record.order.trackingNumber;
   const tracking = currentTrackNumber ? await client.getTrackingInfo(currentTrackNumber) : null;
   const trackingNumber = tracking?.trackingNumber ?? currentTrackNumber ?? null;
@@ -207,6 +207,6 @@ export async function syncCjTrackingForOrder(orderId: number): Promise<{ trackin
     trackingUrl: detail.trackingUrl ?? record.order.trackingUrl,
     trackingSyncedAt: new Date(),
   });
-  if (!saved) throw new Error("The CJ order mapping changed while tracking was being refreshed; no data was saved.");
+  if (!saved) throw new Error("The CJ order link changed while tracking was being refreshed; no data was saved.");
   return { trackingNumber, trackingStatus: tracking?.trackingStatus ?? record.order.trackingStatus, orderStatus: detail.orderStatus ?? record.order.cjOrderStatus };
 }

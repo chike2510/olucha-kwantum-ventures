@@ -58,13 +58,13 @@ async function withSlugConflict<T>(run: () => Promise<T>) {
   }
 }
 function requirePreviewEnvironment(): void {
-  if (ENV.vercelEnv !== "preview") throw new TRPCError({ code: "FORBIDDEN", message: "CJ operations are available only in the approved Preview deployment." });
+  if (ENV.vercelEnv !== "preview") throw new TRPCError({ code: "FORBIDDEN", message: "CJ product browsing and stock checks are not available here." });
 }
 let cachedCjClient: ReturnType<typeof createCjClient> | null = null;
 let cachedCjApiKey = "";
 function getPreviewCjClient(): ReturnType<typeof createCjClient> {
   requirePreviewEnvironment();
-  if (!ENV.cjSyncEnabled || !ENV.cjApiKey) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "CJ sync is not configured for this Preview deployment." });
+  if (!ENV.cjSyncEnabled || !ENV.cjApiKey) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "CJ is not connected." });
   if (!cachedCjClient || cachedCjApiKey !== ENV.cjApiKey) {
     cachedCjApiKey = ENV.cjApiKey;
     cachedCjClient = createCjClient(cachedCjApiKey);
@@ -92,7 +92,7 @@ export const adminRouter = router({
     if (values.isActive === 1) {
       const existing = await getAdminProductWithCjLink(id);
       if (existing?.cjLink?.cjImportedAt && existing.product.isActive !== 1) {
-        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Review and activate imported CJ drafts with the dedicated activation action." });
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Review and activate imported CJ drafts from the product list." });
       }
     }
     return withSlugConflict(() => updateProduct(id, { ...values, updatedAt: new Date() }));
@@ -104,14 +104,14 @@ export const adminRouter = router({
     if (!cjLink?.cjImportedAt) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This is not an imported CJ draft." });
     if (product.isActive === 1) return { success: true, alreadyActive: true };
     if (!product.adminCreatedAt || !cjLink.cjProductId || !cjLink.cjVariantId || !cjLink.cjVariantSku || cjLink.isFixedVariant !== true) {
-      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "The imported CJ variant mapping is incomplete. Re-import or correct the mapping before activation." });
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "The imported CJ product link is incomplete. Re-import or correct the link before activation." });
     }
     if (product.name.trim().length < 2 || product.slug.trim().length < 1 || product.description.trim().length < 10 || product.priceKobo < 1 || product.unit.trim().length < 1) {
       throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Complete the retail name, URL, description, price, and unit before activation." });
     }
     const syncedAt = cjLink.stockSyncedAt?.getTime() ?? 0;
     if (!cjLink.stockSyncedAt || Date.now() - syncedAt > 24 * 60 * 60 * 1000 || cjLink.stockQuantity === null || cjLink.stockQuantity < 1) {
-      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Refresh CJ stock and confirm at least one unit is available before activation." });
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Check CJ stock and confirm at least one unit is available before activation." });
     }
     await updateProduct(input.id, { isActive: 1, updatedAt: new Date() });
     return { success: true, alreadyActive: false };
@@ -147,7 +147,7 @@ export const adminRouter = router({
     try {
       const source = await client.getCatalogProduct(input.cjProductId);
       const variant = source.variants.find((candidate) => candidate.id === input.cjVariantId);
-      if (!variant) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "The selected CJ variant is no longer available. Refresh the details and choose again." });
+      if (!variant) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "The selected CJ option is no longer available. Refresh the details and choose again." });
       const imported = await importCjProductDraft({
         ...input,
         currency: "NGN",
@@ -162,46 +162,46 @@ export const adminRouter = router({
     } catch (error) {
       if (error instanceof TRPCError) throw error;
       if ((error instanceof Error && error.message.includes("already been imported")) || isUniqueViolation(error)) {
-        throw new TRPCError({ code: "CONFLICT", message: "This CJ variant is already mapped or imported, or the slug is already in use." });
+        throw new TRPCError({ code: "CONFLICT", message: "This CJ option is already linked or imported, or the product page address is already in use." });
       }
-      throw new TRPCError({ code: "BAD_GATEWAY", message: "The CJ product draft could not be saved. Check the catalogue fields and try again." });
+      throw new TRPCError({ code: "BAD_GATEWAY", message: "The CJ product draft could not be saved. Check the product details and try again." });
     }
   }),
   saveCjMapping: adminProcedure.input(cjMappingInput).mutation(({ input }) => {
     requirePreviewEnvironment();
     return getCjProductLinkByProductId(input.productId).then((existing) => {
       if (existing?.cjImportedAt && (existing.cjProductId !== input.cjProductId || existing.cjVariantId !== input.cjVariantId)) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "An imported CJ draft is bound to its selected variant. Start a fresh import to change its source variant." });
+        throw new TRPCError({ code: "FORBIDDEN", message: "An imported CJ draft is bound to its selected option. Start a fresh import to change its CJ source." });
       }
       return saveCjProductMapping(input.productId, input.cjProductId, input.cjVariantId);
     }).catch((error) => {
       if (error instanceof TRPCError) throw error;
-      throw new TRPCError({ code: "CONFLICT", message: "CJ mapping could not be saved. Check the product and variant IDs." });
+      throw new TRPCError({ code: "CONFLICT", message: "CJ product link could not be saved. Check the product and option IDs." });
     });
   }),
   syncCjProduct: adminProcedure.input(z.object({ productId: z.number().int().positive() })).mutation(async ({ input }) => {
     const client = getPreviewCjClient();
     try {
       const mapping = await getCjProductLinkByProductId(input.productId);
-      if (!mapping) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Save a CJ product and variant mapping before syncing." });
+      if (!mapping) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Save a CJ product and option link before checking stock." });
       const sync = await client.syncProduct(mapping.cjProductId, mapping.cjVariantId);
       await updateCjProductSync(input.productId, mapping.cjProductId, mapping.cjVariantId, sync);
       return { productId: input.productId, cjProductName: sync.cjProductName, cjVariantName: sync.cjVariantName, stockQuantity: sync.stockQuantity, stockSyncedAt: sync.stockSyncedAt };
     } catch (error) {
       if (error instanceof TRPCError) throw error;
-      const message = error instanceof Error && error.message.startsWith("The mapped CJ variant") ? error.message : "CJ sync failed. Refresh the product before retrying.";
+      const message = error instanceof Error && error.message.startsWith("The mapped CJ variant") ? error.message : "CJ stock check failed. Refresh the product before trying again.";
       throw new TRPCError({ code: "BAD_GATEWAY", message });
     }
   }),
   reconcileCjOrder: adminProcedure.input(z.object({ orderId: z.number().int().positive() })).mutation(async ({ input }) => {
     if (!isCjAutoOrderAvailable()) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "CJ order automation is disabled or missing explicit shipping configuration." });
     try { return await reconcileCjSupplierOrder(input.orderId); }
-    catch { throw new TRPCError({ code: "BAD_GATEWAY", message: "CJ order reconciliation failed. No new supplier order was submitted." }); }
+    catch { throw new TRPCError({ code: "BAD_GATEWAY", message: "CJ order check failed. No new supplier order was submitted." }); }
   }),
   retryCjOrder: adminProcedure.input(z.object({ orderId: z.number().int().positive(), confirmedNoMatchingOrder: z.literal(true) })).mutation(async ({ input }) => {
     if (!isCjAutoOrderAvailable()) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "CJ order automation is disabled or missing explicit shipping configuration." });
     try { return await retryCjSupplierOrder(input.orderId, input.confirmedNoMatchingOrder); }
-    catch { throw new TRPCError({ code: "BAD_GATEWAY", message: "The CJ order retry did not complete. Reconcile the supplier order before trying again." }); }
+    catch { throw new TRPCError({ code: "BAD_GATEWAY", message: "The CJ order retry did not complete. Check the existing CJ order before trying again." }); }
   }),
   syncCjTracking: adminProcedure.input(z.object({ orderId: z.number().int().positive() })).mutation(async ({ input }) => {
     try { return await syncCjTrackingForOrder(input.orderId); }

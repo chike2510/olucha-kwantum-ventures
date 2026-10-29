@@ -132,7 +132,7 @@ describe("CJ verified-payment fulfillment state machine", () => {
     await submitCjOrderForVerifiedPayment(73);
 
     expect(cjMocks.createSupplierOrder).toHaveBeenCalledOnce();
-    expect(dbMocks.setCjSupplierOrderState).toHaveBeenCalledWith(73, "needs_reconciliation", "CJ returned an order, but the local order could not be updated. Reconcile by the stable order reference before any retry.");
+    expect(dbMocks.setCjSupplierOrderState).toHaveBeenCalledWith(73, "needs_reconciliation", "CJ returned an order, but this order could not be updated. Check the existing CJ order by its reference before any retry.");
     expect(dbMocks.claimCjSupplierOrderRetry).not.toHaveBeenCalled();
   });
 
@@ -184,7 +184,7 @@ describe("CJ verified-payment fulfillment state machine", () => {
     expect(dbMocks.saveCjTracking).toHaveBeenCalledWith(73, "cj-order-73", expect.objectContaining({ trackingNumber: "TRACK-73", trackingStatus: "In transit", trackingProvider: "Carrier" }));
 
     cjMocks.getOrderDetail.mockResolvedValue({ orderId: "other-order", platformOrderId: "OTHER-ORDER" });
-    await expect(syncCjTrackingForOrder(73)).rejects.toThrow("CJ order details did not match this local order");
+    await expect(syncCjTrackingForOrder(73)).rejects.toThrow("CJ order details did not match this order");
     expect(dbMocks.saveCjTracking).toHaveBeenCalledTimes(1);
   });
 });

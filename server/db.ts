@@ -246,7 +246,8 @@ export async function deleteProduct(id: number) {
       return { found: true, deletable: true, deleted: false, archived: true, orderItemCount };
     }
 
-    await tx.delete(products).where(eq(products.id, id));
+    const [deleted] = await tx.delete(products).where(eq(products.id, id)).returning({ id: products.id });
+    if (!deleted) throw new Error("The product could not be removed.");
     return { found: true, deletable: true, deleted: true, archived: false, orderItemCount: 0 };
   });
 }

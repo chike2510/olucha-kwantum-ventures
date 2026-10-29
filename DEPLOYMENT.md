@@ -64,3 +64,15 @@ The upload route now returns an absolute same-origin Worker URL. The CJ client u
 The approved Worker `olucha-kwantum-ventures` is deployed at `https://olucha-kwantum-ventures.onovochikeziri84.workers.dev`, version `e2fedf17-f4b6-4d6c-a687-dad3d9c5df3a`. Authenticated Admin verification passed: searching `lamp` returned 20 products across 12 pages; the first product detail returned 12 variants, and its first variant stock read returned 28,061 units. These were read-only supplier catalog/detail/inventory requests.
 
 The authenticated Admin image-upload route returned an absolute URL; reading it back returned a 92,597-byte JPEG matching the input SHA-256. The temporary test object was deleted and verified not found. The original object `product-images/ba105e62-7628-4c0f-9f26-e8bff1b50f77.jpg` remained readable and its SHA-256 was unchanged. No product was saved or imported, no mapping or store record was changed, and no supplier order or payment endpoint was called. No Git push, `main` change, Production database change, or billing action was made.
+
+## Admin deletion and client-ready wording
+
+The Admin-created-product hard-delete failure was caused by the dedicated Preview app role having `SELECT`, `INSERT`, and `UPDATE` but no `DELETE` privilege on `public.products`. Migration `supabase/migrations/0005_admin_product_delete_privilege.sql` adds only that single-table privilege to `okv_preview_app`. It grants nothing to public/anon/authenticated roles and changes no catalogue or order data.
+
+The delete transaction locks the requested product, requires Admin provenance, and hides it instead of deleting it when any order line references it. The hard-delete branch now requires a returned product ID before reporting success. Product images and order history are not deleted by this action. Direct regressions cover both branches, provenance, missing products, database failures, exact target IDs and the narrow migration grant.
+
+Visible wording now describes CJ product links, product options and stock checks without exposing deployment/key setup notes. Read-only supplier information, unchanged retail details/prices, unpublished import drafts, fresh-stock checks, duplicate-order protection and no-payment limitations remain explicit; operational flags and behavior are unchanged. Customer checkout/order language is similarly simplified.
+
+Unconfirmed business hours, return-window/refund-processing timings and policy review date are left empty instead of publishing example values. Pages omit empty optional details or direct customers to contact the store for the applicable terms; no deadline or review date has been invented. The owner should confirm these details before launch.
+
+Local validation for this change: TypeScript passes, all 169 tests across 33 files pass, and a fresh Vite build plus Wrangler dry-run passes with the exact approved Hyperdrive ID and unchanged Preview/payment/supplier-order flags.

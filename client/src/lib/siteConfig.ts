@@ -10,7 +10,7 @@ export const OKV_WORDMARK_URL = "https://raw.githubusercontent.com/chike2510/olu
 
 /**
  * Business details used by the footer and legal pages.
- * Values in [square brackets] are placeholders the owner must confirm before launch.
+ * Empty optional values are omitted publicly until the business confirms them.
  */
 export const BUSINESS = {
   legalName: "Olucha Kwantum Ventures Limited",
@@ -22,11 +22,11 @@ export const BUSINESS = {
   privacyEmail: "oluchakwantumventures@gmail.com",
   supportPhone: "0907 497 5086",
   whatsappDisplay: "0813 723 2498",
-  businessHours: "[business hours, e.g. Monday–Friday, 9am–5pm WAT]",
+  businessHours: "",
   flatShippingNaira: 2500,
   freeShippingThresholdNaira: 100000,
   vatRatePercent: 0, // prices are VAT-inclusive; no VAT added at checkout
-  returnWindowDays: "[return window, e.g. 7]",
-  refundProcessingDays: "[refund processing time, e.g. 5–10 business days]",
-  policiesLastUpdated: "[date of last review]",
+  returnWindowDays: "",
+  refundProcessingDays: "",
+  policiesLastUpdated: "",
 } as const;
