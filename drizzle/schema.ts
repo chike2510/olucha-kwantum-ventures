@@ -40,6 +40,7 @@ export const products = pgTable("products", {
   currency: varchar("currency", { length: 8 }).default("NGN").notNull(),
   unit: varchar("unit", { length: 40 }).default("per item").notNull(),
   imageUrl: text("imageUrl"),
+  adminCreatedAt: timestampColumn("adminCreatedAt"),
   isActive: integer("isActive").default(1).notNull(),
   createdAt: timestampColumn("createdAt").defaultNow().notNull(),
   updatedAt: timestampColumn("updatedAt").defaultNow().notNull(),

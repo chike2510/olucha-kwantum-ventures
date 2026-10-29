@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, inArray, or, type SQL } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import {
@@ -170,6 +170,26 @@ export async function updateProduct(id: number, input: Partial<InsertProduct>) {
   if (!db) throw new Error("Database unavailable");
   await db.update(products).set(input).where(eq(products.id, id));
   return { success: true };
+}
+
+export async function deleteProduct(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  return db.transaction(async (tx) => {
+    const [product] = await tx.select({ id: products.id, adminCreatedAt: products.adminCreatedAt }).from(products).where(eq(products.id, id)).for("update");
+    if (!product) return { found: false, deletable: false, deleted: false, archived: false, orderItemCount: 0 };
+    if (!product.adminCreatedAt) return { found: true, deletable: false, deleted: false, archived: false, orderItemCount: 0 };
+
+    const [history] = await tx.select({ count: sql<number>`count(*)::int` }).from(orderItems).where(eq(orderItems.productId, id));
+    const orderItemCount = Number(history?.count ?? 0);
+    if (orderItemCount > 0) {
+      await tx.update(products).set({ isActive: 0, updatedAt: new Date() }).where(eq(products.id, id));
+      return { found: true, deletable: true, deleted: false, archived: true, orderItemCount };
+    }
+
+    await tx.delete(products).where(eq(products.id, id));
+    return { found: true, deletable: true, deleted: true, archived: false, orderItemCount: 0 };
+  });
 }
 
 export async function createExportInquiry(input: typeof exportInquiries.$inferInsert) {

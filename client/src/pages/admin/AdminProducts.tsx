@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type DragEvent, type FormEvent } from "react";
-import { CheckCircle2, ImageOff, Link2, Pencil, Plus, RefreshCw, UploadCloud, X } from "lucide-react";
+import { CheckCircle2, ImageOff, Link2, Pencil, Plus, RefreshCw, Trash2, UploadCloud, X } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { EmptyState, Panel, PRODUCT_CATEGORIES, StatusBadge, errorMessage, formatNaira, slugify, uploadProductImage, useConfirm, type AdminProduct } from "./ui";
@@ -143,6 +143,15 @@ export default function AdminProducts({ products, loading, error }: { products: 
     onSuccess: (_, variables) => { toast.success(variables.isActive ? "Product activated" : "Product deactivated"); utils.admin.products.invalidate(); },
     onError: (error) => toast.error(errorMessage(error, "Could not change product status.")),
   });
+  const remove = trpc.admin.deleteProduct.useMutation({
+    onSuccess: (result) => {
+      toast.success(result.archived
+        ? `Removed from the storefront; preserved ${result.orderItemCount} historical order ${result.orderItemCount === 1 ? "item" : "items"}.`
+        : "Product deleted from the catalogue.");
+      utils.admin.products.invalidate();
+    },
+    onError: (error) => toast.error(errorMessage(error, "Could not delete the product.")),
+  });
   const categories = useMemo(() => Array.from(new Set([...PRODUCT_CATEGORIES, ...products.map((product) => product.category)])), [products]);
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -160,7 +169,12 @@ export default function AdminProducts({ products, loading, error }: { products: 
     toggle.mutate({ id: product.id, isActive: activate ? 1 : 0 });
   };
 
-  const actions = (product: AdminProduct) => <div className="flex flex-wrap gap-2"><button type="button" onClick={() => { setEditing(product); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="inline-flex min-h-10 items-center gap-1 rounded-full border border-slate-200 px-4 text-xs font-bold text-[#1f5b9f]"><Pencil size={12}/>Edit</button><button type="button" disabled={toggle.isPending} onClick={() => toggleActive(product)} className={`rounded-full px-3 py-1.5 text-xs font-bold ${product.isActive === 1 ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>{product.isActive === 1 ? "Deactivate" : "Activate"}</button></div>;
+  const deleteProduct = async (product: AdminProduct) => {
+    const ok = await confirm({ title: `Delete ${product.name}?`, description: <>This removes the product from the catalogue. If it appears in past orders, it will be hidden from the storefront instead so those order records remain intact.</>, confirmLabel: "Delete product", destructive: true });
+    if (ok) remove.mutate({ id: product.id });
+  };
+
+  const actions = (product: AdminProduct) => <div className="flex flex-wrap gap-2"><button type="button" onClick={() => { setEditing(product); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="inline-flex min-h-10 items-center gap-1 rounded-full border border-slate-200 px-4 text-xs font-bold text-[#1f5b9f]"><Pencil size={12}/>Edit</button><button type="button" disabled={toggle.isPending} onClick={() => toggleActive(product)} className={`rounded-full px-3 py-1.5 text-xs font-bold ${product.isActive === 1 ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>{product.isActive === 1 ? "Deactivate" : "Activate"}</button>{product.adminCreatedAt && <button type="button" disabled={remove.isPending} onClick={() => void deleteProduct(product)} aria-label={`Delete ${product.name}`} title={`Delete ${product.name}`} className="inline-flex min-h-10 items-center gap-1 rounded-full border border-rose-200 px-3 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"><Trash2 size={13}/><span>Delete</span></button>}</div>;
 
   return <>
     <div className="mb-5 flex justify-end"><button type="button" onClick={() => setEditing((value) => value === "new" ? null : "new")} className="inline-flex items-center gap-2 rounded-full bg-[#0b1736] px-4 py-2 text-xs font-bold text-white"><Plus size={14}/>{editing === "new" ? "Close form" : "Add product"}</button></div>

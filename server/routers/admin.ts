@@ -4,6 +4,7 @@ import { adminProcedure, router } from "../_core/trpc.js";
 import {
   createBlogPost,
   createProduct,
+  deleteProduct,
   deleteBlogPost,
   getCjProductLinkByProductId,
   getProductBySlug,
@@ -81,11 +82,17 @@ export const adminRouter = router({
     return updateBlogPost(id, { ...values, publishedAt: values.status === "published" ? new Date() : values.status === "draft" ? null : undefined });
   }),
   deleteBlogPost: adminProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ input }) => deleteBlogPost(input.id)),
-  createProduct: adminProcedure.input(productInput).mutation(async ({ input }) => { await assertSlugAvailable(input.slug); return withSlugConflict(() => createProduct(input)); }),
+  createProduct: adminProcedure.input(productInput).mutation(async ({ input }) => { await assertSlugAvailable(input.slug); return withSlugConflict(() => createProduct({ ...input, adminCreatedAt: new Date() })); }),
   updateProduct: adminProcedure.input(productUpdateInput).mutation(async ({ input }) => {
     const { id, ...values } = input;
     if (values.slug) await assertSlugAvailable(values.slug, id);
     return withSlugConflict(() => updateProduct(id, { ...values, updatedAt: new Date() }));
+  }),
+  deleteProduct: adminProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ input }) => {
+    const result = await deleteProduct(input.id);
+    if (!result.found) throw new TRPCError({ code: "NOT_FOUND", message: "This product no longer exists." });
+    if (!result.deletable) throw new TRPCError({ code: "FORBIDDEN", message: "Only products added through Admin can be deleted." });
+    return { deleted: result.deleted, archived: result.archived, orderItemCount: result.orderItemCount };
   }),
   cjSyncStatus: adminProcedure.query(() => ({ previewEnvironment: ENV.vercelEnv === "preview", configured: ENV.vercelEnv === "preview" && ENV.cjSyncEnabled && Boolean(ENV.cjApiKey) })),
   saveCjMapping: adminProcedure.input(cjMappingInput).mutation(({ input }) => {
