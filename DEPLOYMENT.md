@@ -4,7 +4,7 @@
 
 The owner has approved the existing, unlaunched Cloudflare Worker `olucha-kwantum-ventures` as the test/Preview target, despite its Cloudflare environment label being Production. Its public URL is `https://olucha-kwantum-ventures.onovochikeziri84.workers.dev`. Do not create a second Worker, modify `main`, touch a production database, enable live Paystack, create CJ supplier orders, or make supplier payments.
 
-The working branch is `work/cjdropshipping-preview`, based on the current `cloudflare-preview` source. Keep changes uncommitted/unpushed until the combined catalogue, Admin-image, footer and CJ work is validated. A push to `cloudflare-preview` can trigger `.github/workflows/deploy-cloudflare.yml` and publish the Worker; do not push as a substitute for review or while deployment is paused.
+The working branch is `work/cjdropshipping-preview`, based on the current `cloudflare-preview` source. A push to `cloudflare-preview` can trigger `.github/workflows/deploy-cloudflare.yml` and publish the Worker; do not push as a substitute for review or while deployment is paused.
 
 `pnpm build` performs a Vite build and Wrangler **dry run** only. It does not publish. Rebuild `dist/public` after all source changes; never deploy stale generated assets.
 
@@ -14,7 +14,7 @@ Use only isolated Supabase project `zmaysbnlgctesemrhkqw` (`olucha-kwantum-previ
 
 Workers use the Hyperdrive-provided connection string. Node/Vercel development retains its separate strict-TLS PostgreSQL path using `DATABASE_URL` and `DATABASE_PASSWORD`. Keep passwords and connection credentials server-side. The app role is least-privilege; public/anon/authenticated roles must not gain direct access to application tables.
 
-The CJ migration is `supabase/migrations/0001_cj_preview_manual_handoff.sql`. It adds RLS-protected `cj_product_links` and `orders.verifiedPaymentAt`. The coordinator reported that it has been applied only to the isolated Preview project. Do not reapply blindly or run it against another database. Verify schema/grants read-only before a future deployment.
+The CJ migration is `supabase/migrations/0001_cj_preview_manual_handoff.sql`. The coordinator reported that it has been applied only to the isolated Preview project. Do not reapply blindly or run it against another database. Verify schema/grants read-only before a future deployment.
 
 ## Runtime values for this test target
 
@@ -55,8 +55,12 @@ Resolve all merge conflicts, install the matching lockfile, run TypeScript and t
 
 After an explicitly authorized publish, smoke-test the public app, empty catalogue behavior, Admin upload, and one authenticated read-only CJ product/stock refresh. A build or dry run is not proof of deployed runtime compatibility. No live payments, supplier orders or supplier payments are permitted.
 
-## Current local verification
+## Latest Preview verification
 
-The local source passes TypeScript and all 109 tests across 27 files. A fresh Vite/Wrangler dry run lists `ASSETS` and the exact approved `HYPERDRIVE` ID; it did not deploy. The storefront and News pages now show only backend-active products and published Admin posts, with separate loading, error and successful-empty states. Cart snapshots stay hidden until active products are verified. Admin metrics and record lists show loading/unavailable states instead of false zeroes after query failures. The data-only `0002_hide_preview_seed_products.sql` retains and deactivates only the marked legacy fixtures. A prior disconnected local UI check confirmed an empty backend yields no demo product cards and that name/category/price/unit/description update the separate draft-only preview; the draft was cancelled without saving. The Worker database path fails closed if its Hyperdrive binding is missing, and Preview rejects live Paystack keys even if a live-enable flag is accidentally present.
+The current source passes `pnpm check`, all 151 tests across 30 files, and a fresh `pnpm build` Vite/Wrangler dry run. The dry run lists `ASSETS`, `VERCEL_ENV=preview`, `CJ_SYNC_ENABLED=true`, `CJ_AUTO_ORDER_ENABLED=false`, `PAYSTACK_LIVE_ENABLED=false`, and the exact approved `HYPERDRIVE` ID. The Preview Worker settings retain those flags and `keep_vars=true`; no private environment identifiers were found in the generated browser assets.
 
-No code has been pushed or deployed from this work. The combined source has not yet been tested as a deployed Cloudflare runtime or with a fresh authenticated CJ sync; those checks remain required after deployment is authorized.
+The upload route now returns an absolute same-origin Worker URL. The CJ client uses Cloudflare Workers-supported manual redirect handling, rejects 3xx responses without following them, and preserves full access tokens up to a 4,096-character limit. The real CJ access token was 625 characters; the previous 200-character truncation was the cause of catalog 401 responses.
+
+The approved Worker `olucha-kwantum-ventures` is deployed at `https://olucha-kwantum-ventures.onovochikeziri84.workers.dev`, version `e2fedf17-f4b6-4d6c-a687-dad3d9c5df3a`. Authenticated Admin verification passed: searching `lamp` returned 20 products across 12 pages; the first product detail returned 12 variants, and its first variant stock read returned 28,061 units. These were read-only supplier catalog/detail/inventory requests.
+
+The authenticated Admin image-upload route returned an absolute URL; reading it back returned a 92,597-byte JPEG matching the input SHA-256. The temporary test object was deleted and verified not found. The original object `product-images/ba105e62-7628-4c0f-9f26-e8bff1b50f77.jpg` remained readable and its SHA-256 was unchanged. No product was saved or imported, no mapping or store record was changed, and no supplier order or payment endpoint was called. No Git push, `main` change, Production database change, or billing action was made.

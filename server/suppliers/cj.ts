@@ -3,6 +3,7 @@ const TOKEN_CACHE_SAFETY_MS = 5 * 60 * 1000;
 const DEFAULT_TOKEN_LIFETIME_MS = 180 * 24 * 60 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_ID_LENGTH = 200;
+const MAX_ACCESS_TOKEN_LENGTH = 4096;
 
 export type CjProductSyncResult = {
   cjProductName: string;
@@ -358,7 +359,9 @@ export function createCjClient(apiKey: string, options: CjClientOptions = {}) {
     try {
       response = await fetcher(`${CJ_API_BASE}${path}`, {
         ...init,
-        redirect: "error",
+        // Workers supports only `follow` and `manual`; manual lets us reject
+        // redirects without forwarding CJ credentials to another host.
+        redirect: "manual",
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
     } catch (error) {
@@ -376,7 +379,24 @@ export function createCjClient(apiKey: string, options: CjClientOptions = {}) {
           : "CJ could not be reached. No supplier data was changed by this request.";
       throw new Error(message);
     }
-    if (!response.ok) throw new Error("CJ request failed.");
+    if (response.status >= 300 && response.status < 400) {
+      const pathname = new URL(`${CJ_API_BASE}${path}`).pathname;
+      console.error("[CJ] upstream request returned a redirect", {
+        method: init.method ?? "GET",
+        path: pathname,
+        category: "redirect",
+      });
+      throw new Error("CJ returned an unexpected redirect. No supplier data was changed by this request.");
+    }
+    if (!response.ok) {
+      const pathname = new URL(`${CJ_API_BASE}${path}`).pathname;
+      console.error("[CJ] upstream request failed", {
+        method: init.method ?? "GET",
+        path: pathname,
+        status: response.status,
+      });
+      throw new Error("CJ request failed.");
+    }
     let payload: unknown;
     try {
       payload = await response.json();
@@ -396,8 +416,10 @@ export function createCjClient(apiKey: string, options: CjClientOptions = {}) {
         body: JSON.stringify({ apiKey: key }),
       },
     );
-    const token = safeText(data.accessToken, 200);
-    if (!token) throw new Error("CJ authentication did not return an access token.");
+    const token = typeof data.accessToken === "string" ? data.accessToken.trim() : "";
+    if (!token || token.length > MAX_ACCESS_TOKEN_LENGTH || /[\u0000-\u001f\u007f]/.test(token)) {
+      throw new Error("CJ authentication did not return a valid access token.");
+    }
     const expiry = typeof data.accessTokenExpiryDate === "string" ? Date.parse(data.accessTokenExpiryDate) : NaN;
     cachedAccessToken = token;
     cachedTokenExpiresAt = Number.isFinite(expiry) && expiry > now() ? expiry : now() + DEFAULT_TOKEN_LIFETIME_MS;

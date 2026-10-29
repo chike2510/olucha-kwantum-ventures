@@ -89,6 +89,26 @@ describe("CJ product and stock client", () => {
     expect(tokenCalls).toBe(1);
   });
 
+  it("preserves CJ access tokens longer than 200 characters", async () => {
+    const longAccessToken = "cj-long-token-".padEnd(625, "x");
+    let sentAccessToken = "";
+    const fetcher: typeof fetch = async (input, init) => {
+      const url = String(input);
+      if (url.endsWith("/authentication/getAccessToken")) {
+        return jsonResponse({ code: 200, result: true, data: { accessToken: longAccessToken } });
+      }
+      if (url.includes("/product/listV2?")) {
+        sentAccessToken = new Headers(init?.headers).get("CJ-Access-Token") ?? "";
+        return jsonResponse({ code: 200, result: true, data: { totalPages: 1, content: [] } });
+      }
+      return jsonResponse({ code: 404, result: false, data: null }, 404);
+    };
+    const client = createCjClient("test-cj-api-key", { fetcher, minRequestIntervalMs: 0 });
+
+    await expect(client.searchCatalogProducts("lamp", 1)).resolves.toEqual({ page: 1, totalPages: 1, products: [] });
+    expect(sentAccessToken).toBe(longAccessToken);
+  });
+
   it("refuses invalid mappings before making network requests", async () => {
     const fetcher = vi.fn<typeof fetch>();
     const client = createCjClient("test-cj-api-key", { fetcher, minRequestIntervalMs: 0 });
@@ -128,6 +148,38 @@ describe("CJ catalogue and supplier-order workflow", () => {
     expect(capturedError).toBeInstanceOf(Error);
     expect((capturedError as Error).message).toContain(expected);
     expect((capturedError as Error).message).not.toContain("private transport detail");
+  });
+
+  it("uses Workers-supported manual redirects and rejects 3xx without following the target", async () => {
+    const calls: Array<{ url: string; redirect?: RequestRedirect }> = [];
+    const fetcher: typeof fetch = async (input, init) => {
+      calls.push({ url: String(input), redirect: init?.redirect });
+      return new Response(null, { status: 302, headers: { location: "https://redirect-target.invalid/" } });
+    };
+    const client = createCjClient("test-cj-api-key", { fetcher, minRequestIntervalMs: 0 });
+
+    await expect(client.searchCatalogProducts("lamp", 1)).rejects.toThrow("CJ returned an unexpected redirect.");
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toContain("/authentication/getAccessToken");
+    expect(calls[0]?.redirect).toBe("manual");
+    expect(calls.some((call) => call.url.includes("redirect-target.invalid"))).toBe(false);
+  });
+
+  it("logs only the upstream status and path for HTTP failures", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const fetcher: typeof fetch = async () => new Response(JSON.stringify({ message: "private supplier detail" }), { status: 429 });
+    const client = createCjClient("test-cj-api-key", { fetcher, minRequestIntervalMs: 0 });
+
+    await expect(client.searchCatalogProducts("lamp", 1)).rejects.toThrow("CJ request failed.");
+
+    expect(log).toHaveBeenCalledWith("[CJ] upstream request failed", {
+      method: "POST",
+      path: "/api2.0/v1/authentication/getAccessToken",
+      status: 429,
+    });
+    expect(JSON.stringify(log.mock.calls)).not.toContain("private supplier detail");
+    log.mockRestore();
   });
 
   const orderInput = (quantity = 2) => ({

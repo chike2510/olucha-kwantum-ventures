@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { uploadProductImageObject } from "./supabaseProductImages.js";
+import { getCheckoutRequestOrigin } from "./requestOrigin.js";
 import { getSessionCookieOptions } from "./cookies.js";
 import { parseProductImageDataUrl } from "./productMedia.js";
 import { ADMIN_SESSION_COOKIE, adminSessionMaxAgeMs, createAdminSession, isAdminCredentialValid, getAdminSessionFromRequest } from "./adminAuth.js";
@@ -38,7 +39,10 @@ export function registerOAuthRoutes(app: Express) {
     }
     try {
       const uploaded = await uploadProductImageObject(`product-images/${crypto.randomUUID()}.${image.extension}`, image.bytes, image.contentType);
-      res.json(uploaded);
+      const origin = new URL(getCheckoutRequestOrigin(req));
+      const imageUrl = new URL(uploaded.url, origin);
+      if (imageUrl.origin !== origin.origin) throw new Error("Image URL must remain on the current origin");
+      res.json({ ...uploaded, url: imageUrl.toString() });
     } catch {
       console.error("[Storage] Product image upload failed");
       res.status(502).json({ error: "Product image upload failed" });
