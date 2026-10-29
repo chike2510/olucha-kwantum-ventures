@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import {
@@ -135,6 +135,7 @@ export async function listProducts(search?: string, category?: string) {
   return rows.map(({ product, link }) => ({
     ...product,
     supplierMapped: Boolean(link),
+    supplierVariantFixed: link?.isFixedVariant === true,
     supplierStock: link?.stockQuantity ?? null,
     supplierStockSyncedAt: link?.stockSyncedAt ?? null,
   }));
@@ -153,6 +154,7 @@ export async function getProductBySlug(slug: string) {
   return row ? {
     ...row.product,
     supplierMapped: Boolean(row.link),
+    supplierVariantFixed: row.link?.isFixedVariant === true,
     supplierStock: row.link?.stockQuantity ?? null,
     supplierStockSyncedAt: row.link?.stockSyncedAt ?? null,
   } : null;
@@ -163,6 +165,63 @@ export async function createProduct(input: InsertProduct) {
   if (!db) throw new Error("Database unavailable");
   await db.insert(products).values(input);
   return { success: true };
+}
+
+export async function importCjProductDraft(input: {
+  name: string;
+  slug: string;
+  category: string;
+  description: string;
+  specifications: Record<string, string>;
+  priceKobo: number;
+  currency: string;
+  unit: string;
+  imageUrl: string | null;
+  cjProductId: string;
+  cjVariantId: string;
+  cjProductName: string;
+  cjVariantName: string;
+  cjProductSku: string | null;
+  cjVariantSku: string | null;
+  cjImageUrl: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  return db.transaction(async (tx) => {
+    const [existing] = await tx.select({ id: cjProductLinks.id }).from(cjProductLinks)
+      .where(eq(cjProductLinks.cjVariantId, input.cjVariantId)).limit(1).for("update");
+    if (existing) throw new Error("This CJ variant has already been imported or mapped.");
+    const [product] = await tx.insert(products).values({
+      name: input.name,
+      slug: input.slug,
+      category: input.category,
+      description: input.description,
+      specifications: input.specifications,
+      priceKobo: input.priceKobo,
+      currency: input.currency,
+      unit: input.unit,
+      imageUrl: input.imageUrl,
+      adminCreatedAt: new Date(),
+      isActive: 0,
+    }).returning({ id: products.id });
+    if (!product) throw new Error("CJ product draft could not be created.");
+    const [link] = await tx.insert(cjProductLinks).values({
+      productId: product.id,
+      cjProductId: input.cjProductId,
+      cjVariantId: input.cjVariantId,
+      cjProductName: input.cjProductName,
+      cjVariantName: input.cjVariantName,
+      cjProductSku: input.cjProductSku,
+      cjVariantSku: input.cjVariantSku,
+      cjImageUrl: input.cjImageUrl,
+      cjImportedAt: new Date(),
+      isFixedVariant: true,
+      stockQuantity: null,
+      stockSyncedAt: null,
+    }).returning();
+    if (!link) throw new Error("CJ product draft mapping could not be saved.");
+    return { productId: product.id, isActive: 0, cjLink: link };
+  });
 }
 
 export async function updateProduct(id: number, input: Partial<InsertProduct>) {
@@ -236,6 +295,15 @@ export async function getCjProductLinkByProductId(productId: number) {
   return result[0] ?? null;
 }
 
+export async function getAdminProductWithCjLink(productId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const [result] = await db.select({ product: products, cjLink: cjProductLinks }).from(products)
+    .leftJoin(cjProductLinks, eq(cjProductLinks.productId, products.id))
+    .where(eq(products.id, productId)).limit(1);
+  return result ?? null;
+}
+
 export async function saveCjProductMapping(productId: number, cjProductId: string, cjVariantId: string) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
@@ -288,6 +356,112 @@ export async function listAllOrders() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(orders).orderBy(desc(orders.createdAt));
+}
+
+export async function getCjSupplierOrder(orderId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+  if (!order) return null;
+  const rows = await db.select({ item: orderItems, mapping: cjProductLinks }).from(orderItems)
+    .leftJoin(cjProductLinks, eq(cjProductLinks.productId, orderItems.productId))
+    .where(eq(orderItems.orderId, orderId));
+  return { order, items: rows.map(({ item, mapping }) => ({ ...item, mapping })) };
+}
+
+export async function claimCjSupplierOrder(orderId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const [claimed] = await db.update(orders).set({
+    cjOrderNumber: `OKV-${orderId}`,
+    cjSubmissionStatus: "submitting",
+    cjSubmissionAttemptedAt: new Date(),
+    cjSubmissionError: null,
+  }).where(and(
+    eq(orders.id, orderId),
+    eq(orders.status, "paid"),
+    eq(orders.verifiedPaymentMode, "live"),
+    isNotNull(orders.verifiedPaymentAt),
+    isNull(orders.cjSubmissionStatus),
+  )).returning({ id: orders.id, cjOrderNumber: orders.cjOrderNumber });
+  return claimed ?? null;
+}
+
+export async function claimCjSupplierOrderRetry(orderId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const [claimed] = await db.update(orders).set({
+    cjOrderNumber: `OKV-${orderId}`,
+    cjSubmissionStatus: "submitting",
+    cjSubmissionAttemptedAt: new Date(),
+    cjSubmissionError: null,
+  }).where(and(
+    eq(orders.id, orderId),
+    eq(orders.status, "paid"),
+    eq(orders.verifiedPaymentMode, "live"),
+    isNotNull(orders.verifiedPaymentAt),
+    eq(orders.cjSubmissionStatus, "blocked"),
+    isNull(orders.cjOrderId),
+  )).returning({ id: orders.id, cjOrderNumber: orders.cjOrderNumber });
+  return claimed ?? null;
+}
+
+export async function setCjSupplierOrderState(orderId: number, state: "blocked" | "needs_reconciliation", message: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const [updated] = await db.update(orders).set({ cjSubmissionStatus: state, cjSubmissionError: message.slice(0, 1000) })
+    .where(and(eq(orders.id, orderId), eq(orders.cjSubmissionStatus, "submitting"), eq(orders.verifiedPaymentMode, "live"), isNotNull(orders.verifiedPaymentAt)))
+    .returning({ id: orders.id });
+  return Boolean(updated);
+}
+
+export async function saveCjSupplierOrderResult(orderId: number, result: { orderId: string; orderCode: string | null; orderStatus: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const [updated] = await db.update(orders).set({
+    cjOrderId: result.orderId,
+    cjOrderCode: result.orderCode,
+    cjOrderStatus: result.orderStatus,
+    cjSubmissionStatus: "created_unpaid",
+    cjSubmissionError: null,
+  }).where(and(eq(orders.id, orderId), eq(orders.status, "paid"), eq(orders.cjSubmissionStatus, "submitting"), eq(orders.verifiedPaymentMode, "live"), isNotNull(orders.verifiedPaymentAt)))
+    .returning({ id: orders.id });
+  return Boolean(updated);
+}
+
+export async function saveCjOrderReconciliation(orderId: number, result: { orderId: string; orderCode: string | null; orderStatus: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const [updated] = await db.update(orders).set({
+    cjOrderId: result.orderId,
+    cjOrderCode: result.orderCode,
+    cjOrderStatus: result.orderStatus,
+    cjSubmissionStatus: "created_unpaid",
+    cjSubmissionError: null,
+  }).where(and(eq(orders.id, orderId), eq(orders.status, "paid"), eq(orders.verifiedPaymentMode, "live"), isNotNull(orders.verifiedPaymentAt)))
+    .returning({ id: orders.id });
+  return Boolean(updated);
+}
+
+export async function saveCjTracking(orderId: number, expectedCjOrderId: string, update: {
+  cjOrderCode: string | null;
+  cjOrderStatus: string | null;
+  trackingNumber: string | null;
+  trackingStatus: string | null;
+  trackingProvider: string | null;
+  trackingUrl: string | null;
+  trackingSyncedAt: Date;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const [updated] = await db.update(orders).set(update).where(and(
+    eq(orders.id, orderId),
+    eq(orders.cjOrderId, expectedCjOrderId),
+    eq(orders.cjSubmissionStatus, "created_unpaid"),
+    eq(orders.verifiedPaymentMode, "live"),
+    isNotNull(orders.verifiedPaymentAt),
+  )).returning({ id: orders.id });
+  return Boolean(updated);
 }
 
 export async function listAllBlogPosts() {

@@ -37,7 +37,10 @@ describe("commerce input validation", () => {
       customerEmail: "buyer@example.com",
       customerPhone: "+2348000000000",
       deliveryCountry: "Nigeria",
+      deliveryCountryCode: "NG",
       deliveryAddress: "1 Example Street, Lagos",
+      deliveryCity: "Lagos",
+      deliveryRegion: "Lagos",
       items: [{ slug: "smart-home-essentials", quantity: 1 }],
     })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });

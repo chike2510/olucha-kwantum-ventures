@@ -341,8 +341,8 @@ export default function Account() {
           <div className="rounded-3xl bg-white p-6 shadow-sm">
             <MapPin className="text-[#1f5b9f]" size={22} />
             <h2 className="mt-6 font-semibold">Delivery tracking</h2>
-            <p className="mt-2 text-sm text-slate-500">Track processing, dispatch, and delivery status from one place.</p>
-            <span className="mt-6 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold capitalize text-slate-500">{orders.data?.[0]?.status || "Ready for first order"}</span>
+            <p className="mt-2 text-sm text-slate-500">See synchronized carrier updates for orders that have tracking information.</p>
+            <span className="mt-6 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold capitalize text-slate-500">{orders.data?.[0]?.trackingStatus || orders.data?.[0]?.status || "Ready for first order"}</span>
           </div>
         </div>
         <section id="orders" className="mt-10 rounded-3xl bg-white p-6 shadow-sm">
@@ -363,7 +363,8 @@ export default function Account() {
                   </div>
                 </div>
                 {order.items.length > 0 && <ul className="mt-4 space-y-1 border-t border-slate-100 pt-3 text-sm text-slate-600">{order.items.map((item) => <li key={item.id} className="flex justify-between gap-4"><span className="min-w-0">{item.productName} × {item.quantity}</span><span>{formatNaira((item.unitPriceKobo * item.quantity) / 100)}</span></li>)}</ul>}
-                {order.deliveryAddress && <p className="mt-3 text-xs text-slate-500">Deliver to: {order.deliveryAddress}</p>}
+                {order.deliveryAddress && <p className="mt-3 text-xs text-slate-500">Deliver to: {[order.deliveryAddress, order.deliveryAddress2, order.deliveryCity, order.deliveryRegion, order.deliveryPostalCode, order.deliveryCountry].filter(Boolean).join(", ")}</p>}
+                {(order.trackingNumber || order.trackingStatus) && <div className="mt-3 rounded-xl bg-blue-50 p-3 text-xs text-blue-900"><p className="font-semibold">{order.trackingStatus || "Tracking update"}</p>{order.trackingNumber && <p className="mt-1 break-all font-mono">{order.trackingNumber}</p>}{order.trackingProvider && <p className="mt-1">Carrier: {order.trackingProvider}</p>}{order.trackingUrl?.startsWith("https://") && <a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block font-semibold underline">Open carrier tracking</a>}</div>}
               </article>
             ))}
           </div>

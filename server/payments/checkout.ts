@@ -25,7 +25,12 @@ export type CheckoutDetails = {
   customerEmail: string;
   customerPhone: string;
   deliveryCountry: string;
+  deliveryCountryCode: string;
   deliveryAddress: string;
+  deliveryAddress2?: string;
+  deliveryCity: string;
+  deliveryRegion: string;
+  deliveryPostalCode?: string;
   coupon?: string;
   items: CheckoutItem[];
 };
@@ -78,6 +83,11 @@ export async function initializePaymentCheckout(
   if (!getAllowedPaystackMode(secretKey)) throw new Error("Online payment is not available right now. Please try again later.");
   if (!Number.isSafeInteger(userId) || userId < 0) throw new Error("Sign in to continue to secure checkout.");
   const origin = validateOrigin(requestOrigin);
+  const expectedCountryCodes: Record<string, string> = { Nigeria: "NG", Ghana: "GH", "United Kingdom": "GB", "United States": "US" };
+  if (expectedCountryCodes[input.deliveryCountry] !== input.deliveryCountryCode) throw new Error("The delivery country is invalid.");
+  if (input.deliveryAddress.trim().length < 8 || input.deliveryCity.trim().length < 2 || input.deliveryRegion.trim().length < 2) {
+    throw new Error("Enter a complete delivery address, city, and state or region.");
+  }
   if (input.items.length < 1 || input.items.length > 20) throw new Error("Your cart could not be checked. Please review it and try again.");
 
   const products = await getCheckoutProductsBySlug(input.items.map((item) => item.slug));
@@ -126,7 +136,12 @@ export async function initializePaymentCheckout(
     customerEmail: input.customerEmail.trim().toLowerCase(),
     customerPhone: input.customerPhone.trim(),
     deliveryCountry: input.deliveryCountry.trim(),
+    deliveryCountryCode: input.deliveryCountryCode,
     deliveryAddress: input.deliveryAddress.trim(),
+    deliveryAddress2: input.deliveryAddress2?.trim() || null,
+    deliveryCity: input.deliveryCity.trim(),
+    deliveryRegion: input.deliveryRegion.trim(),
+    deliveryPostalCode: input.deliveryPostalCode?.trim() || null,
     totalKobo: totals.totalKobo,
     currency: "NGN",
     lines,
@@ -157,7 +172,8 @@ type PaymentCompleterDependencies = {
   getIntent: (reference: string) => Promise<{ reference: string; totalKobo: number; currency: string } | null>;
   verifyTransaction: typeof verifyPaystackTransaction;
   updateIntentStatus: typeof updatePaymentIntentStatus;
-  createPaidOrder: typeof createPaidOrderFromIntent;
+  createPaidOrder: (reference: string, mode: "test" | "live") => ReturnType<typeof createPaidOrderFromIntent>;
+  onVerifiedLivePayment?: (orderId: number) => Promise<void>;
 };
 
 export function createPaystackPaymentCompleter(dependencies: PaymentCompleterDependencies) {
@@ -183,7 +199,10 @@ export function createPaystackPaymentCompleter(dependencies: PaymentCompleterDep
       return { outcome: "failed" };
     }
 
-    const order = await dependencies.createPaidOrder(reference);
+    const order = await dependencies.createPaidOrder(reference, mode);
+    if (order && mode === "live" && dependencies.onVerifiedLivePayment) {
+      await dependencies.onVerifiedLivePayment(order.orderId).catch(() => undefined);
+    }
     return order ? { outcome: "success", orderId: order.orderId } : { outcome: "unknown" };
   };
 }
@@ -193,6 +212,10 @@ export const completePaystackPayment = createPaystackPaymentCompleter({
   verifyTransaction: verifyPaystackTransaction,
   updateIntentStatus: updatePaymentIntentStatus,
   createPaidOrder: createPaidOrderFromIntent,
+  onVerifiedLivePayment: async (orderId) => {
+    const { submitCjOrderForVerifiedPayment } = await import("../suppliers/cjFulfillment.js");
+    await submitCjOrderForVerifiedPayment(orderId);
+  },
 });
 
 export async function markPaymentCancelled(reference: string): Promise<void> {

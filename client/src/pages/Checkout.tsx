@@ -21,6 +21,12 @@ const PAYMENT_MESSAGES: Record<string, string> = {
   pending:
     "We are still confirming your payment. Your order will appear in your account as soon as Paystack confirms it.",
 };
+const DELIVERY_COUNTRY_CODES: Record<string, "NG" | "GH" | "GB" | "US"> = {
+  Nigeria: "NG",
+  Ghana: "GH",
+  "United Kingdom": "GB",
+  "United States": "US",
+};
 
 export default function Checkout() {
   const { user } = useAuth();
@@ -37,6 +43,10 @@ export default function Checkout() {
     phone: "",
     country: "Nigeria",
     address: "",
+    address2: "",
+    city: "",
+    region: "",
+    postalCode: "",
   });
   const paymentStatus =
     new URLSearchParams(window.location.search).get("payment") || "";
@@ -93,7 +103,9 @@ export default function Checkout() {
     if (!/^\+?[0-9\s()-]{7,}$/.test(form.phone))
       next.push("Enter a valid phone number.");
     if (form.address.trim().length < 8)
-      next.push("Enter a complete delivery address.");
+      next.push("Enter a complete street address.");
+    if (form.city.trim().length < 2) next.push("Enter your delivery city.");
+    if (form.region.trim().length < 2) next.push("Enter your state or region.");
     if (!items.length)
       next.push("Your cart is empty. Add a product before checkout.");
     setErrors(next);
@@ -125,7 +137,12 @@ export default function Checkout() {
       customerEmail: form.email,
       customerPhone: form.phone,
       deliveryCountry: form.country,
+      deliveryCountryCode: DELIVERY_COUNTRY_CODES[form.country] ?? "NG",
       deliveryAddress: form.address,
+      deliveryAddress2: form.address2,
+      deliveryCity: form.city,
+      deliveryRegion: form.region,
+      deliveryPostalCode: form.postalCode,
       coupon: coupon || undefined,
       items: items.map(({ product, quantity }) => ({
         slug: product.slug,
@@ -213,13 +230,50 @@ export default function Checkout() {
                   <option>United States</option>
                 </select>
               </label>
+              <label className="field">
+                City
+                <input
+                  value={form.city}
+                  onChange={event => update("city", event.target.value)}
+                  autoComplete="address-level2"
+                  placeholder="Your city"
+                />
+              </label>
+              <label className="field">
+                State / region
+                <input
+                  value={form.region}
+                  onChange={event => update("region", event.target.value)}
+                  autoComplete="address-level1"
+                  placeholder="Your state or region"
+                />
+              </label>
+              <label className="field">
+                Postal code <span className="text-xs font-normal text-slate-400">(optional)</span>
+                <input
+                  value={form.postalCode}
+                  onChange={event => update("postalCode", event.target.value)}
+                  autoComplete="postal-code"
+                  placeholder="Postal code"
+                />
+              </label>
               <label className="field sm:col-span-2">
-                Delivery address
+                Street address
                 <textarea
                   value={form.address}
                   onChange={event => update("address", event.target.value)}
                   rows={4}
-                  placeholder="Street, city, state, and delivery notes"
+                  autoComplete="address-line1"
+                  placeholder="House number and street"
+                />
+              </label>
+              <label className="field sm:col-span-2">
+                Address line 2 <span className="text-xs font-normal text-slate-400">(optional)</span>
+                <input
+                  value={form.address2}
+                  onChange={event => update("address2", event.target.value)}
+                  autoComplete="address-line2"
+                  placeholder="Apartment, suite, landmark"
                 />
               </label>
             </div>

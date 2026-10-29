@@ -22,7 +22,12 @@ export type NewPaymentIntent = {
   customerEmail: string;
   customerPhone: string;
   deliveryCountry: string;
+  deliveryCountryCode: string;
   deliveryAddress: string;
+  deliveryAddress2: string | null;
+  deliveryCity: string;
+  deliveryRegion: string;
+  deliveryPostalCode: string | null;
   totalKobo: number;
   currency: string;
   lines: PaymentIntentLine[];
@@ -78,7 +83,7 @@ export async function updatePaymentIntentStatus(
     .where(and(eq(paymentIntents.reference, reference), ne(paymentIntents.status, "paid")));
 }
 
-export async function createPaidOrderFromIntent(reference: string): Promise<{ orderId: number; created: boolean } | null> {
+export async function createPaidOrderFromIntent(reference: string, paymentMode: "test" | "live"): Promise<{ orderId: number; created: boolean } | null> {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable.");
 
@@ -111,12 +116,18 @@ export async function createPaidOrderFromIntent(reference: string): Promise<{ or
         customerEmail: intent.customerEmail,
         customerPhone: intent.customerPhone,
         deliveryCountry: intent.deliveryCountry,
+        deliveryCountryCode: intent.deliveryCountryCode,
         deliveryAddress: intent.deliveryAddress,
+        deliveryAddress2: intent.deliveryAddress2,
+        deliveryCity: intent.deliveryCity,
+        deliveryRegion: intent.deliveryRegion,
+        deliveryPostalCode: intent.deliveryPostalCode,
         totalKobo: intent.totalKobo,
         currency: intent.currency,
         status: "paid",
         paystackReference: reference,
         verifiedPaymentAt: new Date(),
+        verifiedPaymentMode: paymentMode,
       }).returning({ id: orders.id });
       if (!inserted) throw new Error("Database did not return the order ID.");
 

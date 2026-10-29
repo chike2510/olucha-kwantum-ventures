@@ -3,6 +3,7 @@ import { CheckCircle2, ImageOff, Link2, Pencil, Plus, RefreshCw, Trash2, UploadC
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { EmptyState, Panel, PRODUCT_CATEGORIES, StatusBadge, errorMessage, formatNaira, slugify, uploadProductImage, useConfirm, type AdminProduct } from "./ui";
+import CjProductImport from "./CjProductImport";
 
 type Draft = { name: string; slug: string; category: string; description: string; price: string; unit: string; imageUrl: string };
 const emptyDraft: Draft = { name: "", slug: "", category: "Electronics", description: "", price: "", unit: "per item", imageUrl: "" };
@@ -28,7 +29,7 @@ function CjMappingRow({ product, configured }: { product: AdminProduct; configur
   });
   const mapped = product.cjLink;
   return <div className="rounded-2xl border border-slate-200 p-4">
-    <div className="flex flex-wrap items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><ProductThumb product={product}/><div className="min-w-0"><p className="font-semibold">{product.name}</p><p className="text-xs text-slate-500">{mapped ? `${mapped.cjProductName || mapped.cjProductId} · ${mapped.cjVariantName || mapped.cjVariantId}` : "No CJ product or variant mapped"}</p></div></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => setEditing((value) => !value)} className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-[#1f5b9f]"><Link2 size={12}/>{editing ? "Close" : "Edit mapping"}</button>{mapped && <button type="button" disabled={sync.isPending || !configured} title={configured ? "Refresh read-only CJ stock" : "CJ sync is not configured for this Preview deployment"} onClick={() => sync.mutate({ productId: product.id })} className="inline-flex items-center gap-1 rounded-full bg-[#0b1736] px-3 py-1.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"><RefreshCw size={12} className={sync.isPending ? "animate-spin" : ""}/>{sync.isPending ? "Refreshing…" : configured ? "Refresh stock" : "Sync unavailable"}</button>}</div></div>
+    <div className="flex flex-wrap items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><ProductThumb product={product}/><div className="min-w-0"><p className="font-semibold">{product.name}</p><p className="text-xs text-slate-500">{mapped ? `${mapped.cjProductName || mapped.cjProductId} · ${mapped.cjVariantName || mapped.cjVariantId}` : "No CJ product or variant mapped"}</p></div></div><div className="flex flex-wrap gap-2"><button type="button" disabled={Boolean(mapped?.cjImportedAt)} title={mapped?.cjImportedAt ? "This imported draft is bound to its selected CJ variant" : "Edit CJ product/variant mapping"} onClick={() => setEditing((value) => !value)} className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-[#1f5b9f] disabled:cursor-not-allowed disabled:opacity-50"><Link2 size={12}/>{mapped?.cjImportedAt ? "Imported variant" : editing ? "Close" : "Edit mapping"}</button>{mapped && <button type="button" disabled={sync.isPending || !configured} title={configured ? "Refresh read-only CJ stock" : "CJ sync is not configured for this Preview deployment"} onClick={() => sync.mutate({ productId: product.id })} className="inline-flex items-center gap-1 rounded-full bg-[#0b1736] px-3 py-1.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"><RefreshCw size={12} className={sync.isPending ? "animate-spin" : ""}/>{sync.isPending ? "Refreshing…" : configured ? "Refresh stock" : "Sync unavailable"}</button>}</div></div>
     {editing && <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"><label className="field">CJ product ID<input value={cjProductId} onChange={(event) => setCjProductId(event.target.value)} placeholder="CJ product ID" autoComplete="off"/></label><label className="field">CJ variant ID<input value={cjVariantId} onChange={(event) => setCjVariantId(event.target.value)} placeholder="CJ variant ID" autoComplete="off"/></label><button type="button" disabled={save.isPending || !cjProductId.trim() || !cjVariantId.trim()} onClick={() => save.mutate({ productId: product.id, cjProductId: cjProductId.trim(), cjVariantId: cjVariantId.trim() })} className="rounded-full bg-[#f7b32b] px-4 py-2 text-xs font-bold text-[#0b1736] disabled:opacity-50">{save.isPending ? "Saving…" : "Save mapping"}</button></div>}
     {mapped && <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500"><span className="inline-flex items-center gap-1 font-semibold text-emerald-700"><CheckCircle2 size={13}/>Mapped</span><span>Stock: {mapped.stockQuantity === null ? "not synced" : mapped.stockQuantity}</span><span>Last sync: {mapped.stockSyncedAt ? new Date(mapped.stockSyncedAt).toLocaleString("en-NG") : "never"}</span></div>}
   </div>;
@@ -143,6 +144,10 @@ export default function AdminProducts({ products, loading, error }: { products: 
     onSuccess: (_, variables) => { toast.success(variables.isActive ? "Product activated" : "Product deactivated"); utils.admin.products.invalidate(); },
     onError: (error) => toast.error(errorMessage(error, "Could not change product status.")),
   });
+  const activateCjDraft = trpc.admin.activateCjImportedProduct.useMutation({
+    onSuccess: () => { toast.success("CJ draft activated after review"); utils.admin.products.invalidate(); },
+    onError: (error) => toast.error(errorMessage(error, "CJ draft could not be activated. Refresh and review stock first.")),
+  });
   const remove = trpc.admin.deleteProduct.useMutation({
     onSuccess: (result) => {
       toast.success(result.archived
@@ -162,11 +167,17 @@ export default function AdminProducts({ products, loading, error }: { products: 
 
   const toggleActive = async (product: AdminProduct) => {
     const activate = product.isActive !== 1;
-    if (!activate) {
-      const ok = await confirm({ title: `Deactivate ${product.name}?`, description: "It will be hidden from the storefront and can no longer be bought. You can reactivate it at any time.", confirmLabel: "Deactivate", destructive: true });
-      if (!ok) return;
-    }
-    toggle.mutate({ id: product.id, isActive: activate ? 1 : 0 });
+    const ok = await confirm({
+      title: activate ? `Activate ${product.name}?` : `Deactivate ${product.name}?`,
+      description: activate
+        ? product.cjLink?.cjImportedAt ? "This publishes the reviewed CJ variant to shoppers. The server requires a complete retail listing and fresh positive CJ stock." : "This publishes the product to the storefront and makes it available to checkout."
+        : "It will be hidden from the storefront and can no longer be bought. You can reactivate it at any time.",
+      confirmLabel: activate ? "Activate product" : "Deactivate",
+      destructive: !activate,
+    });
+    if (!ok) return;
+    if (activate && product.cjLink?.cjImportedAt) activateCjDraft.mutate({ id: product.id, confirmReviewed: true });
+    else toggle.mutate({ id: product.id, isActive: activate ? 1 : 0 });
   };
 
   const deleteProduct = async (product: AdminProduct) => {
@@ -174,11 +185,12 @@ export default function AdminProducts({ products, loading, error }: { products: 
     if (ok) remove.mutate({ id: product.id });
   };
 
-  const actions = (product: AdminProduct) => <div className="flex flex-wrap gap-2"><button type="button" onClick={() => { setEditing(product); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="inline-flex min-h-10 items-center gap-1 rounded-full border border-slate-200 px-4 text-xs font-bold text-[#1f5b9f]"><Pencil size={12}/>Edit</button><button type="button" disabled={toggle.isPending} onClick={() => toggleActive(product)} className={`rounded-full px-3 py-1.5 text-xs font-bold ${product.isActive === 1 ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>{product.isActive === 1 ? "Deactivate" : "Activate"}</button>{product.adminCreatedAt && <button type="button" disabled={remove.isPending} onClick={() => void deleteProduct(product)} aria-label={`Delete ${product.name}`} title={`Delete ${product.name}`} className="inline-flex min-h-10 items-center gap-1 rounded-full border border-rose-200 px-3 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"><Trash2 size={13}/><span>Delete</span></button>}</div>;
+  const actions = (product: AdminProduct) => <div className="flex flex-wrap gap-2"><button type="button" onClick={() => { setEditing(product); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="inline-flex min-h-10 items-center gap-1 rounded-full border border-slate-200 px-4 text-xs font-bold text-[#1f5b9f]"><Pencil size={12}/>Edit</button><button type="button" disabled={toggle.isPending || activateCjDraft.isPending} onClick={() => toggleActive(product)} className={`rounded-full px-3 py-1.5 text-xs font-bold ${product.isActive === 1 ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>{product.isActive === 1 ? "Deactivate" : "Activate"}</button>{product.adminCreatedAt && <button type="button" disabled={remove.isPending} onClick={() => void deleteProduct(product)} aria-label={`Delete ${product.name}`} title={`Delete ${product.name}`} className="inline-flex min-h-10 items-center gap-1 rounded-full border border-rose-200 px-3 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"><Trash2 size={13}/><span>Delete</span></button>}</div>;
 
   return <>
     <div className="mb-5 flex justify-end"><button type="button" onClick={() => setEditing((value) => value === "new" ? null : "new")} className="inline-flex items-center gap-2 rounded-full bg-[#0b1736] px-4 py-2 text-xs font-bold text-white"><Plus size={14}/>{editing === "new" ? "Close form" : "Add product"}</button></div>
     {editing && <ProductForm key={editing === "new" ? "new" : editing.id} product={editing === "new" ? null : editing} onDone={() => setEditing(null)}/>}
+    <CjProductImport configured={Boolean(cjSyncStatus.data?.configured)}/>
     <Panel title="Catalogue management">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search products" aria-label="Search products" className="min-w-0 flex-1 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm"/>
@@ -189,7 +201,7 @@ export default function AdminProducts({ products, loading, error }: { products: 
         <div className="hidden md:block"><table className="w-full text-left text-sm"><thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-400"><tr><th className="py-3">Product</th><th>Category</th><th>Price</th><th>Status</th><th className="text-right">Actions</th></tr></thead><tbody>{filtered.map((product) => <tr key={product.id} className="border-b border-slate-100 align-middle"><td className="py-3"><div className="flex items-center gap-3"><ProductThumb product={product}/><div className="min-w-0"><p className="font-semibold">{product.name}</p><p className="truncate text-xs text-slate-400">/{product.slug}</p></div></div></td><td>{product.category}</td><td className="whitespace-nowrap">{formatNaira(product.priceKobo)}<span className="block text-xs text-slate-400">{product.unit}</span></td><td><StatusBadge status={product.isActive === 1 ? "active" : "inactive"} label={product.isActive === 1 ? "Active" : "Inactive"}/></td><td className="py-3"><div className="flex justify-end">{actions(product)}</div></td></tr>)}</tbody></table></div>
         <div className="space-y-3 md:hidden">{filtered.map((product) => <div key={product.id} className="rounded-2xl bg-slate-50 p-4"><div className="flex items-start gap-3"><ProductThumb product={product}/><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><p className="font-semibold">{product.name}</p><StatusBadge status={product.isActive === 1 ? "active" : "inactive"} label={product.isActive === 1 ? "Active" : "Inactive"}/></div><p className="mt-1 text-xs text-slate-500">{product.category} · {formatNaira(product.priceKobo)} {product.unit}</p></div></div><div className="mt-3">{actions(product)}</div></div>)}</div>
       </>}
-      <div className="mt-8 border-t border-slate-200 pt-6"><div className="mb-3"><h3 className="font-semibold">CJ Dropshipping read-only stock</h3><p className="mt-1 text-xs leading-5 text-slate-500">Map a store product to a CJ product and variant, then refresh supplier details and stock. This never creates a supplier order or payment.</p><p className={`mt-2 rounded-xl p-3 text-xs ${cjSyncStatus.data?.configured ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-900"}`}>{cjSyncStatus.data?.configured ? "Read-only CJ sync is configured for this Preview deployment." : "CJ stock refresh is unavailable until the Preview deployment is configured with the server-side CJ key."}</p></div><div className="space-y-3">{filtered.map((product) => <CjMappingRow key={`cj-${product.id}`} product={product} configured={Boolean(cjSyncStatus.data?.configured)}/>)}</div></div>
+      <div className="mt-8 border-t border-slate-200 pt-6"><div className="mb-3"><h3 className="font-semibold">CJ mapping and stock refresh</h3><p className="mt-1 text-xs leading-5 text-slate-500">Map an existing store product to one CJ product and variant, then refresh details and stock. Stock sync is read-only; supplier order creation is separately gated and never pays CJ.</p><p className={`mt-2 rounded-xl p-3 text-xs ${cjSyncStatus.data?.configured ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-900"}`}>{cjSyncStatus.data?.configured ? "CJ catalogue browsing and read-only stock refresh are configured for this Preview deployment." : "CJ browsing and stock refresh are unavailable until the Preview deployment is configured with the server-side CJ key."}</p></div><div className="space-y-3">{filtered.map((product) => <CjMappingRow key={`cj-${product.id}`} product={product} configured={Boolean(cjSyncStatus.data?.configured)}/>)}</div></div>
     </Panel>
   </>;
 }

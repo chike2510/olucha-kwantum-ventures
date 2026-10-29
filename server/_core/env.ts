@@ -17,6 +17,9 @@ const runtimeVariableNames = [
   "PAYSTACK_LIVE_ENABLED",
   "CJ_API_KEY",
   "CJ_SYNC_ENABLED",
+  "CJ_AUTO_ORDER_ENABLED",
+  "CJ_FROM_COUNTRY_CODE",
+  "CJ_LOGISTIC_NAME",
   "VERCEL_ENV",
 ] as const;
 
@@ -60,5 +63,8 @@ export const ENV = {
   get paystackSecretKey() { return getRuntimeEnv("PAYSTACK_SECRET_KEY"); },
   get cjApiKey() { return getRuntimeEnv("CJ_API_KEY"); },
   get cjSyncEnabled() { return getRuntimeEnv("CJ_SYNC_ENABLED") === "true"; },
+  get cjAutoOrderEnabled() { return getRuntimeEnv("CJ_AUTO_ORDER_ENABLED") === "true"; },
+  get cjFromCountryCode() { return getRuntimeEnv("CJ_FROM_COUNTRY_CODE").trim().toUpperCase(); },
+  get cjLogisticName() { return getRuntimeEnv("CJ_LOGISTIC_NAME").trim(); },
   get vercelEnv() { return getRuntimeEnv("VERCEL_ENV"); },
 };

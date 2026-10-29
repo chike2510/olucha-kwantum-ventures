@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./repository.js", () => ({
   getCheckoutProductsBySlug: vi.fn(),
@@ -28,7 +28,12 @@ const CHECKOUT_INPUT = {
   customerEmail: "buyer@example.com",
   customerPhone: "+2348000000000",
   deliveryCountry: "Nigeria",
+  deliveryCountryCode: "NG",
   deliveryAddress: "1 Example Street, Lagos",
+  deliveryAddress2: "",
+  deliveryCity: "Lagos",
+  deliveryRegion: "Lagos",
+  deliveryPostalCode: "100001",
   coupon: "OLUCHA10",
   items: [{ slug: "sample-product", quantity: 2 }],
 };
@@ -40,6 +45,10 @@ function jsonResponse(payload: unknown, status = 200): Response {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.unstubAllGlobals();
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe("Paystack checkout", () => {
@@ -96,6 +105,9 @@ describe("Paystack checkout", () => {
     }]);
     expect(intent?.totalKobo).toBe(1_150_000);
     expect(intent?.customerEmail).toBe("buyer@example.com");
+    expect(intent?.deliveryCountryCode).toBe("NG");
+    expect(intent?.deliveryCity).toBe("Lagos");
+    expect(intent?.deliveryRegion).toBe("Lagos");
     expect(result.authorizationUrl).toBe("https://checkout.paystack.com/test-checkout");
     expect(result.totalKobo).toBe(1_150_000);
     expect(updatePaymentIntentStatus).toHaveBeenCalledWith(result.reference, "pending");
@@ -157,15 +169,41 @@ describe("Paystack checkout", () => {
       status: true,
       data: { reference: "okv-test-reference", status: "success", amount: 1_150_000, currency: "NGN", domain: "test" },
     });
+    const createPaidOrder = vi.fn().mockResolvedValue({ orderId: 73, created: true });
+    const onVerifiedLivePayment = vi.fn().mockResolvedValue(undefined);
     const completer = createPaystackPaymentCompleter({
       getIntent: async () => ({ reference: "okv-test-reference", totalKobo: 1_150_000, currency: "NGN" }),
       verifyTransaction: (secret, reference) => verifyPaystackTransaction(secret, reference, fetcher),
       updateIntentStatus: vi.fn().mockResolvedValue(undefined),
-      createPaidOrder: vi.fn().mockResolvedValue({ orderId: 73, created: true }),
+      createPaidOrder,
+      onVerifiedLivePayment,
     });
 
     await expect(completer("okv-test-reference", TEST_KEY)).resolves.toEqual({ outcome: "success", orderId: 73 });
-    expect(fetcher).toBeDefined();
+    expect(createPaidOrder).toHaveBeenCalledWith("okv-test-reference", "test");
+    expect(onVerifiedLivePayment).not.toHaveBeenCalled();
+  });
+
+  it("calls the supplier-order hook only after a server-verified live transaction is persisted", async () => {
+    vi.stubEnv("PAYSTACK_LIVE_ENABLED", "true");
+    const liveKey = "sk_live_unit_test_fixture_only";
+    const createPaidOrder = vi.fn().mockResolvedValue({ orderId: 74, created: true });
+    const onVerifiedLivePayment = vi.fn().mockResolvedValue(undefined);
+    const fetcher: typeof fetch = async () => jsonResponse({
+      status: true,
+      data: { reference: "okv-live-reference", status: "success", amount: 1_150_000, currency: "NGN", domain: "live" },
+    });
+    const completer = createPaystackPaymentCompleter({
+      getIntent: async () => ({ reference: "okv-live-reference", totalKobo: 1_150_000, currency: "NGN" }),
+      verifyTransaction: (secret, reference) => verifyPaystackTransaction(secret, reference, fetcher),
+      updateIntentStatus: vi.fn().mockResolvedValue(undefined),
+      createPaidOrder,
+      onVerifiedLivePayment,
+    });
+
+    await expect(completer("okv-live-reference", liveKey)).resolves.toEqual({ outcome: "success", orderId: 74 });
+    expect(createPaidOrder).toHaveBeenCalledWith("okv-live-reference", "live");
+    expect(onVerifiedLivePayment).toHaveBeenCalledWith(74);
   });
 
   it("does not create an order when Paystack returns a mismatched amount", async () => {

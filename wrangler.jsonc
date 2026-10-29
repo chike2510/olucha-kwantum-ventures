@@ -5,6 +5,7 @@
   "keep_vars": true,
   "vars": {
     "CJ_SYNC_ENABLED": "true",
+    "CJ_AUTO_ORDER_ENABLED": "false",
     "VERCEL_ENV": "preview",
     "PAYSTACK_LIVE_ENABLED": "false"
   },

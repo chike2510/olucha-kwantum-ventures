@@ -141,7 +141,7 @@ describe("Paystack live-key gate (PAYSTACK_LIVE_ENABLED=true)", () => {
     vi.stubEnv("PAYSTACK_LIVE_ENABLED", "true");
     const { complete, createPaidOrder } = completerFor(transaction({ domain: "live" }));
     await expect(complete("okv-gate", LIVE_KEY)).resolves.toEqual({ outcome: "success", orderId: 5 });
-    expect(createPaidOrder).toHaveBeenCalledWith("okv-gate");
+    expect(createPaidOrder).toHaveBeenCalledWith("okv-gate", "live");
   });
 
   it("rejects a test-domain transaction verified with a live key", async () => {
