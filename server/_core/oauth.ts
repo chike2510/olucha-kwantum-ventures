@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { storagePut } from "../storage.js";
+import { uploadProductImageObject } from "./supabaseProductImages.js";
 import { getSessionCookieOptions } from "./cookies.js";
 import { parseProductImageDataUrl } from "./productMedia.js";
 import { ADMIN_SESSION_COOKIE, adminSessionMaxAgeMs, createAdminSession, isAdminCredentialValid, getAdminSessionFromRequest } from "./adminAuth.js";
@@ -37,10 +37,10 @@ export function registerOAuthRoutes(app: Express) {
       return;
     }
     try {
-      const uploaded = await storagePut(`product-images/${crypto.randomUUID()}.${image.extension}`, image.bytes, image.contentType);
+      const uploaded = await uploadProductImageObject(`product-images/${crypto.randomUUID()}.${image.extension}`, image.bytes, image.contentType);
       res.json(uploaded);
-    } catch (error) {
-      console.error("[Storage] Product image upload failed", error);
+    } catch {
+      console.error("[Storage] Product image upload failed");
       res.status(502).json({ error: "Product image upload failed" });
     }
   });

@@ -112,6 +112,24 @@ describe("CJ product and stock client", () => {
 });
 
 describe("CJ catalogue and supplier-order workflow", () => {
+  it.each([
+    { name: "timeout", error: Object.assign(new Error("request timed out"), { name: "TimeoutError" }), expected: "CJ request timed out." },
+    { name: "redirect", error: new TypeError("unexpected redirect to https://example.invalid"), expected: "CJ returned an unexpected redirect." },
+    { name: "network", error: new Error("private transport detail"), expected: "CJ could not be reached." },
+  ])("reports a safe $name transport category without leaking details", async ({ error, expected }) => {
+    const fetcher: typeof fetch = async () => { throw error; };
+    const client = createCjClient("test-cj-api-key", { fetcher, minRequestIntervalMs: 0 });
+    let capturedError: unknown;
+    try {
+      await client.searchCatalogProducts("lamp", 1);
+    } catch (caught) {
+      capturedError = caught;
+    }
+    expect(capturedError).toBeInstanceOf(Error);
+    expect((capturedError as Error).message).toContain(expected);
+    expect((capturedError as Error).message).not.toContain("private transport detail");
+  });
+
   const orderInput = (quantity = 2) => ({
     orderNumber: "OKV-73",
     shipping: {

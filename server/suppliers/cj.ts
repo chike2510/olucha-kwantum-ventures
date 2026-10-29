@@ -289,6 +289,18 @@ function defaultSleep(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
+type CjTransportFailureCategory = "timeout" | "redirect" | "network";
+
+function classifyCjTransportFailure(error: unknown): CjTransportFailureCategory {
+  if (!error || typeof error !== "object") return "network";
+  const value = error as { name?: unknown; message?: unknown };
+  const name = typeof value.name === "string" ? value.name : "";
+  const message = typeof value.message === "string" ? value.message.toLowerCase() : "";
+  if (name === "TimeoutError" || /timeout|timed out/.test(message)) return "timeout";
+  if (/redirect/.test(message)) return "redirect";
+  return "network";
+}
+
 function getProductList(data: CjProductList): CjProductSummary[] {
   if (!Array.isArray(data.content)) return [];
   if (data.content.length && data.content.every((entry) => entry && typeof entry === "object" && "productList" in entry)) {
@@ -349,8 +361,20 @@ export function createCjClient(apiKey: string, options: CjClientOptions = {}) {
         redirect: "error",
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
-    } catch {
-      throw new Error("CJ could not be reached. No supplier data was changed by this request.");
+    } catch (error) {
+      const category = classifyCjTransportFailure(error);
+      const pathname = new URL(`${CJ_API_BASE}${path}`).pathname;
+      console.error("[CJ] upstream request transport failure", {
+        method: init.method ?? "GET",
+        path: pathname,
+        category,
+      });
+      const message = category === "timeout"
+        ? "CJ request timed out. No supplier data was changed by this request."
+        : category === "redirect"
+          ? "CJ returned an unexpected redirect. No supplier data was changed by this request."
+          : "CJ could not be reached. No supplier data was changed by this request.";
+      throw new Error(message);
     }
     if (!response.ok) throw new Error("CJ request failed.");
     let payload: unknown;
