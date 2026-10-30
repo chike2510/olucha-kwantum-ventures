@@ -1,8 +1,9 @@
-import type { ReactNode, CSSProperties } from "react";
+import type { ReactNode } from "react";
 import { ArrowUpRight, ImageOff } from "lucide-react";
 import { Link } from "wouter";
 import type { StoreProduct } from "@/lib/storeCatalog";
 import { formatNaira } from "@/lib/storeCatalog";
+import Reveal from "./Reveal";
 
 type StoreProductCardProps = {
   product: StoreProduct;
@@ -13,10 +14,8 @@ type StoreProductCardProps = {
 };
 
 export default function StoreProductCard({ product, action, index = 0, imagePriority = false, spotlight = false }: StoreProductCardProps) {
-  const delay = `${Math.min(index, 4) * 70}ms`;
-
   return (
-    <article className={`store-product-card group overflow-hidden rounded-[1.65rem] border border-slate-200/80 bg-white ${spotlight ? "sm:grid sm:grid-cols-[1.05fr_.95fr]" : ""}`} style={{ "--card-delay": delay } as CSSProperties}>
+    <Reveal as="article" delay={Math.min(index, 4) * 120} className={`store-product-card group overflow-hidden rounded-[1.65rem] border border-slate-200/80 bg-white ${spotlight ? "sm:grid sm:grid-cols-[1.05fr_.95fr]" : ""}`}>
       <Link href={`/products/${product.slug}`} aria-label={`View ${product.name}`} className={`store-product-visual relative isolate flex aspect-[1.14/1] items-end overflow-hidden bg-gradient-to-br ${product.color} text-left ${spotlight ? "sm:aspect-auto sm:min-h-[25rem] lg:min-h-[29rem]" : ""}`}>
         {product.imageUrl ? (
           <img src={product.imageUrl} alt="" loading={imagePriority ? "eager" : "lazy"} fetchPriority={imagePriority ? "high" : "auto"} decoding="async" className="store-product-photo absolute inset-0 h-full w-full object-cover" />
@@ -35,9 +34,9 @@ export default function StoreProductCard({ product, action, index = 0, imagePrio
         <p className={`store-product-description text-slate-500 ${spotlight ? "text-base leading-7 sm:text-lg sm:leading-8" : "line-clamp-2 min-h-[3rem] text-sm leading-6"}`}>{product.description}</p>
         <div className={`flex flex-wrap items-end justify-between gap-3 border-t border-slate-100 pt-4 ${spotlight ? "mt-8" : "mt-5"}`}>
           <div className="min-w-0"><p className="text-xl font-bold tracking-tight text-[#0b1736]">{formatNaira(product.price)}</p><p className="mt-0.5 truncate text-xs text-slate-400">{product.unit}</p></div>
-          {action ?? <Link href={`/products/${product.slug}`} className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full bg-[#0b1736] px-4 text-xs font-bold text-white transition hover:bg-[#1f5b9f] focus-visible:outline-offset-4">View item <ArrowUpRight size={14} aria-hidden="true" /></Link>}
+          {action ?? <Link href={`/products/${product.slug}`} className="pressable inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full bg-[#0b1736] px-4 text-xs font-bold text-white transition hover:bg-[#1f5b9f] focus-visible:outline-offset-4">View item <ArrowUpRight size={14} aria-hidden="true" /></Link>}
         </div>
       </div>
-    </article>
+    </Reveal>
   );
 }

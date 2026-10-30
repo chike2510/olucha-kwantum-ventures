@@ -8,6 +8,7 @@ import { useStoreCart } from "@/hooks/useStoreCart";
 import BrandHeader from "@/components/BrandHeader";
 import SiteFooter from "@/components/SiteFooter";
 import VariantSelector, { type VariantOption, type VariantSelectorHandle } from "@/components/VariantSelector";
+import Reveal from "@/components/Reveal";
 import { getSupplierStockStatus } from "@shared/supplierStock";
 
 const SIZE_OPTIONS: VariantOption[] = [{ value: "Small", label: "S" }, { value: "Medium", label: "M" }, { value: "Large", label: "L" }, { value: "XL", label: "XL" }];
@@ -67,7 +68,7 @@ export default function ProductDetail() {
         </nav>
 
         <div className="grid items-start gap-5 lg:grid-cols-[1.08fr_.92fr] lg:gap-8">
-          <section className="motion-rise min-w-0" aria-label={`${item.name} product image`}>
+          <Reveal as="section" variant="zoom" className="min-w-0" aria-label={`${item.name} product image`}>
             <div className={`product-image-stage group relative isolate overflow-hidden rounded-[1.7rem] border border-white/70 bg-gradient-to-br ${base.color} sm:rounded-[2rem]`}>
               <div className="aspect-[.92/1] max-h-[42rem] min-h-[19rem] sm:aspect-[1.05/1] lg:aspect-[.93/1]">
                 {item.imageUrl ? (
@@ -83,9 +84,9 @@ export default function ProductDetail() {
               </div>
             </div>
             <p className="mt-3 flex items-center justify-between px-1 text-xs text-slate-500"><span>{item.name}</span>{item.imageUrl && <span>Tap photo to enlarge</span>}</p>
-          </section>
+          </Reveal>
 
-          <section className="product-detail-panel motion-rise motion-rise-delay-1 rounded-[1.7rem] border border-slate-100 bg-white p-5 sm:rounded-[2rem] sm:p-8 lg:p-9" aria-labelledby="product-title">
+          <Reveal as="section" delay={160} className="product-detail-panel rounded-[1.7rem] border border-slate-100 bg-white p-5 sm:rounded-[2rem] sm:p-8 lg:p-9" aria-labelledby="product-title">
             <div className="flex flex-wrap items-center justify-between gap-3"><p className="eyebrow mb-0">{item.category}</p><span className={`rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.14em] ${stockStatus === "out-of-stock" ? "bg-rose-50 text-rose-700" : stockStatus === "refresh-required" ? "bg-amber-50 text-amber-800" : "bg-emerald-50 text-emerald-800"}`}>{stockStatus === "out-of-stock" ? "Out of stock" : stockStatus === "refresh-required" ? "Availability being confirmed" : "Available"}</span></div>
             <h1 id="product-title" className="mt-4 font-[Manrope] text-3xl font-bold leading-tight tracking-[-.05em] text-[#0b1736] sm:text-4xl">{item.name}</h1>
             <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-base">{item.description}</p>
@@ -104,11 +105,11 @@ export default function ProductDetail() {
               <div><p className="text-xs font-semibold uppercase tracking-[.14em] text-slate-500">Quantity</p><div className="mt-2 inline-flex h-12 items-center rounded-full border border-slate-200 bg-white p-1"><button type="button" aria-label="Decrease quantity" disabled={quantity <= 1} onClick={() => setQuantity((value) => Math.max(1, value - 1))} className="grid h-10 w-10 place-items-center rounded-full text-[#0b1736] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-35"><Minus size={15}/></button><span className="min-w-9 text-center text-sm font-bold tabular-nums" aria-live="polite">{quantity}</span><button type="button" aria-label="Increase quantity" onClick={() => setQuantity((value) => Math.min(99, value + 1))} className="grid h-10 w-10 place-items-center rounded-full text-[#0b1736] transition hover:bg-slate-100"><Plus size={15}/></button></div></div>
               <button type="button" disabled={unavailable} onClick={addProduct} className="pressable shimmer-button inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[#f7b32b] px-5 text-sm font-bold text-[#0b1736] shadow-[0_10px_24px_rgba(247,179,43,.2)] transition hover:bg-[#e5a31e] hover:shadow-[0_14px_28px_rgba(247,179,43,.28)] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none sm:flex-none sm:px-7"><ShoppingBag size={17}/>{unavailable ? "Unavailable" : `Add to cart · ${formatNaira(base.price * quantity)}`}</button>
             </div>
-            {notice && <p role="status" className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-800"><Check size={16}/>{notice}</p>}
+            {notice && <p role="status" className="motion-toast mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-800"><Check size={16}/>{notice}</p>}
 
             {specifications.length > 0 && <div className="mt-8 border-t border-slate-100 pt-6"><h2 className="font-[Manrope] text-lg font-bold text-[#0b1736]">Product details</h2><dl className="mt-4 divide-y divide-slate-100 rounded-2xl border border-slate-100 px-4">{specifications.map(([key, value]) => <div key={key} className="flex justify-between gap-5 py-3 text-sm"><dt className="text-slate-500">{key}</dt><dd className="text-right font-semibold text-slate-700">{value}</dd></div>)}</dl></div>}
             <div className="mt-7 border-t border-slate-100 pt-5"><h2 className="font-semibold text-[#0b1736]">Customer reviews</h2><p className="mt-2 text-sm leading-6 text-slate-500">No customer reviews have been published for this product yet.</p></div>
-          </section>
+          </Reveal>
         </div>
       </main>
       <SiteFooter />
