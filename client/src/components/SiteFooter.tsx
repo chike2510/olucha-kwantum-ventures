@@ -1,6 +1,6 @@
 import { Link } from "wouter";
-import { MessageCircle } from "lucide-react";
 import { BUSINESS, FACEBOOK_PAGE_URL, OKV_MARK_ONLY_URL, WHATSAPP_URL } from "@/lib/siteConfig";
+import { FacebookMark, WhatsAppMark } from "@/components/SocialIcons";
 
 const columns: Array<{ title: string; links: Array<{ label: string; href: string; external?: boolean }> }> = [
   { title: "Shop", links: [
@@ -37,8 +37,8 @@ export default function SiteFooter() {
           </div>
           <p className="mt-5 max-w-sm leading-6">Electronics, fashion and agro products for customers in Nigeria, plus export supply for buyers abroad. Secure payments by Paystack.</p>
           <div className="mt-5 flex flex-wrap gap-2">
-            <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#25D366] px-4 text-sm font-bold text-white"><MessageCircle size={16} aria-hidden="true" />WhatsApp {BUSINESS.whatsappDisplay}</a>
-            {FACEBOOK_PAGE_URL && <a href={FACEBOOK_PAGE_URL} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-full border border-slate-200 px-4 text-sm font-semibold text-[#0b1736]">Facebook</a>}
+            {FACEBOOK_PAGE_URL && <a href={FACEBOOK_PAGE_URL} target="_blank" rel="noreferrer" aria-label="Open Olucha Kwantum Ventures Facebook page" className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#1877F2] text-white transition hover:scale-105 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0b1736]"><FacebookMark /></a>}
+            <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" aria-label={`Chat on WhatsApp at ${BUSINESS.whatsappDisplay}`} className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#25D366] text-white transition hover:scale-105 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0b1736]"><WhatsAppMark /></a>
           </div>
         </div>
         <nav className="grid grid-cols-2 gap-8 sm:grid-cols-3" aria-label="Footer navigation">
