@@ -59,4 +59,25 @@ describe("auth.logout", () => {
       path: "/",
     });
   });
+
+  it("keeps an Admin-only session separate from customer account routes", async () => {
+    const { ctx } = createAuthContext();
+    const adminUser: AuthenticatedUser = {
+      ...ctx.user!,
+      id: 0,
+      openId: "env-admin",
+      name: "Olucha Administrator",
+      role: "admin",
+    };
+    const adminCaller = appRouter.createCaller({ ...ctx, user: null, adminUser });
+
+    await expect(adminCaller.auth.me()).resolves.toBeNull();
+    await expect(adminCaller.account.me()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(adminCaller.account.orders()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(adminCaller.admin.cjSyncStatus()).resolves.toHaveProperty("previewEnvironment");
+
+    const dualSessionCaller = appRouter.createCaller({ ...ctx, adminUser });
+    await expect(dualSessionCaller.auth.me()).resolves.toEqual(ctx.user);
+    await expect(dualSessionCaller.admin.cjSyncStatus()).resolves.toHaveProperty("previewEnvironment");
+  });
 });

@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "../_core/cookies.js";
 import { publicProcedure, router } from "../_core/trpc.js";
 
 export const authRouter = router({
-  me: publicProcedure.query(({ ctx }) => ctx.user),
+  me: publicProcedure.query(({ ctx }) => ctx.user?.role === "user" ? ctx.user : null),
   logout: publicProcedure.mutation(({ ctx }) => {
     const cookieOptions = getSessionCookieOptions(ctx.req);
     const response = ctx.res as any;

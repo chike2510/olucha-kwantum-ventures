@@ -1,6 +1,7 @@
-import { ArrowLeft, ShoppingBag, type LucideIcon } from "lucide-react";
+import { ArrowLeft, Search, ShoppingBag, type LucideIcon } from "lucide-react";
 import { Link } from "wouter";
 import { OKV_WORDMARK_URL } from "@/lib/siteConfig";
+import { useEffect, useRef, useState } from "react";
 
 type BrandHeaderProps = {
   backHref?: string;
@@ -11,10 +12,19 @@ type BrandHeaderProps = {
   /** Label used below the `sm` breakpoint. Pass "" for an icon-only button on phones. Defaults to actionLabel when it is short. */
   actionShortLabel?: string;
   actionIcon?: LucideIcon;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
 };
 
-export default function BrandHeader({ backHref = "/", backLabel = "Back to store", section, actionHref, actionLabel, actionShortLabel, actionIcon: ActionIcon = ShoppingBag }: BrandHeaderProps) {
+export default function BrandHeader({ backHref = "/", backLabel = "Back to store", section, actionHref, actionLabel, actionShortLabel, actionIcon: ActionIcon = ShoppingBag, searchValue = "", onSearchChange }: BrandHeaderProps) {
   const shortLabel = actionShortLabel ?? (actionLabel && actionLabel.length <= 8 ? actionLabel : "");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchButtonRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-5 lg:px-8">
@@ -29,6 +39,9 @@ export default function BrandHeader({ backHref = "/", backLabel = "Back to store
         </div>
         <div className="flex shrink-0 items-center gap-3">
           {section && <span className="hidden whitespace-nowrap text-xs font-bold uppercase tracking-[.18em] text-[#0b1736] lg:block">{section}</span>}
+          {onSearchChange && <button ref={searchButtonRef} type="button" onClick={() => setSearchOpen((open) => !open)} aria-label={searchOpen ? "Close product search" : "Search products"} aria-expanded={searchOpen} aria-controls="brand-header-search" title="Search products" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#0b1736] transition hover:border-[#cfa43a] hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1f5b9f]">
+            <Search size={19} aria-hidden="true" />
+          </button>}
           {actionHref && actionLabel && (
             <Link href={actionHref} aria-label={actionLabel} className={`inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#0b1736] text-sm font-bold text-white hover:bg-[#1f5b9f] ${shortLabel ? "px-4" : "w-11 sm:w-auto sm:px-4"}`}>
               <ActionIcon size={16} aria-hidden="true" className="shrink-0" />
@@ -37,6 +50,12 @@ export default function BrandHeader({ backHref = "/", backLabel = "Back to store
           )}
         </div>
       </div>
+      {onSearchChange && <div id="brand-header-search" hidden={!searchOpen} className="border-t border-slate-100 bg-white/95 px-4 py-3 sm:px-5 lg:px-8">
+        <form role="search" onSubmit={(event) => event.preventDefault()} className="mx-auto max-w-7xl">
+          <label htmlFor="store-search" className="sr-only">Search products</label>
+          <input ref={searchInputRef} id="store-search" type="search" value={searchValue} onChange={(event) => onSearchChange(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { setSearchOpen(false); searchButtonRef.current?.focus(); } }} placeholder="Search the store" autoComplete="off" className="min-h-12 w-full rounded-full border border-slate-200 bg-slate-50 px-5 py-3 text-base text-[#0b1736] outline-none transition placeholder:text-slate-400 focus:border-[#cfa43a] focus:ring-4 focus:ring-[#cfa43a]/20 sm:max-w-lg sm:text-sm" />
+        </form>
+      </div>}
     </header>
   );
 }

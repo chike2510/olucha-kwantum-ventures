@@ -7,15 +7,17 @@ export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
   res: CreateExpressContextOptions["res"];
   user: User | null;
+  adminUser?: User | null;
 };
 
 export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
   let user: User | null = null;
+  let adminUser: User | null = null;
   const adminSession = getAdminSessionFromRequest(opts.req);
   if (adminSession) {
-    user = {
+    adminUser = {
       id: 0,
       openId: "env-admin",
       name: "Olucha Administrator",
@@ -29,8 +31,8 @@ export async function createContext(
   }
 
   try {
-    if (!user) user = await sdk.authenticateRequest(opts.req);
-  } catch (error) {
+    user = await sdk.authenticateRequest(opts.req);
+  } catch {
     // Authentication is optional for public procedures.
     user = null;
   }
@@ -39,5 +41,6 @@ export async function createContext(
     req: opts.req,
     res: opts.res,
     user,
+    adminUser,
   };
 }

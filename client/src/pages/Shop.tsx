@@ -1,4 +1,4 @@
-import { ArrowRight, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, SlidersHorizontal } from "lucide-react";
 import { Link, useRoute } from "wouter";
 import { useEffect, useMemo, useState } from "react";
 import { paginate } from "@/lib/pagination";
@@ -35,24 +35,13 @@ export default function Shop() {
 
   return (
     <div className="min-h-screen bg-[#f6f7fb] text-[#14213d]">
-      <BrandHeader backHref="/" backLabel="Back to store" section="Shop" actionHref="/cart" actionLabel="Cart" />
+      <BrandHeader backHref="/" backLabel="Back to store" section="Shop" actionHref="/cart" actionLabel="Cart" searchValue={query} onSearchChange={setQuery} />
       <main>
         <section className="relative isolate overflow-hidden bg-[#0b1736] text-white">
           <div className="hero-ambient pointer-events-none absolute -right-20 -top-32 -z-10 h-[26rem] w-[26rem] rounded-full bg-[#1f5b9f]/35 blur-3xl" aria-hidden="true" />
           <div className="hero-ambient hero-ambient-gold pointer-events-none absolute -bottom-40 left-[32%] -z-10 h-[24rem] w-[24rem] rounded-full bg-[#cfa43a]/15 blur-3xl" aria-hidden="true" />
-          <div className="mx-auto grid max-w-7xl gap-8 px-5 py-12 sm:py-16 lg:grid-cols-[1fr_auto] lg:items-end lg:px-8 lg:py-20">
-            <div className="motion-rise max-w-3xl">
-              <p className="mb-4 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[.22em] text-[#e1ba56]"><span className="h-px w-8 bg-[#cfa43a]" /> Olucha online store</p>
-              <h1 className="font-[Manrope] text-4xl font-bold leading-[1.04] tracking-[-.055em] sm:text-5xl lg:text-6xl">Shop products chosen<br className="hidden sm:block" /> for everyday life.</h1>
-              <p className="mt-5 max-w-2xl text-base leading-7 text-white/65 sm:text-lg sm:leading-8">Browse electronics first, then explore fashion and agro products. Every item has a clear price, practical description, and a direct path to order.</p>
-            </div>
-            <div className="motion-rise motion-rise-delay-2 relative w-full lg:w-[20rem]">
-              <label className="mb-2 block text-xs font-semibold text-white/65" htmlFor="store-search">Find a product</label>
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} aria-hidden="true" />
-                <input id="store-search" value={query} onChange={(event) => setQuery(event.target.value)} type="search" aria-label="Search the store" placeholder="Search the store" className="min-h-12 w-full rounded-full border border-white/15 bg-white px-4 py-3 pl-11 text-base text-[#0b1736] outline-none transition placeholder:text-slate-400 focus:border-[#cfa43a] focus:ring-4 focus:ring-[#cfa43a]/25 sm:text-sm" />
-              </div>
-            </div>
+          <div className="mx-auto max-w-7xl px-5 py-8 lg:px-8 lg:py-12">
+            <p className="motion-rise inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[.22em] text-[#e1ba56]"><span className="h-px w-8 bg-[#cfa43a]" /> Olucha online store</p>
           </div>
           <div className="mx-auto max-w-7xl px-5 pb-5 lg:px-8">
             <p className="text-xs font-semibold text-white/45">{category === "All products" ? "Browse the collection" : `Browsing ${category}`}</p>
@@ -69,7 +58,7 @@ export default function Shop() {
           </Reveal>
           <div className="-mx-5 flex items-center gap-2 overflow-x-auto px-5 pb-3 lg:mx-0 lg:px-0" role="group" aria-label="Filter by category">
             {storeCategories.map((item, index) => (
-              <button type="button" key={item} aria-pressed={category === item} onClick={() => setCategory(item)} className={`okv-filter min-h-11 shrink-0 whitespace-nowrap rounded-full px-5 text-sm font-semibold ${category === item ? "okv-filter-active" : ""}`}>
+              <button type="button" key={item} aria-pressed={category === item} onClick={() => setCategory(item)} className={`okv-filter min-h-12 shrink-0 whitespace-nowrap rounded-full px-5 text-sm font-semibold ${category === item ? "okv-filter-active" : ""}`}>
                 {index === 0 ? "All products" : item}
               </button>
             ))}

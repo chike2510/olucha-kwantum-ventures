@@ -15,7 +15,7 @@ export const publicProcedure = t.procedure;
 const requireUser = t.middleware(async opts => {
   const { ctx, next } = opts;
 
-  if (!ctx.user) {
+  if (!ctx.user || ctx.user.role !== 'user') {
     throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
   }
 
@@ -32,15 +32,16 @@ export const protectedProcedure = t.procedure.use(requireUser);
 export const adminProcedure = t.procedure.use(
   t.middleware(async opts => {
     const { ctx, next } = opts;
+    const adminUser = ctx.adminUser ?? (ctx.user?.role === 'admin' ? ctx.user : null);
 
-    if (!ctx.user || ctx.user.role !== 'admin') {
+    if (!adminUser || adminUser.role !== 'admin') {
       throw new TRPCError({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });
     }
 
     return next({
       ctx: {
         ...ctx,
-        user: ctx.user,
+        user: adminUser,
       },
     });
   }),

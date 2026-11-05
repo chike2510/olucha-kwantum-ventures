@@ -36,8 +36,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
 .okv-filter { border: 1px solid #e1e7f0; background: #fff; color: #526178; transition: transform .2s cubic-bezier(.23,1,.32,1), color .2s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease; }
 .okv-filter:hover { transform: translateY(-2px); border-color: rgba(31,91,159,.38); color: var(--okv-blue); box-shadow: 0 8px 20px rgba(17,36,74,.08); }
-.okv-filter-active { border-color: var(--okv-blue-deep); background: var(--okv-blue-deep); color: #fff; box-shadow: 0 8px 20px rgba(11,23,54,.18); }
-.okv-filter-active:hover { border-color: var(--okv-blue); background: var(--okv-blue); color: #fff; }
+.okv-filter-active { border-color: var(--okv-gold); background: var(--okv-blue-deep); color: #fff; box-shadow: 0 0 0 1px rgba(207,164,58,.22), 0 8px 20px rgba(11,23,54,.18); }
+.okv-filter-active:hover { border-color: var(--okv-gold); background: var(--okv-blue); color: #fff; }
 .link-lift { transition: transform .2s cubic-bezier(.23,1,.32,1), color .2s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease; }
 .link-lift:hover { transform: translateY(-2px); }
 .pressable { transition: transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s ease, background-color .25s ease, color .25s ease; }

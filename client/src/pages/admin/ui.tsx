@@ -13,7 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { FASHION_SUBCATEGORIES, PRODUCT_CATEGORIES, PRODUCT_CATEGORY_OPTIONS } from "@shared/productCategories";
+import { ADDITIONAL_FASHION_CATEGORIES, FASHION_SUBCATEGORIES, PRODUCT_CATEGORIES, PRODUCT_CATEGORY_OPTIONS } from "@shared/productCategories";
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
 export type AdminProduct = RouterOutputs["admin"]["products"][number];
@@ -33,6 +33,7 @@ export function ProductCategoryOptions() {
       <option value="Fashion">Fashion (general)</option>
       {FASHION_SUBCATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
     </optgroup>
+    {ADDITIONAL_FASHION_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
     <option value="Agro Products">Agro Products</option>
   </>;
 }

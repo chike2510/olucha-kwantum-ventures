@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { filterProducts } from "./productFilter";
+import { ADDITIONAL_FASHION_CATEGORIES, PRODUCT_CATEGORY_OPTIONS, STORE_CATEGORY_FILTERS } from "@shared/productCategories";
 
 const products = [
   { name: "Smart Home Essentials", category: "Electronics", description: "Connected home devices" },
@@ -36,5 +37,35 @@ describe("filterProducts", () => {
     expect(filterProducts(fashionProducts, "Men's Fashion", "")).toEqual([fashionProducts[1]]);
     expect(filterProducts(fashionProducts, "Women's Fashion", "dress")).toEqual([fashionProducts[2]]);
     expect(filterProducts(fashionProducts, "Children's Fashion", "shoes")).toEqual([fashionProducts[3]]);
+  });
+
+  it("includes every requested additional Fashion category with its exact label", () => {
+    expect(ADDITIONAL_FASHION_CATEGORIES).toEqual([
+      "Shoes & Footwear",
+      "Bags & Luggage",
+      "Watches & Jewellery",
+      "Fashion Accessories",
+      "Sportswear",
+      "Traditional Fashion",
+      "Underwear & Nightwear",
+    ]);
+    expect(PRODUCT_CATEGORY_OPTIONS).toEqual([
+      "Electronics",
+      "Fashion",
+      "Men's Fashion",
+      "Women's Fashion",
+      "Children's Fashion",
+      ...ADDITIONAL_FASHION_CATEGORIES,
+      "Agro Products",
+    ]);
+    expect(STORE_CATEGORY_FILTERS).toEqual(["All products", ...PRODUCT_CATEGORY_OPTIONS]);
+  });
+
+  it("filters every additional category separately and keeps it outside the Fashion parent", () => {
+    const additionalProducts = ADDITIONAL_FASHION_CATEGORIES.map((category) => ({ name: category, category }));
+    for (const product of additionalProducts) {
+      expect(filterProducts(additionalProducts, product.category, "")).toEqual([product]);
+    }
+    expect(filterProducts(additionalProducts, "Fashion", "")).toEqual([]);
   });
 });
