@@ -54,6 +54,9 @@ describe("storefront product card", () => {
   it("disables entrance, hover and photo zoom motion for reduced-motion preferences", () => {
     const css = readFileSync(new URL("../index.css", import.meta.url), "utf8");
     const reducedMotion = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)", css.indexOf(".store-product-card")));
+    expect(css).toContain('@media (hover: hover) and (pointer: fine)');
+    expect(css).toContain('.store-product-card:hover { transform: translateY(-3px);');
+    expect(css).toContain('.store-product-card:hover .store-product-photo { transform: scale(1.035);');
     expect(reducedMotion).toContain(".store-product-card { animation: none !important; transition: none !important; }");
     expect(reducedMotion).toContain(".store-product-card:hover { transform: none !important; }");
     expect(reducedMotion).toContain(".product-image-button:hover img { transform: none !important; }");

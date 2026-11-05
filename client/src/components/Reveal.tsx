@@ -55,5 +55,5 @@ export default function Reveal({ as: Tag = "div", delay = 0, variant = "rise", c
     data-reveal-state={visible ? "visible" : "pending"}
     data-reveal-variant={variant}
     className={`motion-reveal ${className}`}
-    style={{ "--reveal-delay": `${Math.min(Math.max(delay, 0), 600)}ms`, ...style } as CSSProperties} />;
+    style={{ "--reveal-delay": `${Math.min(Math.max(delay, 0), 240)}ms`, ...style } as CSSProperties} />;
 }

@@ -89,7 +89,7 @@ describe("viewport entrance", () => {
     expect(html).toContain('<article aria-label="Product"');
     expect(html).toContain('data-reveal-state="pending"');
     expect(html).toContain('data-reveal-variant="slide"');
-    expect(html).toContain('--reveal-delay:600ms');
+    expect(html).toContain('--reveal-delay:240ms');
     expect(html).toContain('Exact product facts</article>');
   });
 
@@ -103,5 +103,12 @@ describe("viewport entrance", () => {
     expect(css).not.toContain(".motion-reveal:focus-within");
     expect(css).toContain('.motion-reveal { opacity: 1 !important; transform: none !important; }');
     expect(css).toContain('*, *::before, *::after { animation: none !important; transition: none !important; }');
+  });
+  it("keeps movement brief and subtle, limits hover lifts to hover-capable pointers, and quiets mobile ambient motion", () => {
+    const css = readFileSync(new URL("../index.css", import.meta.url), "utf8");
+    expect(css).toContain('.motion-reveal[data-reveal-state="visible"] { animation: olucha-reveal .62s');
+    expect(css).toContain('@media (hover: hover) and (pointer: fine)');
+    expect(css).toContain('.store-product-card:hover { transform: translateY(-3px);');
+    expect(css).toContain('@media (max-width: 767px) { .motion-float, .hero-ambient { animation: none; } }');
   });
 });
