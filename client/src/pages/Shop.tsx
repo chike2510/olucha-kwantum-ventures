@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { paginate } from "@/lib/pagination";
 import { catalogueToStoreProduct, storeCategories, type StoreProduct } from "@/lib/storeCatalog";
 import { filterProducts } from "@/lib/productFilter";
+import { getProductSuggestions } from "@/lib/productSuggestions";
 import { trpc } from "@/lib/trpc";
 import BrandHeader from "@/components/BrandHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -29,13 +30,25 @@ export default function Shop() {
     }), [catalogue.data]);
 
   const filtered = useMemo(() => filterProducts(sourceProducts, category, query), [category, query, sourceProducts]);
+  const searchSuggestions = useMemo(() => getProductSuggestions(sourceProducts, query), [query, sourceProducts]);
   const paged = useMemo(() => paginate(filtered, page, 4), [filtered, page]);
   useEffect(() => setPage(1), [category, query]);
   useEffect(() => setCategory(initialCategory), [initialCategory]);
 
   return (
     <div className="min-h-screen bg-[#f6f7fb] text-[#14213d]">
-      <BrandHeader backHref="/" backLabel="Back to store" section="Shop" actionHref="/cart" actionLabel="Cart" searchValue={query} onSearchChange={setQuery} />
+      <BrandHeader
+        backHref="/"
+        backLabel="Back to store"
+        section="Shop"
+        actionHref="/cart"
+        actionLabel="Cart"
+        searchValue={query}
+        onSearchChange={setQuery}
+        searchSuggestions={searchSuggestions}
+        suggestionsLoading={catalogue.isLoading}
+        suggestionsError={catalogue.isError}
+      />
       <main>
         <section className="relative isolate overflow-hidden bg-[#0b1736] text-white">
           <div className="hero-ambient pointer-events-none absolute -right-20 -top-32 -z-10 h-[26rem] w-[26rem] rounded-full bg-[#1f5b9f]/35 blur-3xl" aria-hidden="true" />

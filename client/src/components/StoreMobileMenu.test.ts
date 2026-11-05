@@ -7,6 +7,7 @@ import StoreMobileMenu from "./StoreMobileMenu";
 const appSource = readFileSync(new URL("../App.tsx", import.meta.url), "utf8");
 const homeSource = readFileSync(new URL("../pages/Home.tsx", import.meta.url), "utf8");
 const shopSource = readFileSync(new URL("../pages/Shop.tsx", import.meta.url), "utf8");
+const mobileMenuSource = readFileSync(new URL("./StoreMobileMenu.tsx", import.meta.url), "utf8");
 const cssSource = readFileSync(new URL("../index.css", import.meta.url), "utf8");
 const htmlSource = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
 
@@ -50,8 +51,21 @@ describe("StoreMobileMenu", () => {
       const inner = link?.[2] ?? "";
       const rendered = decodeHtml(inner);
       expect(inner).toContain('aria-hidden="true"');
+      expect(rendered).not.toContain("—");
+      if (["Men's Fashion", "Women's Fashion", "Children's Fashion", "Shoes & Footwear", "Bags & Luggage", "Watches & Jewellery", "Fashion Accessories", "Sportswear", "Traditional Fashion", "Underwear & Nightwear"].includes(label)) {
+        expect(link?.[1]).toContain("pl-8");
+      } else {
+        expect(link?.[1]).not.toContain("pl-8");
+      }
       expect(rendered.indexOf("<svg")).toBeLessThan(rendered.indexOf(label));
     }
+  });
+
+  it("uses distinct Mars and Venus icons for men's and women's categories", () => {
+    expect(mobileMenuSource).toMatch(/const MarsSymbol: LucideIcon = forwardRef/);
+    expect(mobileMenuSource).toMatch(/const VenusSymbol: LucideIcon = forwardRef/);
+    expect(mobileMenuSource).toMatch(/"Men's Fashion": MarsSymbol/);
+    expect(mobileMenuSource).toMatch(/"Women's Fashion": VenusSymbol/);
   });
 
   it("keeps My account on the customer route and leaves other utility links unadorned", () => {

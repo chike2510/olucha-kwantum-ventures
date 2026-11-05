@@ -8,13 +8,32 @@ import {
   Landmark,
   Leaf,
   MoonStar,
-  PersonStanding,
   Shirt,
-  UserRound,
   Watch,
   type LucideIcon,
 } from "lucide-react";
+import { forwardRef, type SVGProps } from "react";
 import { ADDITIONAL_FASHION_CATEGORIES, FASHION_SUBCATEGORIES } from "@shared/productCategories";
+
+type GenderSymbolProps = SVGProps<SVGSVGElement> & { size?: number | string; absoluteStrokeWidth?: boolean };
+
+const MarsSymbol: LucideIcon = forwardRef<SVGSVGElement, GenderSymbolProps>(function MarsSymbol({ size = 24, color = "currentColor", strokeWidth = 2, absoluteStrokeWidth, ...props }, ref) {
+  const computedStrokeWidth = absoluteStrokeWidth ? Number(strokeWidth) * (24 / Number(size)) : strokeWidth;
+  return <svg ref={ref} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={computedStrokeWidth} strokeLinecap="round" strokeLinejoin="round" focusable="false" {...props}>
+    <circle cx="10" cy="14" r="5" />
+    <path d="m13.5 10.5 5.5-5.5" />
+    <path d="M14 5h5v5" />
+  </svg>;
+});
+
+const VenusSymbol: LucideIcon = forwardRef<SVGSVGElement, GenderSymbolProps>(function VenusSymbol({ size = 24, color = "currentColor", strokeWidth = 2, absoluteStrokeWidth, ...props }, ref) {
+  const computedStrokeWidth = absoluteStrokeWidth ? Number(strokeWidth) * (24 / Number(size)) : strokeWidth;
+  return <svg ref={ref} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={computedStrokeWidth} strokeLinecap="round" strokeLinejoin="round" focusable="false" {...props}>
+    <circle cx="12" cy="9" r="6" />
+    <path d="M12 15v7" />
+    <path d="M9 19h6" />
+  </svg>;
+});
 
 type StoreMobileMenuProps = {
   open: boolean;
@@ -24,8 +43,8 @@ type StoreMobileMenuProps = {
 const categoryIcons: Record<string, LucideIcon> = {
   Electronics: Cpu,
   Fashion: Shirt,
-  "Men's Fashion": PersonStanding,
-  "Women's Fashion": UserRound,
+  "Men's Fashion": MarsSymbol,
+  "Women's Fashion": VenusSymbol,
   "Children's Fashion": Baby,
   "Shoes & Footwear": Footprints,
   "Bags & Luggage": BriefcaseBusiness,
@@ -57,7 +76,7 @@ export default function StoreMobileMenu({ open, onNavigate }: StoreMobileMenuPro
           {mobileNavItems.map(({ label, href, nested, icon: Icon }) => (
             <a key={href} onClick={onNavigate} href={href} className={`flex min-h-12 items-center gap-3 border-b border-white/5 text-white/85 last:border-0 hover:text-[#d2a63b] ${nested ? "pl-8 text-sm text-white/65" : ""}`}>
               {Icon && <Icon size={18} className="shrink-0 text-[#e1ba56]" aria-hidden="true" />}
-              <span>{nested ? `— ${label}` : label}</span>
+              <span>{label}</span>
             </a>
           ))}
         </div>
