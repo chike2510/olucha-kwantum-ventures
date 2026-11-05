@@ -2,11 +2,14 @@ import { Link } from "wouter";
 import { BUSINESS, FACEBOOK_PAGE_URL, OKV_MARK_ONLY_URL, WHATSAPP_URL } from "@/lib/siteConfig";
 import { FacebookMark, WhatsAppMark } from "@/components/SocialIcons";
 
-const columns: Array<{ title: string; links: Array<{ label: string; href: string; external?: boolean }> }> = [
+const columns: Array<{ title: string; links: Array<{ label: string; href: string; external?: boolean; nested?: boolean }> }> = [
   { title: "Shop", links: [
     { label: "All products", href: "/shop" },
     { label: "Electronics", href: "/shop/Electronics" },
     { label: "Fashion", href: "/shop/Fashion" },
+    { label: "Men's Fashion", href: "/shop/Men's%20Fashion", nested: true },
+    { label: "Women's Fashion", href: "/shop/Women's%20Fashion", nested: true },
+    { label: "Children's Fashion", href: "/shop/Children's%20Fashion", nested: true },
     { label: "Agro products", href: "/shop/Agro%20Products" },
     { label: "Cart", href: "/cart" },
   ] },
@@ -46,7 +49,7 @@ export default function SiteFooter() {
             <div key={column.title}>
               <p className="text-xs font-bold uppercase tracking-[.16em] text-[#0b1736]">{column.title}</p>
               <ul className="mt-3 space-y-0.5">
-                {column.links.map((link) => <li key={link.href}>{link.href.includes("#") ? <a href={link.href} className="inline-flex min-h-10 items-center hover:text-[#1f5b9f]">{link.label}</a> : <Link href={link.href} className="inline-flex min-h-10 items-center hover:text-[#1f5b9f]">{link.label}</Link>}</li>)}
+                {column.links.map((link) => <li key={link.href}>{link.href.includes("#") ? <a href={link.href} className={`inline-flex min-h-10 items-center hover:text-[#1f5b9f] ${link.nested ? "pl-4 text-slate-400" : ""}`}>{link.label}</a> : <Link href={link.href} className={`inline-flex min-h-10 items-center hover:text-[#1f5b9f] ${link.nested ? "pl-4 text-slate-400" : ""}`}>{link.label}</Link>}</li>)}
               </ul>
             </div>
           ))}

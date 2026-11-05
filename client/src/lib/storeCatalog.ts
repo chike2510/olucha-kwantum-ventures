@@ -1,7 +1,8 @@
+import { STORE_CATEGORY_FILTERS } from "@shared/productCategories";
 import { formatNairaAmount } from "./money";
 
 export type StoreProduct = {
-  id: number; slug: string; name: string; category: "Electronics" | "Fashion" | "Agro Products";
+  id: number; slug: string; name: string; category: string;
   price: number; unit: string; description: string; color: string; tag: string;
   specs: Record<string, string>; imageUrl?: string; supplierMapped?: boolean; supplierVariantFixed?: boolean;
   supplierStock?: number | null; supplierStockSyncedAt?: Date | null;
@@ -12,10 +13,9 @@ export type CatalogueProduct = {
   description: string; specifications: Record<string, string> | null; imageUrl: string | null;
   isActive: number; supplierMapped?: boolean; supplierVariantFixed?: boolean; supplierStock?: number | null; supplierStockSyncedAt?: Date | null;
 };
-export const storeCategories = ["All products", "Electronics", "Fashion", "Agro Products"] as const;
+export const storeCategories = STORE_CATEGORY_FILTERS;
 export function normalizeStoreCategory(category: string): StoreProduct["category"] {
-  const normalized = category.toLowerCase();
-  return normalized.includes("fashion") ? "Fashion" : normalized.includes("agro") ? "Agro Products" : "Electronics";
+  return category;
 }
 export function catalogueToStoreProduct(product: CatalogueProduct, tag = "Available"): StoreProduct {
   return { id: product.id, slug: product.slug, name: product.name, category: normalizeStoreCategory(product.category), price: product.priceKobo / 100, unit: product.unit, description: product.description, color: "from-[#1f5b9f] via-[#0b1736] to-[#cfa43a]", tag, specs: product.specifications || {}, imageUrl: product.imageUrl || undefined, supplierMapped: product.supplierMapped, supplierVariantFixed: product.supplierVariantFixed, supplierStock: product.supplierStock, supplierStockSyncedAt: product.supplierStockSyncedAt };

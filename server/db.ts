@@ -17,6 +17,7 @@ import {
 import { SUPABASE_ROOT_CA } from "./db-ca.js";
 import { ENV } from "./_core/env.js";
 import { notifyOwner } from "./_core/notification.js";
+import { getProductCategoryFilterValues } from "../shared/productCategories.js";
 
 let _pool: Pool | null = null;
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -119,7 +120,10 @@ export async function listProducts(search?: string, category?: string) {
   const db = await getDb();
   if (!db) return [];
   const filters: SQL[] = [eq(products.isActive, 1)];
-  if (category && category !== "All products") filters.push(eq(products.category, category));
+  if (category && category !== "All products") {
+    const categoryValues = getProductCategoryFilterValues(category);
+    filters.push(categoryValues.length === 1 ? eq(products.category, categoryValues[0]!) : inArray(products.category, categoryValues));
+  }
   if (search) filters.push(or(
     ilike(products.name, `%${search}%`),
     ilike(products.category, `%${search}%`),

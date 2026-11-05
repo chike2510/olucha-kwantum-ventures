@@ -13,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { FASHION_SUBCATEGORIES, PRODUCT_CATEGORIES, PRODUCT_CATEGORY_OPTIONS } from "@shared/productCategories";
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
 export type AdminProduct = RouterOutputs["admin"]["products"][number];
@@ -23,7 +24,18 @@ export type AdminBlogPost = RouterOutputs["admin"]["blogPosts"][number];
 
 export type AdminSection = "overview" | "products" | "orders" | "inquiries" | "content";
 
-export const PRODUCT_CATEGORIES = ["Electronics", "Fashion", "Agro Products"] as const;
+export { PRODUCT_CATEGORIES, PRODUCT_CATEGORY_OPTIONS };
+
+export function ProductCategoryOptions() {
+  return <>
+    <option value="Electronics">Electronics</option>
+    <optgroup label="Fashion">
+      <option value="Fashion">Fashion (general)</option>
+      {FASHION_SUBCATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+    </optgroup>
+    <option value="Agro Products">Agro Products</option>
+  </>;
+}
 
 export const formatNaira = (kobo: number) => formatNairaAmount(kobo / 100);
 
